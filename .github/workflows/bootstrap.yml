@@ -1,13 +1,37 @@
-name: Stable Shipping Staging
+name: Probe Puzzle Arcade Pages
 
 on:
+  push:
+    branches: [ship-v1.0.0]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: puzzle-pages-probe
+  cancel-in-progress: true
 
 jobs:
-  staged:
+  probe:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Stable payload staging only"
+      - name: Download currently served Pages runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://thiepn.github.io/puzzle'
+          mkdir -p live
+          for f in index.html app.js word-content.js styles.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png; do
+            echo "fetching $f"
+            curl --retry 3 --retry-delay 2 -fsSL "$base/$f" -o "live/$f"
+            wc -c "live/$f"
+            sha256sum "live/$f"
+          done
+          grep -q 'Puzzle Arcade' live/index.html
+          grep -q 'const APP_VERSION' live/app.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-pages-runtime
+          path: live
+          if-no-files-found: error
