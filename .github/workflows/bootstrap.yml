@@ -3,10 +3,12 @@ name: Verify Puzzle Arcade 1.0.1 Payload
 on:
   push:
     branches: [ship-v1.0.0]
+    paths:
+      - .github/workflows/bootstrap.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: puzzle-1-0-1-payload-verification
@@ -17,89 +19,129 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Inspect fragment sequence
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t parts < <(find .deploy -maxdepth 1 -type f -name 'part-*' | sort -V)
-          test "${#parts[@]}" -gt 0
-          printf 'parts=%s\n' "${#parts[@]}"
-          for p in "${parts[@]}"; do printf '%s %s\n' "$p" "$(wc -c < "$p")"; done
-          cat "${parts[@]}" | tr -d '\r\n' > /tmp/payload.b64
-          echo "payload_b64_bytes=$(wc -c < /tmp/payload.b64)"
-          test -s /tmp/payload.b64
-
-      - name: Decode base64 payload
-        shell: bash
-        run: |
-          set -euo pipefail
-          base64 --decode /tmp/payload.b64 > /tmp/payload.bin
-          test -s /tmp/payload.bin
-          echo "payload_bytes=$(wc -c < /tmp/payload.bin)"
-          echo "payload_sha256=$(sha256sum /tmp/payload.bin | awk '{print $1}')"
-          file /tmp/payload.bin
-
-      - name: Verify archive integrity and extract
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/puzzle-src
-          mkdir -p /tmp/puzzle-src
-          if xz -t /tmp/payload.bin >/dev/null 2>&1; then
-            echo 'payload_format=xz-tar'
-            xz -dc /tmp/payload.bin | tar -tf - >/tmp/archive-list.txt
-            xz -dc /tmp/payload.bin | tar -xf - -C /tmp/puzzle-src
-          elif unzip -t /tmp/payload.bin >/dev/null 2>&1; then
-            echo 'payload_format=zip'
-            unzip -l /tmp/payload.bin >/tmp/archive-list.txt
-            unzip -q /tmp/payload.bin -d /tmp/puzzle-src
-          else
-            echo 'Payload is neither a valid xz stream nor ZIP archive.' >&2
-            exit 1
-          fi
-          head -80 /tmp/archive-list.txt
-          root="$(dirname "$(find /tmp/puzzle-src -maxdepth 4 -type f -name app.js -print -quit)")"
-          test -n "$root"
-          test -f "$root/index.html"
-          test -f "$root/styles.css"
-          test -f "$root/sw.js"
-          echo "$root" > /tmp/puzzle-root
-          echo "source_root=$root"
-          find "$root" -maxdepth 2 -type f | sort | head -120
-
-      - name: Rebuild generated word content when needed
-        shell: bash
-        run: |
-          set -euo pipefail
-          root="$(cat /tmp/puzzle-root)"
-          if [ ! -f "$root/word-content.js" ]; then
-            test -f "$root/scripts/build-word-content.py"
-            test -f "$root/content/word-content-source.json"
-            (cd "$root" && python3 scripts/build-word-content.py)
-          fi
-          test -f "$root/word-content.js"
-          echo "word_content_sha256=$(sha256sum "$root/word-content.js" | awk '{print $1}')"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Verify release identity and run gates
+      - name: Verify staged payload and publish status
         shell: bash
         run: |
-          set -euo pipefail
-          root="$(cat /tmp/puzzle-root)"
-          cd "$root"
-          grep -q "const APP_VERSION = '1.0.1';" app.js
-          grep -Eq 'puzzle-arcade-core-v18|CACHE_PREFIX.*v18|\$\{CACHE_PREFIX\}v18' sw.js
-          node --check app.js
-          node --check word-content.js
-          node --check sw.js
-          node scripts/validate-word-content.js | tee /tmp/content-validation.log
-          node scripts/test-service-worker.mjs | tee /tmp/service-worker.log
-          node scripts/release-check.mjs | tee /tmp/release-check.log
-          grep -Eq '"errors"[[:space:]]*:[[:space:]]*0|Content validation passed|0 errors' /tmp/content-validation.log
-          grep -Eq 'PASS|"pass"[[:space:]]*:[[:space:]]*true' /tmp/service-worker.log
-          grep -Eq 'PASS|"pass"[[:space:]]*:[[:space:]]*true' /tmp/release-check.log
-          echo 'PAYLOAD_VERIFICATION=PASS'
+          set -u -o pipefail
+          failure=''
+          fragment_count=0
+          b64_bytes=0
+          payload_bytes=0
+          payload_sha256=''
+          payload_format='unknown'
+          source_root=''
+          app_version='unknown'
+          cache_version='unknown'
+          content_gate='not_run'
+          sw_gate='not_run'
+          release_gate='not_run'
+
+          mapfile -t parts < <(find .deploy -maxdepth 1 -type f -name 'part-*' | sort -V)
+          fragment_count="${#parts[@]}"
+          if [ "$fragment_count" -eq 0 ]; then
+            failure='fragments_missing'
+          else
+            cat "${parts[@]}" | tr -d '\r\n' > /tmp/payload.b64
+            b64_bytes="$(wc -c < /tmp/payload.b64)"
+          fi
+
+          if [ -z "$failure" ]; then
+            if base64 --decode /tmp/payload.b64 > /tmp/payload.bin 2>/tmp/decode.err; then
+              payload_bytes="$(wc -c < /tmp/payload.bin)"
+              payload_sha256="$(sha256sum /tmp/payload.bin | awk '{print $1}')"
+            else
+              failure='base64_decode'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            rm -rf /tmp/puzzle-src
+            mkdir -p /tmp/puzzle-src
+            if xz -t /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='xz-tar'
+              if xz -dc /tmp/payload.bin | tar -xf - -C /tmp/puzzle-src; then :; else failure='archive_extract'; fi
+            elif unzip -t /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='zip'
+              if unzip -q /tmp/payload.bin -d /tmp/puzzle-src; then :; else failure='archive_extract'; fi
+            else
+              failure='archive_integrity'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            app_path="$(find /tmp/puzzle-src -maxdepth 4 -type f -name app.js -print -quit)"
+            if [ -z "$app_path" ]; then
+              failure='app_missing'
+            else
+              source_root="$(dirname "$app_path")"
+              for f in index.html styles.css app.js sw.js; do
+                [ -f "$source_root/$f" ] || failure="required_file_missing:$f"
+              done
+            fi
+          fi
+
+          if [ -z "$failure" ] && [ ! -f "$source_root/word-content.js" ]; then
+            if [ -f "$source_root/scripts/build-word-content.py" ] && [ -f "$source_root/content/word-content-source.json" ]; then
+              (cd "$source_root" && python3 scripts/build-word-content.py) || failure='word_content_build'
+            else
+              failure='word_content_source_missing'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            app_version="$(sed -n "s/.*const APP_VERSION = '\([^']*\)'.*/\1/p" "$source_root/app.js" | head -1)"
+            cache_version="$(grep -Eo 'puzzle-arcade-core-v[0-9]+' "$source_root/sw.js" | head -1 | sed 's/.*-v//' || true)"
+            [ "$app_version" = '1.0.1' ] || failure="wrong_app_version:$app_version"
+            [ "$cache_version" = '18' ] || failure="wrong_cache_version:$cache_version"
+          fi
+
+          if [ -z "$failure" ]; then
+            cd "$source_root"
+            node --check app.js || failure='app_syntax'
+            [ -z "$failure" ] && node --check word-content.js || [ -n "$failure" ] || failure='word_content_syntax'
+            [ -z "$failure" ] && node --check sw.js || [ -n "$failure" ] || failure='sw_syntax'
+          fi
+
+          if [ -z "$failure" ]; then
+            if node scripts/validate-word-content.js >/tmp/content.log 2>&1; then content_gate='pass'; else content_gate='fail'; failure='content_validation'; fi
+          fi
+          if [ -z "$failure" ]; then
+            if node scripts/test-service-worker.mjs >/tmp/sw.log 2>&1; then sw_gate='pass'; else sw_gate='fail'; failure='service_worker_regression'; fi
+          fi
+          if [ -z "$failure" ]; then
+            if node scripts/release-check.mjs >/tmp/release.log 2>&1; then release_gate='pass'; else release_gate='fail'; failure='release_check'; fi
+          fi
+
+          result='FAIL'
+          [ -z "$failure" ] && result='PASS'
+          cd "$GITHUB_WORKSPACE"
+          cat > .verification-status.json <<JSON
+          {
+            "result": "$result",
+            "failure": "$failure",
+            "fragmentCount": $fragment_count,
+            "base64Bytes": $b64_bytes,
+            "payloadBytes": $payload_bytes,
+            "payloadSha256": "$payload_sha256",
+            "payloadFormat": "$payload_format",
+            "sourceRoot": "$source_root",
+            "appVersion": "$app_version",
+            "cacheVersion": "$cache_version",
+            "contentValidation": "$content_gate",
+            "serviceWorkerRegression": "$sw_gate",
+            "releaseCheck": "$release_gate"
+          }
+          JSON
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .verification-status.json
+          git commit -m "ci: record payload verification $result" || true
+          git push origin HEAD:ship-v1.0.0
+
+          cat .verification-status.json
+          [ "$result" = 'PASS' ]
