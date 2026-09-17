@@ -2,8 +2,6 @@ name: Inspect Wave 10 Bootstrap
 
 on:
   push:
-    paths:
-      - '.github/workflows/bootstrap.yml'
   workflow_dispatch:
 
 permissions:
@@ -32,7 +30,6 @@ jobs:
           grep -m1 "APP_VERSION" app.js || true
           grep -m1 "BUILD_PHASE" app.js || true
           grep -m1 "puzzle-arcade-core-v" sw.js || true
-          grep -m1 '"version"' manifest.webmanifest || true
           echo '--- release tooling ---'
           test -f scripts/release-check.mjs && echo 'release_check=present' || echo 'release_check=missing'
           test -f scripts/validate-word-content.js && echo 'content_validator=present' || echo 'content_validator=missing'
