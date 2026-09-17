@@ -1,49 +1,13 @@
-name: Recover Puzzle Arcade Bootstrap
+name: Puzzle Arcade Deployment Staging
 
 on:
-  push:
-    branches: [ship-v1.0.0]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: puzzle-bootstrap-recovery
-  cancel-in-progress: true
-
 jobs:
-  recover:
+  staged:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Decode bootstrap parts independently
-        shell: bash
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          parts=(.bootstrap/part-*)
-          test ${#parts[@]} -gt 0
-          rm -f /tmp/recovered.zip
-          for p in "${parts[@]}"; do
-            echo "decoding $p ($(wc -c < "$p") bytes text)"
-            base64 --decode "$p" >> /tmp/recovered.zip
-          done
-          echo "recovered_bytes=$(wc -c < /tmp/recovered.zip)"
-          sha256sum /tmp/recovered.zip
-          unzip -t /tmp/recovered.zip
-          rm -rf recovered && mkdir recovered
-          unzip -q /tmp/recovered.zip -d recovered
-          echo '--- recovered top-level ---'
-          find recovered -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | head -100
-          test -f recovered/app.js
-          test -f recovered/index.html
-          grep -m1 "const APP_VERSION" recovered/app.js || true
-          grep -m1 "const BUILD_PHASE" recovered/app.js || true
-          if [ -f recovered/word-content.js ]; then sha256sum recovered/word-content.js; fi
-          if [ -f recovered/content/word-content-source.json ]; then sha256sum recovered/content/word-content-source.json; fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: recovered-bootstrap-source
-          path: recovered
-          if-no-files-found: error
+      - run: echo 'Deployment payload staging only'
