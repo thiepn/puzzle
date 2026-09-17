@@ -1,0 +1,124 @@
+name: Verify Puzzle Arcade Payload v2
+
+on:
+  push:
+    branches: [ship-v1.0.0]
+    paths:
+      - .github/workflows/payload-verify-v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reconstruct, verify, and report
+        shell: bash
+        run: |
+          set -u -o pipefail
+          failure=''
+          payload_format='unknown'
+          app_version='unknown'
+          cache_version='unknown'
+          content_gate='not_run'
+          sw_gate='not_run'
+          release_gate='not_run'
+          fragment_count=0
+          payload_sha256=''
+
+          mapfile -t parts < <(find .deploy -maxdepth 1 -type f -name 'part-*' | sort -V)
+          fragment_count="${#parts[@]}"
+          if [ "$fragment_count" -eq 0 ]; then
+            failure='fragments_missing'
+          else
+            cat "${parts[@]}" | tr -d '\r\n' > /tmp/payload.b64
+          fi
+
+          if [ -z "$failure" ]; then
+            if base64 --decode /tmp/payload.b64 > /tmp/payload.bin 2>/tmp/decode.err; then
+              payload_sha256="$(sha256sum /tmp/payload.bin | awk '{print $1}')"
+            else
+              failure='base64_decode'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            rm -rf /tmp/puzzle-src && mkdir -p /tmp/puzzle-src
+            if gzip -t /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='gzip-tar'
+              tar -xzf /tmp/payload.bin -C /tmp/puzzle-src || failure='archive_extract'
+            elif xz -t /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='xz-tar'
+              xz -dc /tmp/payload.bin | tar -xf - -C /tmp/puzzle-src || failure='archive_extract'
+            elif unzip -t /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='zip'
+              unzip -q /tmp/payload.bin -d /tmp/puzzle-src || failure='archive_extract'
+            elif tar -tf /tmp/payload.bin >/dev/null 2>&1; then
+              payload_format='tar'
+              tar -xf /tmp/payload.bin -C /tmp/puzzle-src || failure='archive_extract'
+            else
+              failure='archive_integrity'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            app_path="$(find /tmp/puzzle-src -maxdepth 5 -type f -name app.js -print -quit)"
+            if [ -z "$app_path" ]; then
+              failure='app_missing'
+            else
+              root="$(dirname "$app_path")"
+              for f in index.html styles.css app.js sw.js; do
+                [ -f "$root/$f" ] || failure="required_file_missing:$f"
+              done
+            fi
+          fi
+
+          if [ -z "$failure" ] && [ ! -f "$root/word-content.js" ]; then
+            if [ -f "$root/scripts/build-word-content.py" ] && [ -f "$root/content/word-content-source.json" ]; then
+              (cd "$root" && python3 scripts/build-word-content.py) || failure='word_content_build'
+            else
+              failure='word_content_source_missing'
+            fi
+          fi
+
+          if [ -z "$failure" ]; then
+            app_version="$(sed -n "s/.*const APP_VERSION = '\([^']*\)'.*/\1/p" "$root/app.js" | head -1)"
+            cache_version="$(grep -Eo 'puzzle-arcade-core-v[0-9]+' "$root/sw.js" | head -1 | sed 's/.*-v//' || true)"
+            [ "$app_version" = '1.0.1' ] || failure="wrong_app_version:$app_version"
+            [ "$cache_version" = '18' ] || failure="wrong_cache_version:$cache_version"
+          fi
+
+          if [ -z "$failure" ]; then
+            cd "$root"
+            node --check app.js || failure='app_syntax'
+            if [ -z "$failure" ]; then node --check word-content.js || failure='word_content_syntax'; fi
+            if [ -z "$failure" ]; then node --check sw.js || failure='sw_syntax'; fi
+          fi
+          if [ -z "$failure" ]; then
+            if node scripts/validate-word-content.js >/tmp/content.log 2>&1; then content_gate='pass'; else content_gate='fail'; failure='content_validation'; fi
+          fi
+          if [ -z "$failure" ]; then
+            if node scripts/test-service-worker.mjs >/tmp/sw.log 2>&1; then sw_gate='pass'; else sw_gate='fail'; failure='service_worker_regression'; fi
+          fi
+          if [ -z "$failure" ]; then
+            if node scripts/release-check.mjs >/tmp/release.log 2>&1; then release_gate='pass'; else release_gate='fail'; failure='release_check'; fi
+          fi
+
+          result='FAIL'; [ -z "$failure" ] && result='PASS'
+          cd "$GITHUB_WORKSPACE"
+          cat > .verification-v2.json <<JSON
+          {"result":"$result","failure":"$failure","fragmentCount":$fragment_count,"payloadSha256":"$payload_sha256","payloadFormat":"$payload_format","appVersion":"$app_version","cacheVersion":"$cache_version","contentValidation":"$content_gate","serviceWorkerRegression":"$sw_gate","releaseCheck":"$release_gate"}
+          JSON
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .verification-v2.json
+          git commit -m "ci: record v2 payload verification $result" || true
+          git push origin HEAD:ship-v1.0.0
+          cat .verification-v2.json
+          [ "$result" = 'PASS' ]
