@@ -1,0 +1,177 @@
+name: Restore Puzzle Arcade 1.0.1
+
+on:
+  push:
+    branches: [ship-v1.0.0]
+    paths:
+      - '.github/workflows/restore-v1.0.1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-puzzle-v1-0-1
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download exact audited source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://puzzle-v101-68e84b8d.serveo.net/puzzle-minimal-v101.tar.xz'
+          curl --fail --location --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 180 "$URL" -o /tmp/puzzle-minimal-v101.tar.xz
+          echo '68e84b8d8a012a4fdb1932177d0ba1677b6d5b3b07ae45e84efb8853f455b007  /tmp/puzzle-minimal-v101.tar.xz' | sha256sum -c -
+          xz -t /tmp/puzzle-minimal-v101.tar.xz
+
+      - name: Extract and rebuild generated content
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/puzzle-src
+          mkdir -p /tmp/puzzle-src
+          tar -xJf /tmp/puzzle-minimal-v101.tar.xz -C /tmp/puzzle-src
+          cd /tmp/puzzle-src
+          test -f index.html
+          test -f app.js
+          test -f styles.css
+          test -f sw.js
+          test -f content/word-content-source.json
+          python3 scripts/build-word-content.py
+          test -f word-content.js
+          grep -q "const APP_VERSION = '1.0.1';" app.js
+          grep -Eq 'puzzle-arcade-core-v18|CACHE_PREFIX.*v18|\$\{CACHE_PREFIX\}v18' sw.js
+
+      - name: Run complete release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/puzzle-src
+          node --check app.js
+          node --check word-content.js
+          node --check sw.js
+          node scripts/validate-word-content.js
+          node scripts/test-service-worker.mjs
+          node scripts/release-check.mjs
+
+      - name: Add production CI and Pages workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/puzzle-src/.github/workflows
+          cat > /tmp/puzzle-src/.github/workflows/ci.yml <<'CI'
+          name: Puzzle Arcade CI
+
+          on:
+            push:
+              branches: [main]
+            pull_request:
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            verify:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: 22
+                - name: Verify release
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    grep -q "const APP_VERSION = '1.0.1';" app.js
+                    grep -Eq 'puzzle-arcade-core-v18|CACHE_PREFIX.*v18|\$\{CACHE_PREFIX\}v18' sw.js
+                    node --check app.js
+                    node --check word-content.js
+                    node --check sw.js
+                    node scripts/validate-word-content.js
+                    node scripts/test-service-worker.mjs
+                    node scripts/release-check.mjs
+          CI
+
+          cat > /tmp/puzzle-src/.github/workflows/pages.yml <<'PAGES'
+          name: Deploy Puzzle Arcade Pages
+
+          on:
+            push:
+              branches: [main]
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+            pages: write
+            id-token: write
+
+          concurrency:
+            group: pages
+            cancel-in-progress: true
+
+          jobs:
+            deploy:
+              environment:
+                name: github-pages
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: 22
+                - name: Verify release
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    grep -q "const APP_VERSION = '1.0.1';" app.js
+                    grep -Eq 'puzzle-arcade-core-v18|CACHE_PREFIX.*v18|\$\{CACHE_PREFIX\}v18' sw.js
+                    node --check app.js
+                    node --check word-content.js
+                    node --check sw.js
+                    node scripts/validate-word-content.js
+                    node scripts/test-service-worker.mjs
+                    node scripts/release-check.mjs
+                - name: Stage Pages artifact
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    rm -rf dist
+                    mkdir dist
+                    cp index.html styles.css app.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png dist/
+                    touch dist/.nojekyll
+                - uses: actions/configure-pages@v5
+                  with:
+                    enablement: true
+                - uses: actions/upload-pages-artifact@v3
+                  with:
+                    path: dist
+                - uses: actions/deploy-pages@v4
+          PAGES
+
+      - name: Replace broken main tree atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git checkout -B main origin/main
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/puzzle-src/. .
+          git add -A
+          git diff --cached --quiet && { echo 'No source changes to commit'; exit 1; }
+          git commit -m 'fix: restore deployable Puzzle Arcade 1.0.1'
+          git push origin HEAD:main
