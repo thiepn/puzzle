@@ -1,4 +1,4 @@
-name: Rescue Puzzle Arcade Site
+name: Diagnose Puzzle Arcade Bootstrap
 
 on:
   push:
@@ -6,206 +6,41 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: puzzle-site-rescue
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  rescue:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Recover source archive
+      - name: Inspect bootstrap fragments
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import base64, re, hashlib
-
-          parts = sorted(Path('.bootstrap').glob('part-*'), key=lambda p: int(p.name.rsplit('-', 1)[1]))
-          if not parts:
-              raise SystemExit('No bootstrap fragments found')
-          raw = ''.join(p.read_text(errors='ignore') for p in parts)
-          clean = re.sub(r'[^A-Za-z0-9+/=]', '', raw)
-          print(f'bootstrap_parts={len(parts)}')
-          print(f'base64_chars={len(clean)}')
-          print(f'padding_chars={clean.count("=")}')
-
-          decoded = bytearray()
-          start = 0
-          segment_count = 0
-          i = 0
-          while i < len(clean):
-              if clean[i] != '=':
-                  i += 1
-                  continue
-              j = i
-              while j + 1 < len(clean) and clean[j + 1] == '=':
-                  j += 1
-              segment = clean[start:j + 1]
-              if len(segment) % 4 != 0:
-                  raise SystemExit(f'Invalid padded base64 segment length at chars {start}:{j+1}: {len(segment)}')
-              try:
-                  decoded.extend(base64.b64decode(segment, validate=True))
-              except Exception as exc:
-                  raise SystemExit(f'Base64 segment {segment_count} failed: {exc}')
-              segment_count += 1
-              start = j + 1
-              i = j + 1
-
-          tail = clean[start:]
-          if tail:
-              padded = tail + ('=' * ((-len(tail)) % 4))
-              try:
-                  decoded.extend(base64.b64decode(padded, validate=True))
-              except Exception as exc:
-                  raise SystemExit(f'Base64 tail failed: {exc}; tail chars={len(tail)}')
-              segment_count += 1
-
-          out = Path('/tmp/puzzle-bootstrap.zip')
-          out.write_bytes(decoded)
-          print(f'decoded_segments={segment_count}')
-          print(f'archive_bytes={len(decoded)}')
-          print(f'archive_sha256={hashlib.sha256(decoded).hexdigest()}')
-          print(f'archive_magic={decoded[:8].hex()}')
-          if not decoded.startswith(b'PK'):
-              raise SystemExit('Recovered payload does not start with ZIP magic')
+          import re
+          parts=sorted(Path('.bootstrap').glob('part-*'), key=lambda p:int(p.name.rsplit('-',1)[1]))
+          allowed=set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=')
+          total_clean=0
+          for p in parts:
+              s=p.read_text(errors='replace')
+              clean=''.join(c for c in s if c in allowed)
+              bad=[i for i,c in enumerate(s) if c not in allowed]
+              total_clean += len(clean)
+              print(f'{p.name}: raw={len(s)} clean={len(clean)} mod4={len(clean)%4} bad={len(bad)}')
+              if bad:
+                  groups=[]
+                  start=prev=bad[0]
+                  for x in bad[1:]:
+                      if x==prev+1:
+                          prev=x
+                      else:
+                          groups.append((start,prev)); start=prev=x
+                  groups.append((start,prev))
+                  for a,b in groups[:20]:
+                      lo=max(0,a-50); hi=min(len(s),b+51)
+                      print(f'  bad[{a}:{b}] context={s[lo:hi]!r}')
+              print(f'  prefix={s[:24]!r} suffix={s[-24:]!r}')
+          print(f'total_clean={total_clean} mod4={total_clean%4}')
           PY
-
-          unzip -t /tmp/puzzle-bootstrap.zip
-          rm -rf /tmp/puzzle-src
-          mkdir -p /tmp/puzzle-src
-          unzip -q /tmp/puzzle-bootstrap.zip -d /tmp/puzzle-src
-          test -f /tmp/puzzle-src/index.html
-          test -f /tmp/puzzle-src/app.js
-          test -f /tmp/puzzle-src/styles.css
-          test -f /tmp/puzzle-src/sw.js
-          test -f /tmp/puzzle-src/scripts/build-word-content.py
-          test -f /tmp/puzzle-src/scripts/release-check.mjs
-          test -f /tmp/puzzle-src/scripts/validate-word-content.js
-          test -f /tmp/puzzle-src/scripts/test-service-worker.mjs
-
-      - name: Generate word database
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd /tmp/puzzle-src
-          if [ ! -f word-content.js ]; then
-            python3 scripts/build-word-content.py
-          fi
-          test -s word-content.js
-          echo "word_content_bytes=$(wc -c < word-content.js)"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Verify recovered source
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd /tmp/puzzle-src
-          node --check app.js
-          node --check word-content.js
-          node --check sw.js
-          node scripts/validate-word-content.js
-          node scripts/test-service-worker.mjs
-          node scripts/release-check.mjs
-
-      - name: Install production workflows
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/puzzle-src/.github/workflows
-          cat > /tmp/puzzle-src/.github/workflows/ci.yml <<'YAML'
-          name: Release Gate
-          on:
-            push:
-              branches: [main]
-            pull_request:
-            workflow_dispatch:
-          permissions:
-            contents: read
-          jobs:
-            release-gate:
-              runs-on: ubuntu-latest
-              steps:
-                - uses: actions/checkout@v4
-                - uses: actions/setup-node@v4
-                  with:
-                    node-version: 22
-                - run: node --check app.js
-                - run: node --check word-content.js
-                - run: node --check sw.js
-                - run: node scripts/validate-word-content.js
-                - run: node scripts/test-service-worker.mjs
-                - run: node scripts/release-check.mjs
-          YAML
-          cat > /tmp/puzzle-src/.github/workflows/pages.yml <<'YAML'
-          name: Deploy Puzzle Arcade
-          on:
-            push:
-              branches: [main]
-            workflow_dispatch:
-          permissions:
-            contents: read
-            pages: write
-            id-token: write
-          concurrency:
-            group: pages
-            cancel-in-progress: true
-          jobs:
-            deploy:
-              environment:
-                name: github-pages
-                url: ${{ steps.deployment.outputs.page_url }}
-              runs-on: ubuntu-latest
-              steps:
-                - uses: actions/checkout@v4
-                - uses: actions/setup-node@v4
-                  with:
-                    node-version: 22
-                - name: Release gate
-                  run: |
-                    node --check app.js
-                    node --check word-content.js
-                    node --check sw.js
-                    node scripts/validate-word-content.js
-                    node scripts/test-service-worker.mjs
-                    node scripts/release-check.mjs
-                - name: Stage runtime
-                  run: |
-                    rm -rf dist
-                    mkdir dist
-                    cp index.html styles.css app.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png dist/
-                    touch dist/.nojekyll
-                - uses: actions/configure-pages@v5
-                  with:
-                    enablement: true
-                - uses: actions/upload-pages-artifact@v3
-                  with:
-                    path: dist
-                - name: Deploy
-                  id: deployment
-                  uses: actions/deploy-pages@v4
-          YAML
-          touch /tmp/puzzle-src/.nojekyll
-          rm -f /tmp/puzzle-src/.github/workflows/bootstrap.yml
-          rm -rf /tmp/puzzle-src/.bootstrap /tmp/puzzle-src/.payload /tmp/puzzle-src/.deploy
-
-      - name: Publish recovered source to main
-        shell: bash
-        run: |
-          set -euo pipefail
-          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -a /tmp/puzzle-src/. "$GITHUB_WORKSPACE"/
-          cd "$GITHUB_WORKSPACE"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'fix: restore deployable Puzzle Arcade source'
-          git push origin HEAD:main
