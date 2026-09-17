@@ -15,9 +15,6 @@ concurrency:
 
 jobs:
   bootstrap:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,12 +69,6 @@ jobs:
               t,n=re.subn(r"puzzle-arcade-core-v\d+(?:-[A-Za-z0-9.-]+)?", "puzzle-arcade-core-v16", t, count=1)
           assert n==1
           sw.write_text(t)
-          readme=root/'README.md'
-          if readme.exists():
-              r=readme.read_text()
-              r=re.sub(r"Release candidate:\s*[^·\n]+", "Release candidate: 1.0.0-rc.1", r, count=1)
-              r=r.replace('PWA cache v17','PWA cache v16').replace('PWA cache v15','PWA cache v16').replace('PWA cache v14','PWA cache v16')
-              readme.write_text(r)
           cert=root/'docs'/'WAVE10_CERTIFICATION.json'
           cert.parent.mkdir(parents=True,exist_ok=True)
           cert.write_text(json.dumps({
