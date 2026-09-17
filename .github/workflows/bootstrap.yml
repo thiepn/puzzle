@@ -22,14 +22,60 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          parts=(.bootstrap/part-*)
-          test ${#parts[@]} -ge 1
-          echo "bootstrap_parts=${#parts[@]}"
-          cat "${parts[@]}" > /tmp/puzzle-bootstrap.raw
-          base64 --decode --ignore-garbage /tmp/puzzle-bootstrap.raw > /tmp/puzzle-bootstrap.zip
-          echo "archive_bytes=$(wc -c < /tmp/puzzle-bootstrap.zip)"
-          echo "archive_sha256=$(sha256sum /tmp/puzzle-bootstrap.zip | awk '{print $1}')"
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, re, hashlib
+
+          parts = sorted(Path('.bootstrap').glob('part-*'), key=lambda p: int(p.name.rsplit('-', 1)[1]))
+          if not parts:
+              raise SystemExit('No bootstrap fragments found')
+          raw = ''.join(p.read_text(errors='ignore') for p in parts)
+          clean = re.sub(r'[^A-Za-z0-9+/=]', '', raw)
+          print(f'bootstrap_parts={len(parts)}')
+          print(f'base64_chars={len(clean)}')
+          print(f'padding_chars={clean.count("=")}')
+
+          decoded = bytearray()
+          start = 0
+          segment_count = 0
+          i = 0
+          while i < len(clean):
+              if clean[i] != '=':
+                  i += 1
+                  continue
+              j = i
+              while j + 1 < len(clean) and clean[j + 1] == '=':
+                  j += 1
+              segment = clean[start:j + 1]
+              if len(segment) % 4 != 0:
+                  raise SystemExit(f'Invalid padded base64 segment length at chars {start}:{j+1}: {len(segment)}')
+              try:
+                  decoded.extend(base64.b64decode(segment, validate=True))
+              except Exception as exc:
+                  raise SystemExit(f'Base64 segment {segment_count} failed: {exc}')
+              segment_count += 1
+              start = j + 1
+              i = j + 1
+
+          tail = clean[start:]
+          if tail:
+              padded = tail + ('=' * ((-len(tail)) % 4))
+              try:
+                  decoded.extend(base64.b64decode(padded, validate=True))
+              except Exception as exc:
+                  raise SystemExit(f'Base64 tail failed: {exc}; tail chars={len(tail)}')
+              segment_count += 1
+
+          out = Path('/tmp/puzzle-bootstrap.zip')
+          out.write_bytes(decoded)
+          print(f'decoded_segments={segment_count}')
+          print(f'archive_bytes={len(decoded)}')
+          print(f'archive_sha256={hashlib.sha256(decoded).hexdigest()}')
+          print(f'archive_magic={decoded[:8].hex()}')
+          if not decoded.startswith(b'PK'):
+              raise SystemExit('Recovered payload does not start with ZIP magic')
+          PY
+
           unzip -t /tmp/puzzle-bootstrap.zip
           rm -rf /tmp/puzzle-src
           mkdir -p /tmp/puzzle-src
