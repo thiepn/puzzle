@@ -26,19 +26,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f .bootstrap/part-000
-          base64 --decode .bootstrap/part-000 > /tmp/puzzle-bootstrap.zip
+          shopt -s nullglob
+          parts=(.bootstrap/part-*)
+          test ${#parts[@]} -ge 1
+          printf 'bootstrap_parts=%s\n' "${#parts[@]}"
+          cat "${parts[@]}" > /tmp/puzzle-bootstrap.b64
+          base64 --decode /tmp/puzzle-bootstrap.b64 > /tmp/puzzle-bootstrap.zip
+          echo "archive_sha256=$(sha256sum /tmp/puzzle-bootstrap.zip | awk '{print $1}')"
           unzip -t /tmp/puzzle-bootstrap.zip
           rm -rf /tmp/puzzle-src && mkdir /tmp/puzzle-src
           unzip -q /tmp/puzzle-bootstrap.zip -d /tmp/puzzle-src
           test -f /tmp/puzzle-src/index.html
           test -f /tmp/puzzle-src/app.js
-          test -f /tmp/puzzle-src/word-content.js
           test -f /tmp/puzzle-src/sw.js
           test -f /tmp/puzzle-src/scripts/release-check.mjs
           test -f /tmp/puzzle-src/scripts/validate-word-content.js
           test -f /tmp/puzzle-src/scripts/test-service-worker.mjs
-          echo "archive_sha256=$(sha256sum /tmp/puzzle-bootstrap.zip | awk '{print $1}')"
+          if [ ! -f /tmp/puzzle-src/word-content.js ]; then
+            test -f /tmp/puzzle-src/scripts/build-word-content.py
+            test -f /tmp/puzzle-src/content/word-content-source.json
+            (cd /tmp/puzzle-src && python3 scripts/build-word-content.py)
+          fi
+          test -f /tmp/puzzle-src/word-content.js
           echo "word_content_bytes=$(wc -c < /tmp/puzzle-src/word-content.js)"
 
       - name: Normalize RC1 release identity
@@ -99,7 +108,7 @@ jobs:
           grep -q '"pass": true' /tmp/release-check.json
           grep -q '"errors": 0' /tmp/content-validation.json
           grep -q "const APP_VERSION = '1.0.0-rc.1';" app.js
-          grep -q 'puzzle-arcade-core-v' sw.js
+          grep -q 'v16' sw.js
 
       - name: Install final CI and Pages workflows
         shell: bash
