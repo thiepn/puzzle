@@ -1,4 +1,4 @@
-name: Probe Puzzle Arcade Pages
+name: Recover Puzzle Arcade Bootstrap
 
 on:
   push:
@@ -9,29 +9,41 @@ permissions:
   contents: read
 
 concurrency:
-  group: puzzle-pages-probe
+  group: puzzle-bootstrap-recovery
   cancel-in-progress: true
 
 jobs:
-  probe:
+  recover:
     runs-on: ubuntu-latest
     steps:
-      - name: Download currently served Pages runtime
+      - uses: actions/checkout@v4
+      - name: Decode bootstrap parts independently
         shell: bash
         run: |
           set -euo pipefail
-          base='https://thiepn.github.io/puzzle'
-          mkdir -p live
-          for f in index.html app.js word-content.js styles.css sw.js manifest.webmanifest icon.svg icon-192.png icon-512.png; do
-            echo "fetching $f"
-            curl --retry 3 --retry-delay 2 -fsSL "$base/$f" -o "live/$f"
-            wc -c "live/$f"
-            sha256sum "live/$f"
+          shopt -s nullglob
+          parts=(.bootstrap/part-*)
+          test ${#parts[@]} -gt 0
+          rm -f /tmp/recovered.zip
+          for p in "${parts[@]}"; do
+            echo "decoding $p ($(wc -c < "$p") bytes text)"
+            base64 --decode "$p" >> /tmp/recovered.zip
           done
-          grep -q 'Puzzle Arcade' live/index.html
-          grep -q 'const APP_VERSION' live/app.js
+          echo "recovered_bytes=$(wc -c < /tmp/recovered.zip)"
+          sha256sum /tmp/recovered.zip
+          unzip -t /tmp/recovered.zip
+          rm -rf recovered && mkdir recovered
+          unzip -q /tmp/recovered.zip -d recovered
+          echo '--- recovered top-level ---'
+          find recovered -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | head -100
+          test -f recovered/app.js
+          test -f recovered/index.html
+          grep -m1 "const APP_VERSION" recovered/app.js || true
+          grep -m1 "const BUILD_PHASE" recovered/app.js || true
+          if [ -f recovered/word-content.js ]; then sha256sum recovered/word-content.js; fi
+          if [ -f recovered/content/word-content-source.json ]; then sha256sum recovered/content/word-content-source.json; fi
       - uses: actions/upload-artifact@v4
         with:
-          name: current-pages-runtime
-          path: live
+          name: recovered-bootstrap-source
+          path: recovered
           if-no-files-found: error
