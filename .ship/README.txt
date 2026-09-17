@@ -1,0 +1,1 @@
+Puzzle Arcade 1.0.0 shipping payload is assembled off-branch before activation.
