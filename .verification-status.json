@@ -1,0 +1,15 @@
+{
+  "result": "FAIL",
+  "failure": "base64_decode",
+  "fragmentCount": 21,
+  "base64Bytes": 121587,
+  "payloadBytes": 0,
+  "payloadSha256": "",
+  "payloadFormat": "unknown",
+  "sourceRoot": "",
+  "appVersion": "unknown",
+  "cacheVersion": "unknown",
+  "contentValidation": "not_run",
+  "serviceWorkerRegression": "not_run",
+  "releaseCheck": "not_run"
+}
