@@ -1,3 +1,3 @@
 # Puzzle Arcade
 
-Wave 10 repository bootstrap in progress. This placeholder is replaced automatically by the certified v1.0.0 release tree.
+Wave 10 repository bootstrap in progress. The recovered candidate archive is being verified before the certified RC1 source tree replaces this placeholder.
