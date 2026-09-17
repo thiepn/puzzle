@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Reconstruct staged payload
+      - name: Inspect fragment sequence
         shell: bash
         run: |
           set -euo pipefail
@@ -27,25 +27,38 @@ jobs:
           printf 'parts=%s\n' "${#parts[@]}"
           for p in "${parts[@]}"; do printf '%s %s\n' "$p" "$(wc -c < "$p")"; done
           cat "${parts[@]}" | tr -d '\r\n' > /tmp/payload.b64
+          echo "payload_b64_bytes=$(wc -c < /tmp/payload.b64)"
+          test -s /tmp/payload.b64
+
+      - name: Decode base64 payload
+        shell: bash
+        run: |
+          set -euo pipefail
           base64 --decode /tmp/payload.b64 > /tmp/payload.bin
+          test -s /tmp/payload.bin
+          echo "payload_bytes=$(wc -c < /tmp/payload.bin)"
           echo "payload_sha256=$(sha256sum /tmp/payload.bin | awk '{print $1}')"
           file /tmp/payload.bin
 
+      - name: Verify archive integrity and extract
+        shell: bash
+        run: |
+          set -euo pipefail
           rm -rf /tmp/puzzle-src
           mkdir -p /tmp/puzzle-src
           if xz -t /tmp/payload.bin >/dev/null 2>&1; then
             echo 'payload_format=xz-tar'
-            xz -dc /tmp/payload.bin | tar -tf - | head -80
+            xz -dc /tmp/payload.bin | tar -tf - >/tmp/archive-list.txt
             xz -dc /tmp/payload.bin | tar -xf - -C /tmp/puzzle-src
           elif unzip -t /tmp/payload.bin >/dev/null 2>&1; then
             echo 'payload_format=zip'
-            unzip -l /tmp/payload.bin | head -80
+            unzip -l /tmp/payload.bin >/tmp/archive-list.txt
             unzip -q /tmp/payload.bin -d /tmp/puzzle-src
           else
             echo 'Payload is neither a valid xz stream nor ZIP archive.' >&2
             exit 1
           fi
-
+          head -80 /tmp/archive-list.txt
           root="$(dirname "$(find /tmp/puzzle-src -maxdepth 4 -type f -name app.js -print -quit)")"
           test -n "$root"
           test -f "$root/index.html"
