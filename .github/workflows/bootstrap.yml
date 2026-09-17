@@ -1,10 +1,39 @@
-name: Bootstrap Test
+name: Inspect Wave 10 Bootstrap
+
 on:
+  push:
+    paths:
+      - '.github/workflows/bootstrap.yml'
   workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
+
 jobs:
-  test:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - run: echo bootstrap-permission-ok
+      - uses: actions/checkout@v4
+      - name: Verify recovered archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .bootstrap/part-000
+          echo "bootstrap_chars=$(wc -c < .bootstrap/part-000)"
+          base64 --decode .bootstrap/part-000 > /tmp/puzzle-bootstrap.zip
+          echo "archive_sha256=$(sha256sum /tmp/puzzle-bootstrap.zip | awk '{print $1}')"
+          unzip -t /tmp/puzzle-bootstrap.zip
+          rm -rf /tmp/puzzle-src && mkdir /tmp/puzzle-src
+          unzip -q /tmp/puzzle-bootstrap.zip -d /tmp/puzzle-src
+          cd /tmp/puzzle-src
+          echo '--- top-level files ---'
+          find . -maxdepth 2 -type f -printf '%P\n' | sort | head -120
+          echo '--- identity ---'
+          grep -m1 "APP_VERSION" app.js || true
+          grep -m1 "BUILD_PHASE" app.js || true
+          grep -m1 "puzzle-arcade-core-v" sw.js || true
+          grep -m1 '"version"' manifest.webmanifest || true
+          echo '--- release tooling ---'
+          test -f scripts/release-check.mjs && echo 'release_check=present' || echo 'release_check=missing'
+          test -f scripts/validate-word-content.js && echo 'content_validator=present' || echo 'content_validator=missing'
+          test -f word-content.js && echo "word_content_bytes=$(wc -c < word-content.js)" || echo 'word_content=missing'
