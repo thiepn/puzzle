@@ -1,0 +1,3617 @@
+{
+  "themes": {
+    "Animals": [
+      "TIGER",
+      "HORSE",
+      "SHEEP",
+      "MOUSE",
+      "WHALE",
+      "SHARK",
+      "EAGLE",
+      "OTTER",
+      "PANDA",
+      "ZEBRA"
+    ],
+    "Birds": [
+      "ROBIN",
+      "EAGLE",
+      "RAVEN",
+      "HERON",
+      "FINCH",
+      "CRANE",
+      "GOOSE",
+      "SWAN",
+      "LARK",
+      "OWL"
+    ],
+    "Ocean": [
+      "CORAL",
+      "SHARK",
+      "WHALE",
+      "SQUID",
+      "REEF",
+      "TIDES",
+      "SHELL",
+      "WAVES",
+      "KELP",
+      "SEAL"
+    ],
+    "Forest": [
+      "CEDAR",
+      "MAPLE",
+      "PINE",
+      "BIRCH",
+      "MOSS",
+      "FERN",
+      "TRAIL",
+      "GROVE",
+      "ACORN",
+      "OWL"
+    ],
+    "Flowers": [
+      "ROSE",
+      "TULIP",
+      "DAISY",
+      "IRIS",
+      "LILAC",
+      "LOTUS",
+      "ASTER",
+      "POPPY",
+      "VIOLET",
+      "BLOOM"
+    ],
+    "Weather": [
+      "RAIN",
+      "CLOUD",
+      "STORM",
+      "WIND",
+      "HAIL",
+      "FROST",
+      "SNOW",
+      "MIST",
+      "THUNDER",
+      "BREEZE"
+    ],
+    "Space": [
+      "ORBIT",
+      "COMET",
+      "VENUS",
+      "LUNAR",
+      "SOLAR",
+      "MARS",
+      "NOVA",
+      "STAR",
+      "MOON",
+      "METEOR"
+    ],
+    "Planets": [
+      "EARTH",
+      "VENUS",
+      "MARS",
+      "SATURN",
+      "URANUS",
+      "NEPTUNE",
+      "MERCURY",
+      "JUPITER"
+    ],
+    "Night Sky": [
+      "COMET",
+      "STARS",
+      "LUNAR",
+      "MOON",
+      "ORBIT",
+      "NOVA",
+      "METEOR",
+      "VENUS",
+      "SPACE",
+      "DUSK"
+    ],
+    "Kitchen": [
+      "PLATE",
+      "SPOON",
+      "KNIFE",
+      "OVEN",
+      "PAN",
+      "CUP",
+      "FORK",
+      "BOWL",
+      "WHISK",
+      "APRON"
+    ],
+    "Baking": [
+      "FLOUR",
+      "YEAST",
+      "SUGAR",
+      "DOUGH",
+      "OVEN",
+      "WHISK",
+      "BREAD",
+      "CAKE",
+      "TART",
+      "MIXER"
+    ],
+    "Fruit": [
+      "APPLE",
+      "GRAPE",
+      "MANGO",
+      "LEMON",
+      "PEACH",
+      "MELON",
+      "BERRY",
+      "PLUM",
+      "PEAR",
+      "LIME"
+    ],
+    "Vegetables": [
+      "ONION",
+      "CARROT",
+      "BEANS",
+      "PEAS",
+      "CELERY",
+      "RADISH",
+      "TURNIP",
+      "KALE",
+      "CORN",
+      "LEEK"
+    ],
+    "Breakfast": [
+      "TOAST",
+      "EGGS",
+      "CEREAL",
+      "BACON",
+      "JUICE",
+      "COFFEE",
+      "WAFFLE",
+      "BAGEL",
+      "FRUIT",
+      "MILK"
+    ],
+    "Desserts": [
+      "CAKE",
+      "TART",
+      "PIE",
+      "COOKIE",
+      "MOUSSE",
+      "FUDGE",
+      "DONUT",
+      "CREAM",
+      "CANDY",
+      "BROWNIE"
+    ],
+    "Music": [
+      "PIANO",
+      "DRUM",
+      "VOICE",
+      "CHORD",
+      "BEAT",
+      "SONG",
+      "NOTE",
+      "BASS",
+      "TEMPO",
+      "FLUTE"
+    ],
+    "Instruments": [
+      "PIANO",
+      "FLUTE",
+      "DRUM",
+      "CELLO",
+      "VIOLA",
+      "HARP",
+      "BANJO",
+      "TRUMPET",
+      "GUITAR",
+      "OBOE"
+    ],
+    "Theater": [
+      "STAGE",
+      "ACTOR",
+      "SCENE",
+      "SCRIPT",
+      "DRAMA",
+      "LIGHT",
+      "PROPS",
+      "CAST",
+      "AISLE",
+      "CURTAIN"
+    ],
+    "Art": [
+      "PAINT",
+      "BRUSH",
+      "CANVAS",
+      "FRAME",
+      "COLOR",
+      "SKETCH",
+      "MURAL",
+      "INK",
+      "CLAY",
+      "EASEL"
+    ],
+    "Books": [
+      "NOVEL",
+      "POEM",
+      "STORY",
+      "TITLE",
+      "PAGE",
+      "INDEX",
+      "COVER",
+      "SPINE",
+      "CHAPTER",
+      "PROSE"
+    ],
+    "School": [
+      "CLASS",
+      "DESK",
+      "PAPER",
+      "PENCIL",
+      "STUDY",
+      "BOOK",
+      "GRADE",
+      "TEACH",
+      "BOARD",
+      "RULER"
+    ],
+    "Office": [
+      "DESK",
+      "CHAIR",
+      "PAPER",
+      "FILE",
+      "STAMP",
+      "PHONE",
+      "EMAIL",
+      "NOTES",
+      "CLIP",
+      "FOLDER"
+    ],
+    "Technology": [
+      "ROBOT",
+      "LASER",
+      "CABLE",
+      "MOUSE",
+      "PIXEL",
+      "SCREEN",
+      "CHIP",
+      "CODE",
+      "DATA",
+      "CLOUD"
+    ],
+    "Internet": [
+      "BROWSER",
+      "SEARCH",
+      "LINK",
+      "TAB",
+      "EMAIL",
+      "CLOUD",
+      "CACHE",
+      "SERVER",
+      "LOGIN",
+      "PAGE"
+    ],
+    "Coding": [
+      "ARRAY",
+      "LOOP",
+      "CLASS",
+      "INPUT",
+      "DEBUG",
+      "STACK",
+      "QUEUE",
+      "CACHE",
+      "SCRIPT",
+      "LOGIC"
+    ],
+    "Tools": [
+      "DRILL",
+      "HAMMER",
+      "SAW",
+      "LEVEL",
+      "CLAMP",
+      "FILE",
+      "WRENCH",
+      "PLIERS",
+      "SCREW",
+      "CHISEL"
+    ],
+    "Workshop": [
+      "BENCH",
+      "DRILL",
+      "CLAMP",
+      "TOOLS",
+      "SCREW",
+      "NAILS",
+      "LEVEL",
+      "SAW",
+      "LATHE",
+      "VICE"
+    ],
+    "Garden": [
+      "PLANT",
+      "SEEDS",
+      "SOIL",
+      "SPADE",
+      "HOSE",
+      "RAKE",
+      "BLOOM",
+      "HERBS",
+      "WEEDS",
+      "PATIO"
+    ],
+    "Farm": [
+      "FIELD",
+      "TRACTOR",
+      "BARN",
+      "WHEAT",
+      "HORSE",
+      "SHEEP",
+      "CORN",
+      "FENCE",
+      "PLOW",
+      "GRAIN"
+    ],
+    "City": [
+      "STREET",
+      "TOWER",
+      "PLAZA",
+      "HOTEL",
+      "TRAIN",
+      "BRIDGE",
+      "PARK",
+      "BLOCK",
+      "METRO",
+      "CAFE"
+    ],
+    "Travel": [
+      "TRAIN",
+      "HOTEL",
+      "PLANE",
+      "TICKET",
+      "MAP",
+      "PORT",
+      "ROUTE",
+      "TRIP",
+      "BAG",
+      "GUIDE"
+    ],
+    "Airport": [
+      "PLANE",
+      "GATE",
+      "TICKET",
+      "PILOT",
+      "CABIN",
+      "BAG",
+      "FLIGHT",
+      "RUNWAY",
+      "SEAT",
+      "RADAR"
+    ],
+    "Road Trip": [
+      "ROUTE",
+      "MOTEL",
+      "RADIO",
+      "DRIVE",
+      "MAP",
+      "TRUNK",
+      "SNACK",
+      "MILES",
+      "TIRE",
+      "FUEL"
+    ],
+    "Camping": [
+      "TENT",
+      "TRAIL",
+      "FIRE",
+      "CAMP",
+      "ROPE",
+      "BOOTS",
+      "TORCH",
+      "MAP",
+      "FLASK",
+      "WOODS"
+    ],
+    "Hiking": [
+      "TRAIL",
+      "BOOTS",
+      "RIDGE",
+      "CLIMB",
+      "PACK",
+      "MAP",
+      "CREEK",
+      "ROCK",
+      "SUMMIT",
+      "PATH"
+    ],
+    "Beach": [
+      "SAND",
+      "SHELL",
+      "WAVES",
+      "TOWEL",
+      "OCEAN",
+      "SURF",
+      "SUN",
+      "CHAIR",
+      "DUNE",
+      "COAST"
+    ],
+    "Winter": [
+      "SNOW",
+      "FROST",
+      "SCARF",
+      "COAT",
+      "SLEET",
+      "SLED",
+      "GLOVE",
+      "BOOTS",
+      "ICE",
+      "CHILL"
+    ],
+    "Summer": [
+      "SUNNY",
+      "BEACH",
+      "PICNIC",
+      "MELON",
+      "SWIM",
+      "SHADE",
+      "TRAVEL",
+      "HEAT",
+      "POOL",
+      "JUICE"
+    ],
+    "Sports": [
+      "TENNIS",
+      "SOCCER",
+      "RUGBY",
+      "GOLF",
+      "BOXING",
+      "HOCKEY",
+      "SKI",
+      "RACE",
+      "BALL",
+      "TRACK"
+    ],
+    "Baseball": [
+      "PITCH",
+      "BAT",
+      "BASE",
+      "CATCH",
+      "FIELD",
+      "GLOVE",
+      "SWING",
+      "RUN",
+      "TEAM",
+      "COACH"
+    ],
+    "Soccer": [
+      "GOAL",
+      "PITCH",
+      "BALL",
+      "PASS",
+      "TEAM",
+      "COACH",
+      "MATCH",
+      "FIELD",
+      "KICK",
+      "SCORE"
+    ],
+    "Tennis": [
+      "SERVE",
+      "COURT",
+      "RALLY",
+      "BALL",
+      "MATCH",
+      "RACKET",
+      "NET",
+      "SET",
+      "POINT",
+      "ACE"
+    ],
+    "Fitness": [
+      "SQUAT",
+      "BENCH",
+      "PRESS",
+      "LUNGE",
+      "ROW",
+      "RUN",
+      "PLANK",
+      "CYCLE",
+      "LIFT",
+      "REST"
+    ],
+    "Science": [
+      "ATOM",
+      "CELL",
+      "LIGHT",
+      "FORCE",
+      "MASS",
+      "WAVE",
+      "SPACE",
+      "FIELD",
+      "LASER",
+      "ENERGY"
+    ],
+    "Physics": [
+      "FORCE",
+      "MASS",
+      "SPEED",
+      "LIGHT",
+      "WAVE",
+      "FIELD",
+      "ENERGY",
+      "MOTION",
+      "SPACE",
+      "POWER"
+    ],
+    "Biology": [
+      "CELL",
+      "GENE",
+      "BLOOD",
+      "HEART",
+      "BRAIN",
+      "NERVE",
+      "TISSUE",
+      "PLANT",
+      "ORGAN",
+      "BONE"
+    ],
+    "Chemistry": [
+      "ATOM",
+      "MOLE",
+      "ACID",
+      "BASE",
+      "ION",
+      "METAL",
+      "GAS",
+      "BOND",
+      "SALT",
+      "FLASK"
+    ],
+    "Math": [
+      "ANGLE",
+      "PRIME",
+      "RATIO",
+      "CURVE",
+      "PROOF",
+      "GRAPH",
+      "LOGIC",
+      "VALUE",
+      "UNION",
+      "ARRAY"
+    ],
+    "Geometry": [
+      "ANGLE",
+      "CURVE",
+      "POINT",
+      "PLANE",
+      "SOLID",
+      "SHAPE",
+      "LINE",
+      "CIRCLE",
+      "RADIUS",
+      "AREA"
+    ],
+    "Numbers": [
+      "THREE",
+      "SEVEN",
+      "EIGHT",
+      "FORTY",
+      "FIFTY",
+      "SIXTY",
+      "FIRST",
+      "THIRD",
+      "FIFTH",
+      "SIXTH"
+    ],
+    "Home": [
+      "HOUSE",
+      "ROOM",
+      "CHAIR",
+      "TABLE",
+      "SHELF",
+      "LIGHT",
+      "FLOOR",
+      "DOOR",
+      "COUCH",
+      "CLOCK"
+    ],
+    "Bedroom": [
+      "BED",
+      "PILLOW",
+      "SHEET",
+      "LAMP",
+      "CLOCK",
+      "DRESSER",
+      "BLANKET",
+      "CLOSET",
+      "MIRROR",
+      "RUG"
+    ],
+    "Living Room": [
+      "COUCH",
+      "CHAIR",
+      "TABLE",
+      "LAMP",
+      "RUG",
+      "SHELF",
+      "CLOCK",
+      "PHOTO",
+      "PLANT",
+      "FRAME"
+    ],
+    "Bathroom": [
+      "SOAP",
+      "TOWEL",
+      "BRUSH",
+      "SINK",
+      "SHOWER",
+      "MIRROR",
+      "COMB",
+      "TUB",
+      "TAP",
+      "ROBE"
+    ],
+    "Clothing": [
+      "SHIRT",
+      "SKIRT",
+      "PANTS",
+      "SOCKS",
+      "COAT",
+      "DRESS",
+      "SHOES",
+      "BELT",
+      "HAT",
+      "GLOVE"
+    ],
+    "Colors": [
+      "BLACK",
+      "WHITE",
+      "GREEN",
+      "BROWN",
+      "PURPLE",
+      "ORANGE",
+      "CORAL",
+      "AMBER",
+      "VIOLET",
+      "CREAM"
+    ],
+    "Shapes": [
+      "ROUND",
+      "OVAL",
+      "CUBE",
+      "CONE",
+      "ANGLE",
+      "CURVE",
+      "SOLID",
+      "PLANE",
+      "POINT",
+      "LINE"
+    ],
+    "Emotions": [
+      "HAPPY",
+      "ANGER",
+      "PRIDE",
+      "WORRY",
+      "PEACE",
+      "DOUBT",
+      "GRIEF",
+      "JOY",
+      "FEAR",
+      "CALM"
+    ],
+    "Senses": [
+      "SIGHT",
+      "SOUND",
+      "TASTE",
+      "TOUCH",
+      "SMELL",
+      "VOICE",
+      "LIGHT",
+      "NOISE",
+      "SWEET",
+      "SHARP"
+    ],
+    "Body": [
+      "HEART",
+      "BRAIN",
+      "CHEST",
+      "TEETH",
+      "MOUTH",
+      "BLOOD",
+      "NERVE",
+      "BONE",
+      "KNEE",
+      "HAND"
+    ],
+    "Health": [
+      "SLEEP",
+      "WATER",
+      "HEART",
+      "NURSE",
+      "MEDIC",
+      "PULSE",
+      "BLOOD",
+      "REST",
+      "VITAL",
+      "HEALTH"
+    ],
+    "Time": [
+      "TODAY",
+      "MONTH",
+      "DAILY",
+      "EARLY",
+      "LATER",
+      "NIGHT",
+      "CLOCK",
+      "HOUR",
+      "WEEK",
+      "YEAR"
+    ],
+    "Calendar": [
+      "MONTH",
+      "WEEK",
+      "DAILY",
+      "DATE",
+      "YEAR",
+      "APRIL",
+      "MARCH",
+      "JUNE",
+      "JULY",
+      "MAY"
+    ],
+    "Finance": [
+      "MONEY",
+      "PRICE",
+      "ASSET",
+      "AUDIT",
+      "TAXES",
+      "LEASE",
+      "VALUE",
+      "TRADE",
+      "BANK",
+      "CASH"
+    ],
+    "Market": [
+      "PRICE",
+      "TRADE",
+      "BUYER",
+      "ASSET",
+      "MONEY",
+      "STOCK",
+      "VALUE",
+      "SELL",
+      "DEAL",
+      "CASH"
+    ],
+    "Law": [
+      "LEGAL",
+      "COURT",
+      "JUDGE",
+      "CLAIM",
+      "RULE",
+      "TRIAL",
+      "PROOF",
+      "RIGHT",
+      "CASE",
+      "LAW"
+    ],
+    "News": [
+      "MEDIA",
+      "PRESS",
+      "STORY",
+      "RADIO",
+      "VIDEO",
+      "TITLE",
+      "REPORT",
+      "DAILY",
+      "PHOTO",
+      "EDITOR"
+    ],
+    "Film": [
+      "MOVIE",
+      "ACTOR",
+      "SCENE",
+      "DRAMA",
+      "CAST",
+      "FRAME",
+      "VIDEO",
+      "SOUND",
+      "SCRIPT",
+      "CAMERA"
+    ],
+    "Photography": [
+      "PHOTO",
+      "IMAGE",
+      "FRAME",
+      "LIGHT",
+      "FOCUS",
+      "FLASH",
+      "LENS",
+      "CAMERA",
+      "ANGLE",
+      "ZOOM"
+    ],
+    "Games": [
+      "SCORE",
+      "LEVEL",
+      "PLAYER",
+      "BOARD",
+      "ROUND",
+      "MATCH",
+      "QUEST",
+      "TOKEN",
+      "DICE",
+      "CARD"
+    ],
+    "Chess": [
+      "QUEEN",
+      "KING",
+      "ROOK",
+      "PAWN",
+      "BISHOP",
+      "KNIGHT",
+      "BOARD",
+      "CHECK",
+      "MATE",
+      "CASTLE"
+    ],
+    "Cards": [
+      "HEART",
+      "SPADE",
+      "CLUB",
+      "DEUCE",
+      "ACE",
+      "QUEEN",
+      "KING",
+      "JOKER",
+      "DECK",
+      "HAND"
+    ],
+    "Puzzles": [
+      "LOGIC",
+      "CLUE",
+      "SOLVE",
+      "GRID",
+      "WORDS",
+      "NUMBER",
+      "PIECE",
+      "TRAIL",
+      "HINT",
+      "PROOF"
+    ],
+    "Coffee": [
+      "BEANS",
+      "ROAST",
+      "LATTE",
+      "MOCHA",
+      "CREAM",
+      "MUG",
+      "BREW",
+      "ESPRESSO",
+      "AROMA",
+      "STEAM"
+    ],
+    "Tea": [
+      "LEMON",
+      "HONEY",
+      "MINT",
+      "GREEN",
+      "BLACK",
+      "HERBAL",
+      "CUP",
+      "BREW",
+      "LEAF",
+      "STEAM"
+    ],
+    "Weather Gear": [
+      "COAT",
+      "BOOTS",
+      "SCARF",
+      "GLOVE",
+      "UMBRELLA",
+      "HOOD",
+      "HAT",
+      "JACKET",
+      "PARKA",
+      "VEST"
+    ],
+    "Mountains": [
+      "RIDGE",
+      "PEAK",
+      "CLIMB",
+      "ROCK",
+      "TRAIL",
+      "SUMMIT",
+      "SLOPE",
+      "VALLEY",
+      "CLIFF",
+      "SNOW"
+    ],
+    "Rivers": [
+      "WATER",
+      "BANK",
+      "DELTA",
+      "STREAM",
+      "RAPID",
+      "MOUTH",
+      "CREEK",
+      "BRIDGE",
+      "FLOW",
+      "FLOOD"
+    ],
+    "Architecture": [
+      "BRICK",
+      "STONE",
+      "TOWER",
+      "ARCH",
+      "FLOOR",
+      "WALL",
+      "ROOF",
+      "BEAM",
+      "GLASS",
+      "FRAME"
+    ],
+    "Transport": [
+      "TRAIN",
+      "TRUCK",
+      "PLANE",
+      "FERRY",
+      "METRO",
+      "CAR",
+      "BUS",
+      "BIKE",
+      "TAXI",
+      "BOAT"
+    ],
+    "Vehicles": [
+      "TRUCK",
+      "CAR",
+      "TRAIN",
+      "PLANE",
+      "BOAT",
+      "BIKE",
+      "VAN",
+      "TAXI",
+      "FERRY",
+      "BUS"
+    ],
+    "Library": [
+      "BOOK",
+      "SHELF",
+      "INDEX",
+      "TITLE",
+      "NOVEL",
+      "AUTHOR",
+      "PAGE",
+      "STUDY",
+      "QUIET",
+      "LOAN"
+    ],
+    "Writing": [
+      "WRITE",
+      "DRAFT",
+      "PROSE",
+      "STORY",
+      "TITLE",
+      "PAPER",
+      "EDIT",
+      "STYLE",
+      "VOICE",
+      "NOTES"
+    ],
+    "Language": [
+      "WORDS",
+      "VOICE",
+      "SPEAK",
+      "WRITE",
+      "READ",
+      "PHRASE",
+      "VERB",
+      "NOUN",
+      "LETTER",
+      "SOUND"
+    ],
+    "Measurement": [
+      "SCALE",
+      "METER",
+      "LITER",
+      "OUNCE",
+      "POUND",
+      "MILES",
+      "RULER",
+      "DEPTH",
+      "RATIO",
+      "LEVEL"
+    ]
+  },
+  "groupsSpecial": [
+    [
+      "Can follow BLACK",
+      [
+        "BOARD",
+        "BIRD",
+        "JACK",
+        "HOLE"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow NIGHT",
+      [
+        "OWL",
+        "SHIFT",
+        "SKY",
+        "LIGHT"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow HIGH",
+      [
+        "SCHOOL",
+        "SPEED",
+        "TIDE",
+        "RISE"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow PAPER",
+      [
+        "CLIP",
+        "BACK",
+        "WORK",
+        "TRAIL"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow BLUE",
+      [
+        "BIRD",
+        "BERRY",
+        "PRINT",
+        "MOON"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow BOOK",
+      [
+        "MARK",
+        "CASE",
+        "SHELF",
+        "STORE"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can follow SUN",
+      [
+        "LIGHT",
+        "FLOWER",
+        "RISE",
+        "SET"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can precede BALL",
+      [
+        "BASE",
+        "BASKET",
+        "FOOT",
+        "SNOW"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can precede BOARD",
+      [
+        "KEY",
+        "SURF",
+        "DASH",
+        "SCORE"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can precede ROOM",
+      [
+        "BED",
+        "CLASS",
+        "BATH",
+        "SHOW"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can precede LIGHT",
+      [
+        "DAY",
+        "FLASH",
+        "MOON",
+        "SPOT"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Can precede LINE",
+      [
+        "BASE",
+        "DEAD",
+        "SHORE",
+        "TIME"
+      ],
+      "wordplay",
+      3
+    ],
+    [
+      "Things with KEYS",
+      [
+        "PIANO",
+        "CAR",
+        "LOCK",
+        "KEYBOARD"
+      ],
+      "abstract",
+      2
+    ],
+    [
+      "Things you can BREAK",
+      [
+        "RULE",
+        "RECORD",
+        "PROMISE",
+        "SILENCE"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things you can DRAW",
+      [
+        "CARD",
+        "BATH",
+        "BREATH",
+        "LINE"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things you can RUN",
+      [
+        "RACE",
+        "ERRAND",
+        "CODE",
+        "WATER"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things you can RAISE",
+      [
+        "HAND",
+        "MONEY",
+        "ROOF",
+        "ALARM"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things you can OPEN",
+      [
+        "DOOR",
+        "FILE",
+        "STORE",
+        "ACCOUNT"
+      ],
+      "abstract",
+      2
+    ],
+    [
+      "Things with WINGS",
+      [
+        "BIRD",
+        "PLANE",
+        "BEE",
+        "STAGE"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things with RINGS",
+      [
+        "TREE",
+        "PHONE",
+        "SATURN",
+        "BELL"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things with BARS",
+      [
+        "MUSIC",
+        "SOAP",
+        "SIGNAL",
+        "PRISON"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things with BANKS",
+      [
+        "RIVER",
+        "MONEY",
+        "CLOUD",
+        "BLOOD"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Things with CAPS",
+      [
+        "BOTTLE",
+        "PEN",
+        "MUSHROOM",
+        "KNEE"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of BREAK",
+      [
+        "COFFEE",
+        "LUCKY",
+        "SPRING",
+        "DAY"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of FIELD",
+      [
+        "SPORT",
+        "DATA",
+        "MAGNET",
+        "WHEAT"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of COURT",
+      [
+        "TENNIS",
+        "FOOD",
+        "LAW",
+        "ROYAL"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of CHIP",
+      [
+        "POTATO",
+        "POKER",
+        "WOOD",
+        "COMPUTER"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of TRACK",
+      [
+        "RACE",
+        "MUSIC",
+        "TRAIN",
+        "DATA"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of POINT",
+      [
+        "POWER",
+        "MATCH",
+        "VIEW",
+        "BREAK"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of WAVE",
+      [
+        "SOUND",
+        "LIGHT",
+        "TIDAL",
+        "RADIO"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of STAR",
+      [
+        "MOVIE",
+        "SEA",
+        "NORTH",
+        "ROCK"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of TABLE",
+      [
+        "DINNER",
+        "DATA",
+        "PERIODIC",
+        "COFFEE"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of SHELL",
+      [
+        "SEA",
+        "EGG",
+        "COMMAND",
+        "OUTER"
+      ],
+      "abstract",
+      3
+    ],
+    [
+      "Kinds of SCALE",
+      [
+        "MAP",
+        "MUSIC",
+        "WEIGHT",
+        "RATING"
+      ],
+      "abstract",
+      3
+    ]
+  ],
+  "compounds": [
+    {
+      "word": "SUNFLOWER",
+      "pieces": [
+        "SUN",
+        "FLOWER"
+      ]
+    },
+    {
+      "word": "NOTEBOOK",
+      "pieces": [
+        "NOTE",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "RAINBOW",
+      "pieces": [
+        "RAIN",
+        "BOW"
+      ]
+    },
+    {
+      "word": "KEYBOARD",
+      "pieces": [
+        "KEY",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "HEADPHONE",
+      "pieces": [
+        "HEAD",
+        "PHONE"
+      ]
+    },
+    {
+      "word": "AIRPORT",
+      "pieces": [
+        "AIR",
+        "PORT"
+      ]
+    },
+    {
+      "word": "NEWSPAPER",
+      "pieces": [
+        "NEWS",
+        "PAPER"
+      ]
+    },
+    {
+      "word": "DAYLIGHT",
+      "pieces": [
+        "DAY",
+        "LIGHT"
+      ]
+    },
+    {
+      "word": "SEASHELL",
+      "pieces": [
+        "SEA",
+        "SHELL"
+      ]
+    },
+    {
+      "word": "BOOKSHELF",
+      "pieces": [
+        "BOOK",
+        "SHELF"
+      ]
+    },
+    {
+      "word": "FIREWORK",
+      "pieces": [
+        "FIRE",
+        "WORK"
+      ]
+    },
+    {
+      "word": "FOOTBALL",
+      "pieces": [
+        "FOOT",
+        "BALL"
+      ]
+    },
+    {
+      "word": "TOOTHBRUSH",
+      "pieces": [
+        "TOOTH",
+        "BRUSH"
+      ]
+    },
+    {
+      "word": "SUNSET",
+      "pieces": [
+        "SUN",
+        "SET"
+      ]
+    },
+    {
+      "word": "PANCAKE",
+      "pieces": [
+        "PAN",
+        "CAKE"
+      ]
+    },
+    {
+      "word": "RAINCOAT",
+      "pieces": [
+        "RAIN",
+        "COAT"
+      ]
+    },
+    {
+      "word": "BEDROOM",
+      "pieces": [
+        "BED",
+        "ROOM"
+      ]
+    },
+    {
+      "word": "CLASSROOM",
+      "pieces": [
+        "CLASS",
+        "ROOM"
+      ]
+    },
+    {
+      "word": "SNOWMAN",
+      "pieces": [
+        "SNOW",
+        "MAN"
+      ]
+    },
+    {
+      "word": "DOORBELL",
+      "pieces": [
+        "DOOR",
+        "BELL"
+      ]
+    },
+    {
+      "word": "CUPCAKE",
+      "pieces": [
+        "CUP",
+        "CAKE"
+      ]
+    },
+    {
+      "word": "BASKETBALL",
+      "pieces": [
+        "BASKET",
+        "BALL"
+      ]
+    },
+    {
+      "word": "BASEBALL",
+      "pieces": [
+        "BASE",
+        "BALL"
+      ]
+    },
+    {
+      "word": "MOONLIGHT",
+      "pieces": [
+        "MOON",
+        "LIGHT"
+      ]
+    },
+    {
+      "word": "STARLIGHT",
+      "pieces": [
+        "STAR",
+        "LIGHT"
+      ]
+    },
+    {
+      "word": "FLASHLIGHT",
+      "pieces": [
+        "FLASH",
+        "LIGHT"
+      ]
+    },
+    {
+      "word": "LIGHTHOUSE",
+      "pieces": [
+        "LIGHT",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "HOUSEBOAT",
+      "pieces": [
+        "HOUSE",
+        "BOAT"
+      ]
+    },
+    {
+      "word": "HOUSEWORK",
+      "pieces": [
+        "HOUSE",
+        "WORK"
+      ]
+    },
+    {
+      "word": "HOMEWORK",
+      "pieces": [
+        "HOME",
+        "WORK"
+      ]
+    },
+    {
+      "word": "WORKSHOP",
+      "pieces": [
+        "WORK",
+        "SHOP"
+      ]
+    },
+    {
+      "word": "WORKPLACE",
+      "pieces": [
+        "WORK",
+        "PLACE"
+      ]
+    },
+    {
+      "word": "WORKBOOK",
+      "pieces": [
+        "WORK",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "BOOKCASE",
+      "pieces": [
+        "BOOK",
+        "CASE"
+      ]
+    },
+    {
+      "word": "BOOKMARK",
+      "pieces": [
+        "BOOK",
+        "MARK"
+      ]
+    },
+    {
+      "word": "BOOKSTORE",
+      "pieces": [
+        "BOOK",
+        "STORE"
+      ]
+    },
+    {
+      "word": "BOOKWORM",
+      "pieces": [
+        "BOOK",
+        "WORM"
+      ]
+    },
+    {
+      "word": "BACKPACK",
+      "pieces": [
+        "BACK",
+        "PACK"
+      ]
+    },
+    {
+      "word": "BACKYARD",
+      "pieces": [
+        "BACK",
+        "YARD"
+      ]
+    },
+    {
+      "word": "BACKGROUND",
+      "pieces": [
+        "BACK",
+        "GROUND"
+      ]
+    },
+    {
+      "word": "BLACKBOARD",
+      "pieces": [
+        "BLACK",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "WHITEBOARD",
+      "pieces": [
+        "WHITE",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "SKATEBOARD",
+      "pieces": [
+        "SKATE",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "SURFBOARD",
+      "pieces": [
+        "SURF",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "SCOREBOARD",
+      "pieces": [
+        "SCORE",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "BOARDWALK",
+      "pieces": [
+        "BOARD",
+        "WALK"
+      ]
+    },
+    {
+      "word": "WALKWAY",
+      "pieces": [
+        "WALK",
+        "WAY"
+      ]
+    },
+    {
+      "word": "HALLWAY",
+      "pieces": [
+        "HALL",
+        "WAY"
+      ]
+    },
+    {
+      "word": "DOORWAY",
+      "pieces": [
+        "DOOR",
+        "WAY"
+      ]
+    },
+    {
+      "word": "ROADWAY",
+      "pieces": [
+        "ROAD",
+        "WAY"
+      ]
+    },
+    {
+      "word": "RAILWAY",
+      "pieces": [
+        "RAIL",
+        "WAY"
+      ]
+    },
+    {
+      "word": "RUNWAY",
+      "pieces": [
+        "RUN",
+        "WAY"
+      ]
+    },
+    {
+      "word": "HIGHWAY",
+      "pieces": [
+        "HIGH",
+        "WAY"
+      ]
+    },
+    {
+      "word": "SIDEWALK",
+      "pieces": [
+        "SIDE",
+        "WALK"
+      ]
+    },
+    {
+      "word": "MOONWALK",
+      "pieces": [
+        "MOON",
+        "WALK"
+      ]
+    },
+    {
+      "word": "CROSSWALK",
+      "pieces": [
+        "CROSS",
+        "WALK"
+      ]
+    },
+    {
+      "word": "WATERFALL",
+      "pieces": [
+        "WATER",
+        "FALL"
+      ]
+    },
+    {
+      "word": "WATERMELON",
+      "pieces": [
+        "WATER",
+        "MELON"
+      ]
+    },
+    {
+      "word": "WATERPROOF",
+      "pieces": [
+        "WATER",
+        "PROOF"
+      ]
+    },
+    {
+      "word": "WATERWAY",
+      "pieces": [
+        "WATER",
+        "WAY"
+      ]
+    },
+    {
+      "word": "WATERSIDE",
+      "pieces": [
+        "WATER",
+        "SIDE"
+      ]
+    },
+    {
+      "word": "WATERLINE",
+      "pieces": [
+        "WATER",
+        "LINE"
+      ]
+    },
+    {
+      "word": "SEASIDE",
+      "pieces": [
+        "SEA",
+        "SIDE"
+      ]
+    },
+    {
+      "word": "SEASHORE",
+      "pieces": [
+        "SEA",
+        "SHORE"
+      ]
+    },
+    {
+      "word": "SEAPORT",
+      "pieces": [
+        "SEA",
+        "PORT"
+      ]
+    },
+    {
+      "word": "SEAFOOD",
+      "pieces": [
+        "SEA",
+        "FOOD"
+      ]
+    },
+    {
+      "word": "SUNRISE",
+      "pieces": [
+        "SUN",
+        "RISE"
+      ]
+    },
+    {
+      "word": "SUNDOWN",
+      "pieces": [
+        "SUN",
+        "DOWN"
+      ]
+    },
+    {
+      "word": "SUNBEAM",
+      "pieces": [
+        "SUN",
+        "BEAM"
+      ]
+    },
+    {
+      "word": "SUNROOF",
+      "pieces": [
+        "SUN",
+        "ROOF"
+      ]
+    },
+    {
+      "word": "STARFISH",
+      "pieces": [
+        "STAR",
+        "FISH"
+      ]
+    },
+    {
+      "word": "STARBOARD",
+      "pieces": [
+        "STAR",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "STARSHIP",
+      "pieces": [
+        "STAR",
+        "SHIP"
+      ]
+    },
+    {
+      "word": "SPACESHIP",
+      "pieces": [
+        "SPACE",
+        "SHIP"
+      ]
+    },
+    {
+      "word": "SHIPYARD",
+      "pieces": [
+        "SHIP",
+        "YARD"
+      ]
+    },
+    {
+      "word": "SHIPWRECK",
+      "pieces": [
+        "SHIP",
+        "WRECK"
+      ]
+    },
+    {
+      "word": "SHIPMATE",
+      "pieces": [
+        "SHIP",
+        "MATE"
+      ]
+    },
+    {
+      "word": "AIRMAIL",
+      "pieces": [
+        "AIR",
+        "MAIL"
+      ]
+    },
+    {
+      "word": "AIRLINE",
+      "pieces": [
+        "AIR",
+        "LINE"
+      ]
+    },
+    {
+      "word": "AIRPLANE",
+      "pieces": [
+        "AIR",
+        "PLANE"
+      ]
+    },
+    {
+      "word": "AIRFIELD",
+      "pieces": [
+        "AIR",
+        "FIELD"
+      ]
+    },
+    {
+      "word": "AIRSPACE",
+      "pieces": [
+        "AIR",
+        "SPACE"
+      ]
+    },
+    {
+      "word": "RAILROAD",
+      "pieces": [
+        "RAIL",
+        "ROAD"
+      ]
+    },
+    {
+      "word": "RAILCAR",
+      "pieces": [
+        "RAIL",
+        "CAR"
+      ]
+    },
+    {
+      "word": "ROADSIDE",
+      "pieces": [
+        "ROAD",
+        "SIDE"
+      ]
+    },
+    {
+      "word": "ROADBLOCK",
+      "pieces": [
+        "ROAD",
+        "BLOCK"
+      ]
+    },
+    {
+      "word": "ROADMAP",
+      "pieces": [
+        "ROAD",
+        "MAP"
+      ]
+    },
+    {
+      "word": "ROADWORK",
+      "pieces": [
+        "ROAD",
+        "WORK"
+      ]
+    },
+    {
+      "word": "MOTORBIKE",
+      "pieces": [
+        "MOTOR",
+        "BIKE"
+      ]
+    },
+    {
+      "word": "MOTORBOAT",
+      "pieces": [
+        "MOTOR",
+        "BOAT"
+      ]
+    },
+    {
+      "word": "RACECAR",
+      "pieces": [
+        "RACE",
+        "CAR"
+      ]
+    },
+    {
+      "word": "RACEWAY",
+      "pieces": [
+        "RACE",
+        "WAY"
+      ]
+    },
+    {
+      "word": "RACEHORSE",
+      "pieces": [
+        "RACE",
+        "HORSE"
+      ]
+    },
+    {
+      "word": "PLAYGROUND",
+      "pieces": [
+        "PLAY",
+        "GROUND"
+      ]
+    },
+    {
+      "word": "PLAYBOOK",
+      "pieces": [
+        "PLAY",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "PLAYTIME",
+      "pieces": [
+        "PLAY",
+        "TIME"
+      ]
+    },
+    {
+      "word": "PLAYROOM",
+      "pieces": [
+        "PLAY",
+        "ROOM"
+      ]
+    },
+    {
+      "word": "DOWNTOWN",
+      "pieces": [
+        "DOWN",
+        "TOWN"
+      ]
+    },
+    {
+      "word": "UPTOWN",
+      "pieces": [
+        "UP",
+        "TOWN"
+      ]
+    },
+    {
+      "word": "HOMETOWN",
+      "pieces": [
+        "HOME",
+        "TOWN"
+      ]
+    },
+    {
+      "word": "TOWNHOUSE",
+      "pieces": [
+        "TOWN",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "FARMHOUSE",
+      "pieces": [
+        "FARM",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "GREENHOUSE",
+      "pieces": [
+        "GREEN",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "WAREHOUSE",
+      "pieces": [
+        "WARE",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "SCHOOLHOUSE",
+      "pieces": [
+        "SCHOOL",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "SCHOOLWORK",
+      "pieces": [
+        "SCHOOL",
+        "WORK"
+      ]
+    },
+    {
+      "word": "SCHOOLYARD",
+      "pieces": [
+        "SCHOOL",
+        "YARD"
+      ]
+    },
+    {
+      "word": "SCHOOLBOOK",
+      "pieces": [
+        "SCHOOL",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "CLASSMATE",
+      "pieces": [
+        "CLASS",
+        "MATE"
+      ]
+    },
+    {
+      "word": "ROOMMATE",
+      "pieces": [
+        "ROOM",
+        "MATE"
+      ]
+    },
+    {
+      "word": "TEAMMATE",
+      "pieces": [
+        "TEAM",
+        "MATE"
+      ]
+    },
+    {
+      "word": "TEACUP",
+      "pieces": [
+        "TEA",
+        "CUP"
+      ]
+    },
+    {
+      "word": "TEAPOT",
+      "pieces": [
+        "TEA",
+        "POT"
+      ]
+    },
+    {
+      "word": "TEASPOON",
+      "pieces": [
+        "TEA",
+        "SPOON"
+      ]
+    },
+    {
+      "word": "TABLESPOON",
+      "pieces": [
+        "TABLE",
+        "SPOON"
+      ]
+    },
+    {
+      "word": "TABLETOP",
+      "pieces": [
+        "TABLE",
+        "TOP"
+      ]
+    },
+    {
+      "word": "TIMETABLE",
+      "pieces": [
+        "TIME",
+        "TABLE"
+      ]
+    },
+    {
+      "word": "BEDTIME",
+      "pieces": [
+        "BED",
+        "TIME"
+      ]
+    },
+    {
+      "word": "DAYTIME",
+      "pieces": [
+        "DAY",
+        "TIME"
+      ]
+    },
+    {
+      "word": "NIGHTTIME",
+      "pieces": [
+        "NIGHT",
+        "TIME"
+      ]
+    },
+    {
+      "word": "LIFETIME",
+      "pieces": [
+        "LIFE",
+        "TIME"
+      ]
+    },
+    {
+      "word": "MEALTIME",
+      "pieces": [
+        "MEAL",
+        "TIME"
+      ]
+    },
+    {
+      "word": "TIMELINE",
+      "pieces": [
+        "TIME",
+        "LINE"
+      ]
+    },
+    {
+      "word": "DEADLINE",
+      "pieces": [
+        "DEAD",
+        "LINE"
+      ]
+    },
+    {
+      "word": "HEADLINE",
+      "pieces": [
+        "HEAD",
+        "LINE"
+      ]
+    },
+    {
+      "word": "SHORELINE",
+      "pieces": [
+        "SHORE",
+        "LINE"
+      ]
+    },
+    {
+      "word": "LIFELINE",
+      "pieces": [
+        "LIFE",
+        "LINE"
+      ]
+    },
+    {
+      "word": "OUTLINE",
+      "pieces": [
+        "OUT",
+        "LINE"
+      ]
+    },
+    {
+      "word": "PIPELINE",
+      "pieces": [
+        "PIPE",
+        "LINE"
+      ]
+    },
+    {
+      "word": "MAILBOX",
+      "pieces": [
+        "MAIL",
+        "BOX"
+      ]
+    },
+    {
+      "word": "LUNCHBOX",
+      "pieces": [
+        "LUNCH",
+        "BOX"
+      ]
+    },
+    {
+      "word": "TOOLBOX",
+      "pieces": [
+        "TOOL",
+        "BOX"
+      ]
+    },
+    {
+      "word": "SANDBOX",
+      "pieces": [
+        "SAND",
+        "BOX"
+      ]
+    },
+    {
+      "word": "SHOEBOX",
+      "pieces": [
+        "SHOE",
+        "BOX"
+      ]
+    },
+    {
+      "word": "ICEBOX",
+      "pieces": [
+        "ICE",
+        "BOX"
+      ]
+    },
+    {
+      "word": "ICEBERG",
+      "pieces": [
+        "ICE",
+        "BERG"
+      ]
+    },
+    {
+      "word": "SNOWBALL",
+      "pieces": [
+        "SNOW",
+        "BALL"
+      ]
+    },
+    {
+      "word": "SNOWFALL",
+      "pieces": [
+        "SNOW",
+        "FALL"
+      ]
+    },
+    {
+      "word": "SNOWFLAKE",
+      "pieces": [
+        "SNOW",
+        "FLAKE"
+      ]
+    },
+    {
+      "word": "SNOWSTORM",
+      "pieces": [
+        "SNOW",
+        "STORM"
+      ]
+    },
+    {
+      "word": "RAINFALL",
+      "pieces": [
+        "RAIN",
+        "FALL"
+      ]
+    },
+    {
+      "word": "RAINDROP",
+      "pieces": [
+        "RAIN",
+        "DROP"
+      ]
+    },
+    {
+      "word": "RAINSTORM",
+      "pieces": [
+        "RAIN",
+        "STORM"
+      ]
+    },
+    {
+      "word": "WINDMILL",
+      "pieces": [
+        "WIND",
+        "MILL"
+      ]
+    },
+    {
+      "word": "WINDSHIELD",
+      "pieces": [
+        "WIND",
+        "SHIELD"
+      ]
+    },
+    {
+      "word": "WINDSOCK",
+      "pieces": [
+        "WIND",
+        "SOCK"
+      ]
+    },
+    {
+      "word": "WINDSTORM",
+      "pieces": [
+        "WIND",
+        "STORM"
+      ]
+    },
+    {
+      "word": "FIREPLACE",
+      "pieces": [
+        "FIRE",
+        "PLACE"
+      ]
+    },
+    {
+      "word": "FIREHOUSE",
+      "pieces": [
+        "FIRE",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "FIREFLY",
+      "pieces": [
+        "FIRE",
+        "FLY"
+      ]
+    },
+    {
+      "word": "FIREBALL",
+      "pieces": [
+        "FIRE",
+        "BALL"
+      ]
+    },
+    {
+      "word": "FIREPROOF",
+      "pieces": [
+        "FIRE",
+        "PROOF"
+      ]
+    },
+    {
+      "word": "CAMPFIRE",
+      "pieces": [
+        "CAMP",
+        "FIRE"
+      ]
+    },
+    {
+      "word": "CAMPGROUND",
+      "pieces": [
+        "CAMP",
+        "GROUND"
+      ]
+    },
+    {
+      "word": "CAMPSITE",
+      "pieces": [
+        "CAMP",
+        "SITE"
+      ]
+    },
+    {
+      "word": "HANDBAG",
+      "pieces": [
+        "HAND",
+        "BAG"
+      ]
+    },
+    {
+      "word": "HANDBOOK",
+      "pieces": [
+        "HAND",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "HANDMADE",
+      "pieces": [
+        "HAND",
+        "MADE"
+      ]
+    },
+    {
+      "word": "HANDSHAKE",
+      "pieces": [
+        "HAND",
+        "SHAKE"
+      ]
+    },
+    {
+      "word": "HANDWRITING",
+      "pieces": [
+        "HAND",
+        "WRITING"
+      ]
+    },
+    {
+      "word": "HEADACHE",
+      "pieces": [
+        "HEAD",
+        "ACHE"
+      ]
+    },
+    {
+      "word": "HEADBAND",
+      "pieces": [
+        "HEAD",
+        "BAND"
+      ]
+    },
+    {
+      "word": "HEADLIGHT",
+      "pieces": [
+        "HEAD",
+        "LIGHT"
+      ]
+    },
+    {
+      "word": "HEADLINE",
+      "pieces": [
+        "HEAD",
+        "LINE"
+      ]
+    },
+    {
+      "word": "HEADROOM",
+      "pieces": [
+        "HEAD",
+        "ROOM"
+      ]
+    },
+    {
+      "word": "HAIRCUT",
+      "pieces": [
+        "HAIR",
+        "CUT"
+      ]
+    },
+    {
+      "word": "HAIRBRUSH",
+      "pieces": [
+        "HAIR",
+        "BRUSH"
+      ]
+    },
+    {
+      "word": "HAIRLINE",
+      "pieces": [
+        "HAIR",
+        "LINE"
+      ]
+    },
+    {
+      "word": "BATHROOM",
+      "pieces": [
+        "BATH",
+        "ROOM"
+      ]
+    },
+    {
+      "word": "BATHTUB",
+      "pieces": [
+        "BATH",
+        "TUB"
+      ]
+    },
+    {
+      "word": "BATHROBE",
+      "pieces": [
+        "BATH",
+        "ROBE"
+      ]
+    },
+    {
+      "word": "BATHWATER",
+      "pieces": [
+        "BATH",
+        "WATER"
+      ]
+    },
+    {
+      "word": "BIRDHOUSE",
+      "pieces": [
+        "BIRD",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "BIRDSONG",
+      "pieces": [
+        "BIRD",
+        "SONG"
+      ]
+    },
+    {
+      "word": "BIRDSEED",
+      "pieces": [
+        "BIRD",
+        "SEED"
+      ]
+    },
+    {
+      "word": "FISHBOWL",
+      "pieces": [
+        "FISH",
+        "BOWL"
+      ]
+    },
+    {
+      "word": "FISHHOOK",
+      "pieces": [
+        "FISH",
+        "HOOK"
+      ]
+    },
+    {
+      "word": "FISHNET",
+      "pieces": [
+        "FISH",
+        "NET"
+      ]
+    },
+    {
+      "word": "FISHBONE",
+      "pieces": [
+        "FISH",
+        "BONE"
+      ]
+    },
+    {
+      "word": "DOGHOUSE",
+      "pieces": [
+        "DOG",
+        "HOUSE"
+      ]
+    },
+    {
+      "word": "DOGWOOD",
+      "pieces": [
+        "DOG",
+        "WOOD"
+      ]
+    },
+    {
+      "word": "CATFISH",
+      "pieces": [
+        "CAT",
+        "FISH"
+      ]
+    },
+    {
+      "word": "CATWALK",
+      "pieces": [
+        "CAT",
+        "WALK"
+      ]
+    },
+    {
+      "word": "BUTTERFLY",
+      "pieces": [
+        "BUTTER",
+        "FLY"
+      ]
+    },
+    {
+      "word": "DRAGONFLY",
+      "pieces": [
+        "DRAGON",
+        "FLY"
+      ]
+    },
+    {
+      "word": "LADYBUG",
+      "pieces": [
+        "LADY",
+        "BUG"
+      ]
+    },
+    {
+      "word": "HONEYBEE",
+      "pieces": [
+        "HONEY",
+        "BEE"
+      ]
+    },
+    {
+      "word": "HONEYMOON",
+      "pieces": [
+        "HONEY",
+        "MOON"
+      ]
+    },
+    {
+      "word": "HONEYCOMB",
+      "pieces": [
+        "HONEY",
+        "COMB"
+      ]
+    },
+    {
+      "word": "MOONBEAM",
+      "pieces": [
+        "MOON",
+        "BEAM"
+      ]
+    },
+    {
+      "word": "MOONSTONE",
+      "pieces": [
+        "MOON",
+        "STONE"
+      ]
+    },
+    {
+      "word": "MOONRISE",
+      "pieces": [
+        "MOON",
+        "RISE"
+      ]
+    },
+    {
+      "word": "MOONSHINE",
+      "pieces": [
+        "MOON",
+        "SHINE"
+      ]
+    },
+    {
+      "word": "STONEWALL",
+      "pieces": [
+        "STONE",
+        "WALL"
+      ]
+    },
+    {
+      "word": "STONEWORK",
+      "pieces": [
+        "STONE",
+        "WORK"
+      ]
+    },
+    {
+      "word": "SANDSTONE",
+      "pieces": [
+        "SAND",
+        "STONE"
+      ]
+    },
+    {
+      "word": "SANDCASTLE",
+      "pieces": [
+        "SAND",
+        "CASTLE"
+      ]
+    },
+    {
+      "word": "SANDPAPER",
+      "pieces": [
+        "SAND",
+        "PAPER"
+      ]
+    },
+    {
+      "word": "PAPERBACK",
+      "pieces": [
+        "PAPER",
+        "BACK"
+      ]
+    },
+    {
+      "word": "PAPERCLIP",
+      "pieces": [
+        "PAPER",
+        "CLIP"
+      ]
+    },
+    {
+      "word": "PAPERWORK",
+      "pieces": [
+        "PAPER",
+        "WORK"
+      ]
+    },
+    {
+      "word": "WALLPAPER",
+      "pieces": [
+        "WALL",
+        "PAPER"
+      ]
+    },
+    {
+      "word": "WALLBOARD",
+      "pieces": [
+        "WALL",
+        "BOARD"
+      ]
+    },
+    {
+      "word": "WALLFLOWER",
+      "pieces": [
+        "WALL",
+        "FLOWER"
+      ]
+    },
+    {
+      "word": "CLOCKWORK",
+      "pieces": [
+        "CLOCK",
+        "WORK"
+      ]
+    },
+    {
+      "word": "CLOCKWISE",
+      "pieces": [
+        "CLOCK",
+        "WISE"
+      ]
+    },
+    {
+      "word": "TIMEPIECE",
+      "pieces": [
+        "TIME",
+        "PIECE"
+      ]
+    },
+    {
+      "word": "MASTERPIECE",
+      "pieces": [
+        "MASTER",
+        "PIECE"
+      ]
+    },
+    {
+      "word": "PUZZLEPIECE",
+      "pieces": [
+        "PUZZLE",
+        "PIECE"
+      ]
+    },
+    {
+      "word": "JIGSAW",
+      "pieces": [
+        "JIG",
+        "SAW"
+      ]
+    },
+    {
+      "word": "WEEKEND",
+      "pieces": [
+        "WEEK",
+        "END"
+      ]
+    },
+    {
+      "word": "YEARBOOK",
+      "pieces": [
+        "YEAR",
+        "BOOK"
+      ]
+    },
+    {
+      "word": "BIRTHDAY",
+      "pieces": [
+        "BIRTH",
+        "DAY"
+      ]
+    },
+    {
+      "word": "WEEKDAY",
+      "pieces": [
+        "WEEK",
+        "DAY"
+      ]
+    },
+    {
+      "word": "HOLIDAY",
+      "pieces": [
+        "HOLI",
+        "DAY"
+      ]
+    },
+    {
+      "word": "WORKDAY",
+      "pieces": [
+        "WORK",
+        "DAY"
+      ]
+    },
+    {
+      "word": "PAYDAY",
+      "pieces": [
+        "PAY",
+        "DAY"
+      ]
+    },
+    {
+      "word": "FRIENDSHIP",
+      "pieces": [
+        "FRIEND",
+        "SHIP"
+      ]
+    },
+    {
+      "word": "LEADERSHIP",
+      "pieces": [
+        "LEADER",
+        "SHIP"
+      ]
+    },
+    {
+      "word": "OWNERSHIP",
+      "pieces": [
+        "OWNER",
+        "SHIP"
+      ]
+    },
+    {
+      "word": "MEMBERSHIP",
+      "pieces": [
+        "MEMBER",
+        "SHIP"
+      ]
+    }
+  ],
+  "crosswordClues": {
+    "ACE": "Top playing card or a highly skilled person",
+    "AIR": "What we breathe",
+    "ANT": "Small social insect",
+    "APE": "Large primate",
+    "ARC": "Part of a curve",
+    "ARM": "Upper limb",
+    "ART": "Creative expression",
+    "ASH": "Powder left after burning",
+    "BAD": "Not good",
+    "BAG": "Flexible container",
+    "BAR": "Long narrow piece or serving counter",
+    "BAT": "Flying mammal or sports implement",
+    "BAY": "Broad coastal inlet",
+    "BED": "Place to sleep",
+    "BEE": "Pollinating insect",
+    "BOW": "Front of a ship, sometimes",
+    "BOX": "Container with flat sides",
+    "BUS": "Public road vehicle",
+    "CAN": "Metal container or be able to",
+    "CAP": "Head covering",
+    "CAR": "Road vehicle",
+    "CAT": "Small domestic feline",
+    "COW": "Farm animal that gives milk",
+    "CUP": "Small drinking vessel",
+    "DAY": "Twenty-four-hour period",
+    "DEN": "Animal shelter or private room",
+    "DOG": "Domestic canine",
+    "DRY": "Not wet",
+    "EAR": "Organ for hearing",
+    "EEL": "Long snake-shaped fish",
+    "EGG": "Breakfast item with a shell",
+    "ELK": "Large antlered animal",
+    "END": "Final part",
+    "EYE": "Organ of sight",
+    "FAN": "Device that moves air or devoted admirer",
+    "FAR": "At a great distance",
+    "FIN": "Fish appendage",
+    "FIT": "Suitable or physically healthy",
+    "FLY": "Travel through air or winged insect",
+    "FOX": "Wild canine",
+    "FUN": "Enjoyment",
+    "GAS": "Fuel in gaseous form",
+    "GEM": "Precious stone",
+    "GYM": "Place for exercise",
+    "HAM": "Cured pork",
+    "HAT": "Head covering",
+    "HEN": "Female chicken",
+    "HOT": "High in temperature",
+    "ICE": "Frozen water",
+    "INK": "Fluid used for writing",
+    "JAR": "Wide-mouthed container",
+    "JOB": "Paid work",
+    "KEY": "Object used to open a lock",
+    "LAP": "One circuit of a course",
+    "LAW": "Rule enforced by authority",
+    "LEG": "Lower limb",
+    "LID": "Removable cover",
+    "LOG": "Written record or cut tree section",
+    "MAP": "Diagram of an area",
+    "MUD": "Wet earth",
+    "NET": "Open mesh of cord",
+    "OAR": "Boat propeller by hand",
+    "OIL": "Slippery liquid used as fuel or lubricant",
+    "OWL": "Nocturnal bird",
+    "PAN": "Shallow cooking vessel",
+    "PEN": "Writing instrument or animal enclosure",
+    "PIE": "Baked dish with a crust",
+    "PIG": "Farm animal with a snout",
+    "PIN": "Small pointed fastener",
+    "POT": "Deep cooking container",
+    "RAM": "Male sheep",
+    "RED": "Color of a ripe tomato",
+    "RUG": "Small floor covering",
+    "RUN": "Move quickly on foot",
+    "SEA": "Large body of salt water",
+    "SKY": "Expanse above the earth",
+    "SUN": "Star at the center of our solar system",
+    "TEA": "Drink made by steeping leaves",
+    "TOE": "Digit on a foot",
+    "TOP": "Highest part",
+    "TOY": "Object for play",
+    "VAN": "Enclosed road vehicle",
+    "WEB": "Network of threads or linked pages",
+    "YAK": "Long-haired bovine",
+    "ZIP": "Fastener with interlocking teeth",
+    "ABOUT": "Approximately",
+    "ABOVE": "Higher than",
+    "ACTOR": "Stage performer",
+    "ADMIT": "Confess or allow in",
+    "AFTER": "Later than",
+    "AGENT": "Representative",
+    "AGREE": "Share the same opinion",
+    "ALARM": "Warning signal",
+    "ALBUM": "Collection of songs or photos",
+    "ALERT": "Watchful and ready",
+    "ALIEN": "Being from another world",
+    "ALIGN": "Put in a straight line",
+    "ALIVE": "Not dead",
+    "ALLOW": "Permit",
+    "ALONE": "Without company",
+    "ALTER": "Change",
+    "AMONG": "In the middle of",
+    "ANGER": "Strong displeasure",
+    "ANGLE": "Figure made by two rays",
+    "APPLE": "Fruit that can be red or green",
+    "ARENA": "Place for contests",
+    "ARGUE": "Disagree in words",
+    "ARISE": "Get up",
+    "ARRAY": "Ordered collection",
+    "ASIDE": "To one side",
+    "ASSET": "Thing of value",
+    "AUDIO": "Sound recording or signal",
+    "AUDIT": "Formal examination of accounts",
+    "AVOID": "Keep away from",
+    "AWARD": "Prize for achievement",
+    "AWARE": "Knowing about something",
+    "BASIC": "Fundamental",
+    "BEACH": "Sandy shore",
+    "BEGIN": "Start",
+    "BELOW": "Lower than",
+    "BENCH": "Long seat",
+    "BIRTH": "Beginning of life",
+    "BLACK": "Darkest common color",
+    "BLIND": "Unable to see",
+    "BLOCK": "Solid piece or obstruction",
+    "BLOOD": "Red fluid in the body",
+    "BOARD": "Flat panel",
+    "BRAIN": "Organ used for thought",
+    "BRAND": "Product name or mark",
+    "BREAD": "Baked staple food",
+    "BREAK": "Separate into pieces",
+    "BRIEF": "Short in duration",
+    "BRING": "Carry toward here",
+    "BROAD": "Wide",
+    "BROWN": "Earthy color",
+    "BUILD": "Construct",
+    "CABLE": "Thick wire or connection",
+    "CARRY": "Hold and move",
+    "CATCH": "Grab something moving",
+    "CAUSE": "Reason something happens",
+    "CHAIN": "Series of linked rings",
+    "CHAIR": "Seat for one person",
+    "CHART": "Graphic display of information",
+    "CHASE": "Run after",
+    "CHEAP": "Low in price",
+    "CHECK": "Examine for correctness",
+    "CHEST": "Upper front of the torso",
+    "CHIEF": "Leader or most important",
+    "CHILD": "Young person",
+    "CIVIL": "Polite or relating to citizens",
+    "CLAIM": "State as true",
+    "CLASS": "Group of students",
+    "CLEAN": "Free from dirt",
+    "CLEAR": "Easy to understand",
+    "CLICK": "Press a mouse button",
+    "CLOCK": "Device that tells time",
+    "CLOSE": "Shut",
+    "COACH": "Team instructor",
+    "COAST": "Land beside the sea",
+    "COULD": "Past or conditional form of can",
+    "COUNT": "Determine how many",
+    "COURT": "Place for a trial or a game",
+    "COVER": "Put something over",
+    "CRAFT": "Skillful making",
+    "CRASH": "Sudden violent collision",
+    "CREAM": "Rich dairy product",
+    "CRIME": "Illegal act",
+    "CROSS": "Go from one side to another",
+    "CROWD": "Large group of people",
+    "CROWN": "Royal headpiece",
+    "CURVE": "Bent line",
+    "CYCLE": "Repeat in a sequence",
+    "DAILY": "Happening every day",
+    "DANCE": "Move rhythmically to music",
+    "DEATH": "End of life",
+    "DELAY": "Make something late",
+    "DEPTH": "Distance from top to bottom",
+    "DOUBT": "Uncertainty",
+    "DOZEN": "Twelve",
+    "DRAFT": "Early written version",
+    "DRAMA": "Serious play or conflict",
+    "DREAM": "Images during sleep",
+    "DRESS": "One-piece garment",
+    "DRILL": "Tool for making holes",
+    "DRINK": "Take liquid by mouth",
+    "DRIVE": "Operate a vehicle",
+    "EAGER": "Very keen",
+    "EARLY": "Before expected time",
+    "EARTH": "Our planet",
+    "EIGHT": "Number after seven",
+    "ELITE": "Best or most skilled group",
+    "EMPTY": "Containing nothing",
+    "ENEMY": "Opponent or foe",
+    "ENJOY": "Take pleasure in",
+    "ENTER": "Go in",
+    "ENTRY": "Way in or an item in a list",
+    "EQUAL": "The same in value",
+    "ERROR": "Mistake",
+    "EVENT": "Something that happens",
+    "EVERY": "Each one without exception",
+    "EXACT": "Completely precise",
+    "EXIST": "Be real",
+    "EXTRA": "More than usual",
+    "FAITH": "Strong trust or belief",
+    "FALSE": "Not true",
+    "FAULT": "Defect or responsibility for error",
+    "FIELD": "Open land or area of study",
+    "FIFTH": "Position after fourth",
+    "FIGHT": "Physical or verbal conflict",
+    "FINAL": "Last",
+    "FIRST": "Before all others",
+    "FIXED": "Repaired or unmoving",
+    "FLASH": "Brief burst of light",
+    "FLEET": "Group of ships",
+    "FLOOR": "Surface you walk on indoors",
+    "FLUID": "Substance that flows",
+    "FOCUS": "Center of attention",
+    "FORCE": "Push or pull",
+    "FORTH": "Forward or onward",
+    "FORTY": "Four tens",
+    "FOUND": "Discovered",
+    "FRAME": "Border around a picture",
+    "FRESH": "Recently made or not stale",
+    "FRONT": "Forward-facing part",
+    "FRUIT": "Seed-bearing food",
+    "GIANT": "Very large being",
+    "GIVEN": "Provided",
+    "GLASS": "Transparent window material",
+    "GLOBE": "Spherical model of Earth",
+    "GRACE": "Elegance of movement",
+    "GRADE": "Mark of quality or school level",
+    "GRAND": "Large or impressive",
+    "GRANT": "Give or award",
+    "GRASS": "Green lawn plant",
+    "GREAT": "Very good or large",
+    "GREEN": "Color of healthy leaves",
+    "GROUP": "Collection of things",
+    "GUARD": "Protect or watch",
+    "GUESS": "Answer without full certainty",
+    "GUEST": "Invited visitor",
+    "GUIDE": "Person or thing that directs",
+    "HAPPY": "Feeling pleasure",
+    "HEART": "Organ that pumps blood",
+    "HEAVY": "Not light in weight",
+    "HORSE": "Large riding animal",
+    "HOTEL": "Place to stay overnight",
+    "HOUSE": "Building used as a home",
+    "HUMAN": "Person",
+    "IDEAL": "Perfect example",
+    "IMAGE": "Picture or visual representation",
+    "INDEX": "Alphabetical reference list",
+    "INNER": "On the inside",
+    "INPUT": "Data entered into a system",
+    "ISSUE": "Topic or problem",
+    "JOINT": "Place where two parts meet",
+    "JUDGE": "Decide in court or competition",
+    "KNOWN": "Recognized or understood",
+    "LABEL": "Tag with information",
+    "LARGE": "Big",
+    "LASER": "Focused beam of light",
+    "LATER": "Afterward",
+    "LAUGH": "Sound of amusement",
+    "LAYER": "One thickness over another",
+    "LEARN": "Gain knowledge",
+    "LEASE": "Rental agreement",
+    "LEAST": "Smallest amount",
+    "LEAVE": "Go away",
+    "LEGAL": "Allowed by law",
+    "LEVEL": "Flat or a stage of progress",
+    "LIGHT": "Visible illumination",
+    "LIMIT": "Maximum boundary",
+    "LOCAL": "Nearby",
+    "LOGIC": "Reasoning by rules",
+    "LOWER": "Move down or less high",
+    "LUCKY": "Having good fortune",
+    "LUNCH": "Midday meal",
+    "MAJOR": "Important or primary",
+    "MAKER": "One who creates",
+    "MARCH": "Walk in steady steps",
+    "MATCH": "Contest or equal pair",
+    "MAYOR": "City leader",
+    "MEDIA": "Means of communication",
+    "METAL": "Hard conductive material",
+    "MINOR": "Less important",
+    "MODEL": "Representation or example",
+    "MONEY": "Currency",
+    "MONTH": "Calendar period",
+    "MORAL": "Lesson about right and wrong",
+    "MOTOR": "Machine that produces motion",
+    "MOUNT": "Climb or attach",
+    "MOUSE": "Small rodent or computer device",
+    "MOUTH": "Opening used to eat and speak",
+    "MOVIE": "Film",
+    "MUSIC": "Organized sound",
+    "NEVER": "At no time",
+    "NIGHT": "Dark part of the day",
+    "NOISE": "Unwanted sound",
+    "NORTH": "Compass direction opposite south",
+    "NOVEL": "Book-length work of fiction",
+    "NURSE": "Medical caregiver",
+    "OCEAN": "Vast body of salt water",
+    "OFFER": "Present for acceptance",
+    "OFTEN": "Frequently",
+    "ORDER": "Arrangement or command",
+    "OTHER": "Different one",
+    "PAINT": "Colored coating",
+    "PANEL": "Flat section or group of judges",
+    "PAPER": "Thin writing material",
+    "PARTY": "Social gathering",
+    "PEACE": "Freedom from conflict",
+    "PHASE": "Stage in a process",
+    "PHONE": "Device for calls",
+    "PHOTO": "Photograph",
+    "PIECE": "Part of a whole",
+    "PILOT": "Person who flies an aircraft",
+    "PITCH": "Throw or musical tone",
+    "PLACE": "Location",
+    "PLAIN": "Simple or level land",
+    "PLANE": "Aircraft or flat surface",
+    "PLANT": "Living organism that usually grows in soil",
+    "PLATE": "Flat dish",
+    "POINT": "Sharp tip or exact location",
+    "POWER": "Ability or energy",
+    "PRESS": "Push or news media",
+    "PRICE": "Cost",
+    "PRIDE": "Satisfaction in achievement",
+    "PRIME": "First in importance or divisible only by itself and one",
+    "PRINT": "Produce text on paper",
+    "PRIOR": "Earlier",
+    "PRIZE": "Reward",
+    "PROOF": "Evidence showing truth",
+    "PROUD": "Feeling satisfaction",
+    "QUEEN": "Female monarch or chess piece",
+    "QUICK": "Fast",
+    "QUIET": "Making little sound",
+    "RADIO": "Broadcast receiver",
+    "RAISE": "Lift upward",
+    "RANGE": "Span between limits",
+    "RAPID": "Fast-moving",
+    "RATIO": "Relationship between quantities",
+    "REACH": "Extend far enough to touch",
+    "READY": "Prepared",
+    "REFER": "Direct attention to",
+    "RIGHT": "Correct or opposite of left",
+    "RIVAL": "Competitor",
+    "RIVER": "Large natural stream",
+    "ROBOT": "Programmable machine",
+    "ROUGH": "Not smooth",
+    "ROUND": "Circular or one stage of a contest",
+    "ROUTE": "Path between places",
+    "ROYAL": "Relating to a king or queen",
+    "RURAL": "Relating to the countryside",
+    "SCALE": "Measuring system or relative size",
+    "SCENE": "Part of a play or visible setting",
+    "SCOPE": "Range or extent",
+    "SCORE": "Points in a game",
+    "SENSE": "Meaning or a faculty like sight",
+    "SERVE": "Provide or deliver",
+    "SEVEN": "Number after six",
+    "SHAPE": "Form or outline",
+    "SHARE": "Use or own together",
+    "SHARP": "Having a fine edge",
+    "SHEET": "Large thin piece or bed linen",
+    "SHELF": "Horizontal storage surface",
+    "SHELL": "Hard outer covering",
+    "SHIFT": "Move position or work period",
+    "SHIRT": "Upper-body garment",
+    "SHOCK": "Sudden surprise or electric jolt",
+    "SHORT": "Not long",
+    "SIGHT": "Ability to see",
+    "SINCE": "From a past time until now",
+    "SIXTH": "Position after fifth",
+    "SKILL": "Learned ability",
+    "SLEEP": "Natural state of rest",
+    "SMALL": "Little in size",
+    "SMART": "Clever",
+    "SMILE": "Happy facial expression",
+    "SOLID": "Firm and not liquid",
+    "SOLVE": "Find the answer",
+    "SOUND": "Something heard",
+    "SOUTH": "Compass direction opposite north",
+    "SPACE": "Area or outer universe",
+    "SPARE": "Extra",
+    "SPEAK": "Talk",
+    "SPEED": "Rate of motion",
+    "SPEND": "Use money or time",
+    "SPORT": "Athletic activity",
+    "STAGE": "Platform for performers or phase",
+    "STAKE": "Post or something at risk",
+    "STAND": "Be upright",
+    "START": "Begin",
+    "STATE": "Condition or political region",
+    "STEAM": "Water vapor",
+    "STEEL": "Strong metal alloy",
+    "STICK": "Thin piece of wood",
+    "STILL": "Not moving",
+    "STOCK": "Supply or company shares",
+    "STONE": "Rock material",
+    "STORE": "Shop or keep for later",
+    "STORM": "Severe weather",
+    "STORY": "Narrative",
+    "STRIP": "Long narrow piece",
+    "STUDY": "Learn carefully",
+    "STYLE": "Distinctive manner",
+    "SUGAR": "Sweet crystals",
+    "SUPER": "Excellent or above",
+    "SWEET": "Sugary tasting",
+    "TABLE": "Furniture with a flat top",
+    "TASTE": "Flavor sense",
+    "TEACH": "Help someone learn",
+    "TEETH": "Plural of tooth",
+    "THEIR": "Belonging to them",
+    "THEME": "Central subject",
+    "THERE": "In that place",
+    "THICK": "Not thin",
+    "THING": "Object or matter",
+    "THINK": "Use the mind",
+    "THIRD": "Position after second",
+    "THREE": "Number after two",
+    "THROW": "Send through the air",
+    "TIGHT": "Not loose",
+    "TITLE": "Name of a work",
+    "TODAY": "This day",
+    "TOPIC": "Subject",
+    "TOTAL": "Complete amount",
+    "TOUCH": "Make physical contact",
+    "TOUGH": "Strong or difficult",
+    "TOWER": "Tall narrow structure",
+    "TRACK": "Path or recorded sequence",
+    "TRADE": "Exchange goods",
+    "TRAIN": "Rail vehicle or practice",
+    "TREAT": "Act toward or special food",
+    "TREND": "General direction of change",
+    "TRIAL": "Test or court proceeding",
+    "TRUCK": "Large road vehicle",
+    "TRUST": "Confidence in reliability",
+    "TRUTH": "What is true",
+    "TWICE": "Two times",
+    "UNDER": "Below",
+    "UNION": "Joining together",
+    "UNITY": "State of being one",
+    "UNTIL": "Up to a time",
+    "UPPER": "Higher",
+    "URBAN": "Relating to a city",
+    "USAGE": "Way something is used",
+    "USUAL": "Normal",
+    "VALID": "Logically or legally sound",
+    "VALUE": "Worth",
+    "VIDEO": "Moving-picture recording",
+    "VISIT": "Go to see",
+    "VITAL": "Essential",
+    "VOICE": "Sound made in speaking",
+    "WASTE": "Use carelessly",
+    "WATCH": "Look at or a wrist timepiece",
+    "WATER": "Clear liquid essential to life",
+    "WHEEL": "Circular rotating part",
+    "WHERE": "At what place",
+    "WHICH": "What one or ones",
+    "WHITE": "Lightest common color",
+    "WHOLE": "Complete",
+    "WOMAN": "Adult female person",
+    "WORLD": "Earth and its people",
+    "WORRY": "Feel anxious",
+    "WORSE": "More bad",
+    "WORTH": "Value",
+    "WOULD": "Conditional form of will",
+    "WRITE": "Put words on a surface",
+    "WRONG": "Not correct",
+    "YOUNG": "Not old",
+    "YOUTH": "Young people or early life",
+    "ACT": "Something done or a stage performance",
+    "ADD": "Combine numbers",
+    "AGE": "How old someone is",
+    "AID": "Help",
+    "AIM": "Target or purpose",
+    "ALE": "Type of beer",
+    "ALL": "Every one",
+    "AND": "Basic joining word",
+    "ANY": "One or some without restriction",
+    "APT": "Suitable or fitting",
+    "AWE": "Feeling of wonder",
+    "AXE": "Tool for chopping wood",
+    "BIT": "Small piece",
+    "BOA": "Large constricting snake",
+    "BOG": "Wet spongy ground",
+    "BOY": "Young male person",
+    "BUN": "Small bread roll",
+    "BUY": "Purchase",
+    "CAB": "Taxi",
+    "COD": "Common food fish",
+    "COT": "Small simple bed",
+    "CUT": "Slice with a sharp tool",
+    "DAM": "Barrier across water",
+    "DIP": "Brief downward movement",
+    "DOT": "Small round mark",
+    "DUO": "Pair of performers",
+    "DYE": "Substance used to color",
+    "EAT": "Consume food",
+    "EGO": "Sense of self",
+    "ELF": "Small mythical being",
+    "ELM": "Type of tree",
+    "ERA": "Historical period",
+    "EVE": "Day or evening before an event",
+    "EWE": "Female sheep",
+    "FIG": "Sweet soft fruit",
+    "FIR": "Evergreen tree",
+    "FOG": "Low cloud near the ground",
+    "FRY": "Cook in hot oil",
+    "GAP": "Opening or space between",
+    "GEL": "Jellylike substance",
+    "GIN": "Clear spirit flavored with juniper",
+    "GUM": "Chewy candy or tissue around teeth",
+    "GUN": "Weapon that fires projectiles",
+    "GUY": "Informal term for a man",
+    "HIP": "Joint beside the pelvis",
+    "HIT": "Strike",
+    "HOE": "Garden tool with a flat blade",
+    "HOP": "Small jump",
+    "HUB": "Central connection point",
+    "HUG": "Embrace",
+    "HUT": "Small simple shelter",
+    "INN": "Small lodging house",
+    "ION": "Charged atom or molecule",
+    "IVY": "Climbing evergreen plant",
+    "JAM": "Fruit spread or traffic blockage",
+    "JET": "Fast aircraft",
+    "JOY": "Great happiness",
+    "KID": "Child",
+    "KIT": "Set of tools or equipment",
+    "LAB": "Room for scientific work",
+    "LIP": "Edge of the mouth",
+    "LOT": "Parcel or large amount",
+    "LOW": "Not high",
+    "MAD": "Angry or wildly unreasonable",
+    "MAN": "Adult male person",
+    "MAT": "Small floor covering",
+    "MIX": "Combine together",
+    "NAP": "Short sleep",
+    "NEW": "Not old",
+    "NOD": "Move the head up and down",
+    "NOR": "Negative conjunction",
+    "OAK": "Strong hardwood tree",
+    "ODD": "Not even or unusual",
+    "OLD": "Not new",
+    "ONE": "First counting number",
+    "ORE": "Rock containing useful metal",
+    "PAD": "Cushion or writing tablet",
+    "PEA": "Small green vegetable seed",
+    "PET": "Animal kept for companionship",
+    "POD": "Seed case",
+    "POP": "Short sharp sound",
+    "RAT": "Long-tailed rodent",
+    "RAW": "Uncooked",
+    "RAY": "Narrow beam of light",
+    "RIB": "Curved bone in the chest",
+    "RIM": "Outer edge of a circle",
+    "ROW": "Line of things or propel a boat",
+    "RUB": "Move against with pressure",
+    "SAP": "Fluid circulating in a plant",
+    "SAW": "Tool with a toothed blade",
+    "SAY": "Speak words",
+    "SET": "Put in place or a collection",
+    "SEW": "Join with needle and thread",
+    "SHY": "Reserved around others",
+    "SIT": "Rest on a seat",
+    "SKI": "Long runner used on snow",
+    "SON": "Male child",
+    "SOW": "Plant seeds",
+    "SPY": "Secret observer",
+    "TAN": "Light brown color",
+    "TAP": "Light touch or faucet",
+    "TIE": "Fasten together or equal score",
+    "TIN": "Silvery metal or metal container",
+    "TIP": "Pointed end or small piece of advice",
+    "VET": "Animal doctor",
+    "WAX": "Substance used in candles",
+    "WET": "Covered with water",
+    "WIN": "Finish first",
+    "WIT": "Mental sharpness or humor",
+    "YES": "Word of agreement",
+    "ZOO": "Place where animals are exhibited",
+    "ABS": "Abdominal muscles, informally",
+    "ADO": "Fuss or commotion",
+    "AGO": "Before the present time",
+    "AIL": "Be unwell",
+    "AMP": "Unit of electric current, informally",
+    "ANN": "A woman\u2019s name, sometimes",
+    "ARK": "Large biblical vessel",
+    "ATE": "Consumed food",
+    "AUK": "Northern seabird",
+    "AVE": "Street abbreviation, sometimes",
+    "BIB": "Cloth worn under a baby\u2019s chin",
+    "BIN": "Storage container",
+    "BUD": "Unopened flower",
+    "BUG": "Small insect or software flaw",
+    "CAM": "Rotating machine part",
+    "COP": "Police officer, informally",
+    "CUE": "Signal to act",
+    "DAB": "Small amount applied lightly",
+    "DOE": "Female deer",
+    "DON": "Put on clothing",
+    "EMU": "Large flightless bird",
+    "FAD": "Short-lived fashion",
+    "FEE": "Charge for a service",
+    "FIB": "Small lie",
+    "FOE": "Enemy",
+    "GAG": "Joke or device that blocks speech",
+    "HAY": "Dried grass for animals",
+    "HEX": "Six-sided spell or curse, informally",
+    "JOG": "Run slowly",
+    "KEG": "Small barrel",
+    "LAG": "Fall behind",
+    "LED": "Guided in the past tense",
+    "MOP": "Cleaning tool with an absorbent head",
+    "MUG": "Large cup",
+    "NUT": "Hard-shelled seed",
+    "OAT": "Cereal grain",
+    "ORB": "Sphere",
+    "PAL": "Friend",
+    "PIT": "Deep hole",
+    "RAG": "Old cloth",
+    "RAP": "Quick knock or rhythmic music",
+    "ROD": "Straight thin bar",
+    "ROT": "Decay",
+    "RUE": "Regret",
+    "RYE": "Cereal grain",
+    "SIN": "Wrongdoing",
+    "SIP": "Drink a small amount",
+    "SOD": "Piece of grass-covered soil",
+    "SUM": "Total",
+    "TAG": "Small label",
+    "TAR": "Dark road-surfacing material",
+    "URN": "Vase-shaped container",
+    "WIG": "Artificial hairpiece",
+    "YAM": "Starchy root vegetable",
+    "YEN": "Japanese currency",
+    "ZAP": "Strike suddenly with energy",
+    "ARE": "Present plural form of be",
+    "ASK": "Request information",
+    "BET": "Wager",
+    "BID": "Offer a price",
+    "BIG": "Large in size",
+    "CRY": "Shed tears or call loudly",
+    "DIE": "Singular form of dice",
+    "DIG": "Break up earth or excavate",
+    "FAT": "Body tissue that stores energy",
+    "FIX": "Repair",
+    "FOR": "Intended to benefit",
+    "GET": "Receive or obtain",
+    "HER": "Female object or possessive pronoun",
+    "HIM": "Male object pronoun",
+    "LET": "Allow",
+    "MEN": "Plural of man",
+    "NOT": "Word of negation",
+    "OFF": "Not operating or away from",
+    "RID": "Free from something unwanted",
+    "RIP": "Tear apart",
+    "SAD": "Unhappy",
+    "SEE": "Perceive with the eyes",
+    "SHE": "Female subject pronoun",
+    "SIX": "Number after five",
+    "TEN": "Number after nine",
+    "TRY": "Make an attempt",
+    "TWO": "Number after one",
+    "USE": "Employ for a purpose",
+    "WAR": "Armed conflict",
+    "WHO": "Question word asking about a person",
+    "YOU": "Person being addressed"
+  }
+}

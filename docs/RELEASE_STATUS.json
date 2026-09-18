@@ -1,0 +1,10 @@
+{
+  "version": "1.0.1",
+  "cacheVersion": 18,
+  "catalogGames": 36,
+  "automatedReleaseGate": "PASS",
+  "contentValidation": "PASS",
+  "serviceWorkerRegression": "PASS",
+  "manualPhysicalPwaUpdate": "NOT_INDEPENDENTLY_VERIFIED",
+  "manualScreenReaderTesting": "NOT_INDEPENDENTLY_VERIFIED"
+}
