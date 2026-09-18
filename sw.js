@@ -1,13 +1,13 @@
-/* Puzzle Arcade 1.0.1: coherent, scope-isolated offline shell. */
-const APP_VERSION = '1.0.1';
-const CACHE_VERSION = 'v18';
+/* Puzzle Arcade 1.0.2: coherent, scope-isolated offline shell. */
+const APP_VERSION = '1.0.2';
+const CACHE_VERSION = 'v19';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
 const CACHE = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL = new URL('./index.html', SCOPE).href;
 const CORE = [
-  './index.html', './styles.css', './word-content.js', './app.js',
+  './index.html', './styles.css', './word-dictionary.js', './word-content.js', './app.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ].map(path => new URL(path, SCOPE).href);
 const CORE_SET = new Set(CORE);
