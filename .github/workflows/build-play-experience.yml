@@ -4,6 +4,7 @@ on:
     branches: [improve-play-experience-1.1]
     paths:
       - scripts/apply-play-experience.py
+      - scripts/finalize-play-experience.py
       - scripts/play-experience-source.js
       - scripts/play-experience-source.css
       - scripts/test-play-experience.mjs
@@ -32,6 +33,7 @@ jobs:
       - name: Apply source-verified upgrade
         run: |
           python scripts/apply-play-experience.py
+          python scripts/finalize-play-experience.py
           python -c "from pathlib import Path; p=Path('scripts/test-service-worker.mjs'); p.write_text(p.read_text().replace('v19','v20'))"
       - name: Complete release and game regressions
         run: |
@@ -54,7 +56,7 @@ jobs:
           python scripts/test-play-browser.py
       - name: Commit verified production source
         run: |
-          rm scripts/apply-play-experience.py scripts/play-experience-source.js scripts/play-experience-source.css
+          rm scripts/apply-play-experience.py scripts/finalize-play-experience.py scripts/play-experience-source.js scripts/play-experience-source.css
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app.js styles.css sw.js README.md CHANGELOG.md RELEASE_NOTES.md scripts
