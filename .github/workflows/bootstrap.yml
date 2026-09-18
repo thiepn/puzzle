@@ -28,6 +28,7 @@ jobs:
       - run: node --check sw.js
       - run: node scripts/validate-word-content.js
       - run: node scripts/test-service-worker.mjs
+      - run: node scripts/test-word-entry.mjs
       - run: node scripts/release-check.mjs
 
   deploy:
@@ -43,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp index.html styles.css app.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png dist/
+          cp index.html styles.css app.js word-dictionary.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png dist/
           touch dist/.nojekyll
       - uses: actions/configure-pages@v5
         with:
@@ -71,6 +72,9 @@ jobs:
           grep -q 'Puzzle Arcade' /tmp/live-index.html
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
-          grep -q "const APP_VERSION = '1.0.1';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v18';" /tmp/live-sw.js
+          curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
+          grep -q "const APP_VERSION = '1.0.2';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v19';" /tmp/live-sw.js
+          grep -q 'trace' /tmp/live-dictionary.js
+          grep -q 'adieu' /tmp/live-dictionary.js
           echo 'PRODUCTION_SMOKE=PASS'

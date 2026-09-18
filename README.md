@@ -200,3 +200,7 @@ python3 scripts/build-standalone.py ../puzzle-arcade-standalone.html
 Operational documentation is under `docs/PRODUCTION_CONFIG.md`, `docs/SECURITY.md`, `docs/PRIVACY.md`, `docs/STORAGE_SCHEMA.md`, `docs/DEPLOYMENT.md`, `docs/ROLLBACK.md`, `docs/THIRD_PARTY_NOTICES.md`, and `docs/RELEASE_CHECKLIST.md`.
 
 Wave 10 produced the certified V1 release, completed automated production verification, and froze the initial application at v1.0.0; the audited maintenance build is v1.0.1. Physical install/update and assistive-technology checks remain documented as manual post-ship verification because they cannot be independently executed in the automated release environment.
+
+## Broad English input dictionary
+
+Puzzle Arcade separates **accepted player words** from **curated puzzle targets**. Five Letters, Word Ladder, Anagrams, Letter Hive, and Word Grid accept a broad offline ESDB/SCOWL-derived dictionary (132,590 filtered words; 7,278 five-letter words), while generated answers remain curated for familiarity and fairness. See `THIRD_PARTY_NOTICES.md` for attribution.

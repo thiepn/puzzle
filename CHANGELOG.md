@@ -1,3 +1,12 @@
+## 1.0.2 — Expanded Lexicon & Hint Fix
+
+- Added a broad offline ESDB/SCOWL-derived accepted-word dictionary: 132,590 filtered English words, including 7,278 five-letter words.
+- Five Letters now accepts common and uncommon valid guesses such as TRACE, CRATE, STARE, ADIEU, LIONS, and LOVES while keeping answer targets curated.
+- Word Ladder accepts broad-dictionary bridge words and uses the broad graph for hint routing.
+- Anagrams accepts all dictionary-valid full anagrams for its tiles and now has four distinct progressive hint stages: structure, pattern, anchor, and chunk.
+- Letter Hive and Word Grid now accept valid broad-dictionary words that satisfy their board rules.
+- Added word-entry regression coverage and ESDB attribution.
+
 # Changelog
 
 ## 1.0.0 — Stable

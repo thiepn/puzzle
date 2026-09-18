@@ -1,0 +1,27 @@
+name: Verify Word Lexicon 1.0.2
+
+on:
+  push:
+    branches: [fix-word-lexicon-v1.0.2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check app.js
+      - run: node --check word-dictionary.js
+      - run: node --check word-content.js
+      - run: node --check sw.js
+      - run: node scripts/test-word-entry.mjs
+      - run: node scripts/validate-word-content.js
+      - run: node scripts/test-service-worker.mjs
+      - run: node scripts/release-check.mjs

@@ -1,10 +1,16 @@
 {
-  "version": "1.0.1",
-  "cacheVersion": 18,
+  "version": "1.0.2",
+  "cacheVersion": 19,
   "catalogGames": 36,
   "automatedReleaseGate": "PASS",
   "contentValidation": "PASS",
   "serviceWorkerRegression": "PASS",
   "manualPhysicalPwaUpdate": "NOT_INDEPENDENTLY_VERIFIED",
-  "manualScreenReaderTesting": "NOT_INDEPENDENTLY_VERIFIED"
+  "manualScreenReaderTesting": "NOT_INDEPENDENTLY_VERIFIED",
+  "acceptedWordDictionary": {
+    "source": "ESDB/SCOWL size <= 70",
+    "filteredWords": 132590,
+    "fiveLetterWords": 7278
+  },
+  "wordEntryRegression": "PASS_ON_RELEASE_GATE"
 }
