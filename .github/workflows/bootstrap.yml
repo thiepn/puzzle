@@ -54,3 +54,23 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Production smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${{ steps.deployment.outputs.page_url }}"
+          base="${base%/}"
+          echo "live_url=$base/"
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsSL --retry 2 --retry-delay 1 "$base/" -o /tmp/live-index.html; then
+              break
+            fi
+            sleep 2
+          done
+          grep -q 'Puzzle Arcade' /tmp/live-index.html
+          curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
+          curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.0.1';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v18';" /tmp/live-sw.js
+          echo 'PRODUCTION_SMOKE=PASS'
