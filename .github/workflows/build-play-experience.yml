@@ -11,6 +11,9 @@ on:
       - .github/workflows/build-play-experience.yml
 permissions:
   contents: write
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: puzzle-play-experience-upgrade
   cancel-in-progress: true
