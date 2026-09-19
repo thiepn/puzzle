@@ -9,7 +9,7 @@ const store={};const localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>stor
 const box={console,structuredClone,URL,URLSearchParams,Date,Math,Map,Set,WeakMap,WeakSet,Uint32Array,Uint8Array,Int8Array,Int32Array,performance,crypto:webcrypto,document:{querySelector:()=>el,querySelectorAll:()=>[],createElement:()=>({...el}),addEventListener:noop,documentElement:el,body:el,hidden:false},location:{hash:'',protocol:'https:'},navigator:{},window:{matchMedia:()=>({matches:false,addEventListener:noop}),addEventListener:noop},localStorage,setTimeout:noop,clearTimeout:noop,setInterval:noop,clearInterval:noop,requestAnimationFrame:noop,CSS:{escape:x=>x}};
 vm.createContext(box);for(const f of ['word-dictionary.js','word-content.js'])vm.runInContext(read(f),box);
 let src=read('app.js');const cut=src.lastIndexOf("  document.addEventListener('click',e=>{");assert.ok(cut>0);
-src=src.slice(0,cut)+`globalThis.TEST={GAMES,state,byId,PLAY_GUIDES,playSession,canUndoGame,redoGame,playSignature,repairSavedActive,sanitizeSettings,baseGameShell,acceptedLadderPath,acceptedLadderGraph,acceptedWordSet,acceptedWordsOfLength,hiveDictionaryWords,isWordOnGrid,w6LadderGraph};})();`;
+src=src.slice(0,cut)+`globalThis.TEST={GAMES,state,byId,PLAY_GUIDES,playSession,canUndoGame,redoGame,playSignature,repairSavedActive,sanitizeSettings,baseGameShell,acceptedLadderPath,acceptedLadderGraph,acceptedWordSet,acceptedWordsOfLength,hiveDictionaryWords,isWordOnGrid,w6LadderGraph,resultRewardSummary,nextResultDifficulty,resultPanel,statsRecord,statsDayKey,statsHumanDuration};})();`;
 vm.runInContext(src,box);const T=box.TEST,plain=x=>JSON.parse(JSON.stringify(x));
 let assertions=0;const ok=(condition,message)=>{assert.ok(condition,message);assertions++;};
 const games=Object.values(T.GAMES);ok(games.length===36,'36 games retained');ok(Object.keys(T.PLAY_GUIDES).length===36,'each game has an individual guide');
@@ -21,7 +21,7 @@ for(const game of games){
   assert.deepEqual(plain(a.puzzle),plain(fresh.puzzle),`${game.id} deterministic puzzle`);assertions++;
   const restored=T.repairSavedActive(game,structuredClone(a),fresh);ok(restored,`${game.id} ${difficulty}: save restores`);
   assert.deepEqual(plain(restored.state),plain(a.state),`${game.id} ${difficulty}: progress survives repair`);assertions++;
-  const html=T.baseGameShell(T.byId[game.id],a,'<div>board</div>');ok(html.includes('data-game-pause')&&html.includes('data-play-guide')&&html.includes('data-play-difficulty'),`${game.id}: controls present`);
+  const html=T.baseGameShell(T.byId[game.id],a,'<div>board</div>');ok(html.includes('data-game-pause')&&html.includes('data-game-hint')&&html.includes('data-play-difficulty')&&html.includes('play-action-dock')&&html.includes('game-status-cluster'),`${game.id}: phase 2 chrome present`);
   generated++;if(performance.now()-start>1000)slow.push({game:game.id,difficulty,ms:Math.round(performance.now()-start)});
  }
  const a=await game.create('play-hint-check',game.defaultDifficulty);await game.hint(a);ok(!a.completed,`${game.id}: requesting a hint must not complete the puzzle`);hints++;
@@ -68,4 +68,73 @@ for(const id of ['letter-hive','word-grid']){
  const g=T.GAMES.sudoku,a=await g.create('hint-count','Easy');a.hintsUsed=7;const b=T.repairSavedActive(g,a,await g.create(a.seed,a.difficulty));ok(b.hintsUsed===7,'hint count survives reopening');
  const settings=T.sanitizeSettings({theme:'dark',difficulties:{sudoku:'Hard',nonexistent:'Hard','word-grid':'<script>'}});ok(settings.difficulties.sudoku==='Hard'&&!settings.difficulties.nonexistent,'remembered difficulty sanitized');
 }
+
+// Phase 7 result recognition must reflect real history rather than fabricated rewards.
+{
+ const oldHistory=T.state.history;
+ const g=T.GAMES.sudoku,now=Date.now(),current={result:{id:'current',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:60000,metrics:{hintsUsed:0},endedAt:now},outcome:'completed',durationMs:60000,difficulty:'Easy',hintsUsed:0,state:{}};
+ T.state.history=[
+  current.result,
+  {id:'prev-sudoku',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:90000,metrics:{hintsUsed:1},endedAt:now-1000},
+  {id:'prev-groups',gameId:'groups',outcome:'completed',difficulty:'Easy',durationMs:80000,metrics:{hintsUsed:0},endedAt:now-2000},
+ ];
+ let reward=T.resultRewardSummary(current,g);
+ ok(reward.newBest,'Phase 7: faster same-difficulty solve earns New fastest');
+ ok(reward.clean,'Phase 7: zero-hint completion earns Clean solve');
+ ok(reward.streak===3,'Phase 7: current consecutive completion streak is counted');
+ ok(reward.badges.some(x=>x.kind==='best'),'Phase 7: fastest badge rendered from history');
+ ok(T.nextResultDifficulty(g,current)==='Medium','Phase 7: next difficulty steps upward');
+ const html=T.resultPanel(current,g,'');
+ ok(html.includes('result-badges')&&html.includes('Share result')&&html.includes('data-result-challenge'),'Phase 7: result panel contains rewards and next actions');
+
+ const firstHard={...current,difficulty:'Hard',result:{...current.result,id:'hard-current',difficulty:'Hard',endedAt:now+1000}};
+ T.state.history=[firstHard.result,...T.state.history.filter(h=>h.id!=='current')];
+ reward=T.resultRewardSummary(firstHard,g);
+ ok(reward.firstDifficulty,'Phase 7: first solve at a difficulty is recognized');
+ ok(T.nextResultDifficulty(g,firstHard)===null,'Phase 7: hardest difficulty does not invent another tier');
+
+ const failed={...current,result:{...current.result,id:'failed-current',outcome:'failed',endedAt:now+2000},outcome:'failed'};
+ T.state.history=[failed.result,{id:'before-fail',gameId:'groups',outcome:'completed',difficulty:'Easy',durationMs:10000,metrics:{},endedAt:now+1000}];
+ reward=T.resultRewardSummary(failed,g);
+ ok(reward.streak===0&&!reward.clean&&!reward.newBest,'Phase 7: failed attempt earns no completion rewards');
+
+ const milestone={...current,result:{...current.result,id:'milestone-current',endedAt:now+5000}};
+ T.state.history=[milestone.result,
+  {id:'m1',gameId:'groups',outcome:'completed',difficulty:'Easy',durationMs:1,metrics:{},endedAt:now+4000},
+  {id:'m2',gameId:'anagrams',outcome:'completed',difficulty:'Easy',durationMs:1,metrics:{},endedAt:now+3000},
+  {id:'m3',gameId:'nonogram',outcome:'completed',difficulty:'Easy',durationMs:1,metrics:{},endedAt:now+2000},
+  {id:'m4',gameId:'network',outcome:'completed',difficulty:'Easy',durationMs:1,metrics:{},endedAt:now+1000},
+ ];
+ reward=T.resultRewardSummary(milestone,g);
+ ok(reward.totalSolved===5&&reward.badges.some(x=>x.kind==='milestone'),'Phase 7: real solve-count milestone is recognized');
+ T.state.history=oldHistory;
+}
+
+
+// Phase 8 local record aggregation must be deterministic and purely history-derived.
+{
+ const now=new Date();now.setHours(12,0,0,0);const t=now.getTime(),day=86400000;
+ const history=[
+  {id:'s1',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:60000,metrics:{hintsUsed:0},endedAt:t},
+  {id:'s2',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:45000,metrics:{hintsUsed:1},endedAt:t-1000},
+  {id:'g1',gameId:'groups',outcome:'completed',difficulty:'Medium',durationMs:80000,metrics:{hintsUsed:0},endedAt:t-day},
+  {id:'u1',gameId:'untangle',outcome:'failed',difficulty:'Hard',durationMs:30000,metrics:{hintsUsed:0},endedAt:t-2*day},
+  {id:'n1',gameId:'nonogram',outcome:'completed',difficulty:'Hard',durationMs:120000,metrics:{hintsUsed:2},endedAt:t-3*day},
+ ];
+ const record=T.statsRecord(history);
+ ok(record.completed.length===4,'Phase 8: only completed results count as solves');
+ ok(record.attempts===5,'Phase 8: attempts include ended runs');
+ ok(record.clean.length===2,'Phase 8: clean solves use zero hint steps');
+ ok(record.currentStreak===3,'Phase 8: current streak stops at first non-completion');
+ ok(record.bestStreak===3,'Phase 8: best streak derived from chronological history');
+ ok(record.uniqueGames===3,'Phase 8: unique solved games excludes failed-only games');
+ const sudoku=record.games.find(g=>g.gameId==='sudoku');
+ ok(sudoku.solves===2&&sudoku.bests.Easy.durationMs===45000,'Phase 8: per-game fastest time retained by difficulty');
+ ok(Math.round(sudoku.avgHints*10)===5,'Phase 8: average hints derived from completed solves');
+ ok(record.categories.find(c=>c.id==='word').solves===1,'Phase 8: family solve totals are correct');
+ ok(record.categories.find(c=>c.id==='number').games===1,'Phase 8: family game coverage is unique');
+ ok(record.days.length===28&&record.days.at(-1).count===2,'Phase 8: 28-day activity bins local-day solves');
+ ok(T.statsHumanDuration(3661000)==='1h 1m','Phase 8: long solve time has readable duration format');
+}
+
 console.log(JSON.stringify({pass:true,games:games.length,generated,hintEngines:hints,assertions,slow},null,2));
