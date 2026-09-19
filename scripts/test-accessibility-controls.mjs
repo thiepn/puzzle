@@ -17,13 +17,14 @@ for(const key of ["motion:['system','reduced']","contrast:['system','high']","co
 }
 has(app,'function applyAccessibilitySettings','accessibility preference application missing');
 has(app,"setAttribute('aria-current','page')",'active route semantics missing');
-has(app,"$('.nav-link').forEach",'navigation collection binding missing');
-has(app,"$('[data-motion-choice]').forEach",'motion controls collection binding missing');
-has(app,"$('[data-contrast-choice]').forEach",'contrast controls collection binding missing');
-has(app,"$('[data-controls-choice]').forEach",'control-size collection binding missing');
-has(app,"$('[data-action=\"controls\"]').forEach",'controls-help collection binding missing');
+has(app,"$$('.nav-link').forEach",'navigation collection binding missing');
+has(app,"$$('[data-motion-choice]').forEach",'motion controls collection binding missing');
+has(app,"$$('[data-contrast-choice]').forEach",'contrast controls collection binding missing');
+has(app,"$$('[data-controls-choice]').forEach",'control-size collection binding missing');
+has(app,"$$('[data-action=\"controls\"]').forEach",'controls-help collection binding missing');
 has(app,'aria-keyshortcuts="Control+Z Meta+Z"','undo shortcut semantics missing');
 has(app,"if(e.key==='?'","keyboard help shortcut missing");
+has(app,"if(e.key==='Escape'&&overlayRoot.firstChild)",'global Escape overlay close missing');
 has(app,"if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!a.state.path.length)","trace keyboard activation missing");
 has(app,'aria-label="${esc(g.name)} puzzle board"','game board region label missing');
 has(app,"result?.focus({preventScroll:true})",'completion focus management missing');
