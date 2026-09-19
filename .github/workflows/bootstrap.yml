@@ -3,6 +3,8 @@ name: Puzzle Arcade CI + Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: puzzle-production
+  group: puzzle-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,8 +32,23 @@ jobs:
       - run: node scripts/test-service-worker.mjs
       - run: node scripts/test-word-entry.mjs
       - run: node scripts/release-check.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Browser interaction gate
+        run: |
+          set -euo pipefail
+          python -m http.server 8080 >/tmp/puzzle-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/ --quick
 
   deploy:
+    if: github.event_name == 'push'
     needs: release-gate
     environment:
       name: github-pages
@@ -73,8 +90,8 @@ jobs:
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
           curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
-          grep -q "const APP_VERSION = '1.1.0';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v20';" /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.2.0';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v21';" /tmp/live-sw.js
           grep -q 'trace' /tmp/live-dictionary.js
           grep -q 'adieu' /tmp/live-dictionary.js
           echo 'PRODUCTION_SMOKE=PASS'
