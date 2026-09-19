@@ -1440,6 +1440,11 @@
   }
   function bindResult(active, game){
     const next=$('[data-next-puzzle]'); if(next) next.onclick=()=>newGame(game.id,active.difficulty);
+    const challenge=$('[data-result-challenge]'); if(challenge) challenge.onclick=()=>{
+      const d=challenge.dataset.resultDifficulty;if(d)return newGame(game.id,d);
+      state.category=challenge.dataset.resultCategory||'all';state.libraryQuery='';go('home');
+    };
+    const home=$('[data-result-home]');if(home)home.onclick=()=>go('home');
     const replay=$('[data-replay-puzzle]'); if(replay) replay.onclick=async()=>{
       if(replayingActives.has(active))return;
       replayingActives.add(active); replay.disabled=true;
@@ -1453,7 +1458,7 @@
         fresh.startedAt=document.hidden?null:Date.now();game.render(fresh);
       } finally { replayingActives.delete(active); }
     };
-    const share=$('[data-share-puzzle]'); if(share) share.onclick=()=>sharePuzzle(active,game);
+    const share=$('[data-share-puzzle]'); if(share) share.onclick=()=>sharePuzzle(active,game,true);
   }
   async function copyTextFallback(text){
     if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
