@@ -895,49 +895,64 @@
   }
 
   function baseGameShell(g, active, boardHtml, extraHtml=''){
-    const game=GAMES[g.id],ui=playSession(active),favorite=state.favorites.includes(g.id),difficulties=game.difficulties||['Standard'];
+    const game=GAMES[g.id],ui=playSession(active),difficulties=game.difficulties||['Standard'];
+    const hasHistory=typeof game.undo==='function';
     return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}">
-      <div class="game-top"><button class="game-back" data-game-back aria-label="Back to puzzles">←</button><div class="game-title"><small>${esc(CATEGORIES[g.category].label)} puzzles</small><h1>${esc(g.name)}</h1></div><button class="game-menu" data-game-menu aria-label="Game menu">•••</button></div>
-      <p class="game-objective">${esc(game.rules.objective)}</p>
-      <div class="play-commandbar" role="group" aria-label="Puzzle controls">
-        <label class="play-difficulty"><span>Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label>
-        ${typeof game.undo==='function'?`<div class="play-history"><button data-play-undo aria-label="Undo" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}>↶ <span>Undo</span></button><button data-play-redo aria-label="Redo" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}>↷ <span>Redo</span></button></div>`:''}
-        <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}>${ui.busy?'Thinking…':'Hint'}</button>
-        <button data-play-guide aria-expanded="${ui.guide}" aria-controls="play-guide">Guide</button>
-        <button data-game-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button>
-      </div>
+      <header class="game-chrome">
+        <button class="game-back chrome-icon" data-game-back aria-label="Back to puzzles"><span aria-hidden="true">←</span></button>
+        <div class="game-heading">
+          <small class="game-category-label">${esc(CATEGORIES[g.category].label)} puzzle</small>
+          <div class="game-title-line"><h1>${esc(g.name)}</h1><label class="difficulty-chip"><span class="sr-only">Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label></div>
+          <p class="game-objective">${esc(game.rules.objective)}</p>
+        </div>
+        <div class="game-status-cluster">
+          <div class="chrome-stat chrome-stat--time"><span>${ui.paused?'Paused':'Time'}</span><strong data-timer>${formatTime(activeDuration(active))}</strong></div>
+          <div class="chrome-stat chrome-stat--progress"><span>Progress</span><strong>${esc(safeProgressLabel(active))}</strong></div>
+          <button class="game-menu chrome-icon" data-game-menu aria-label="Game options"><span aria-hidden="true">•••</span></button>
+        </div>
+      </header>
       ${playGuide(game,active)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
-      <div class="game-layout"><section class="game-stage ${ui.paused?'is-paused':''}" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
-        <aside class="game-side"><div class="play-session-summary"><div class="side-stat"><label>${ui.paused?'Paused':'Time'}</label><div class="timer" data-timer>${formatTime(activeDuration(active))}</div></div><div class="side-stat play-progress"><label>Progress</label><strong>${esc(safeProgressLabel(active))}</strong></div></div>
-          <p class="play-start-tip">${esc(PLAY_GUIDES[g.id][0])}</p><button class="small-button" data-game-rules>Full rules</button><button class="small-button" data-game-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button>
-          <p class="play-save-note">${state.settings.playMode==='challenge'?'Challenge mode':'Relaxed mode'} · Autosaved locally</p>
-        </aside>
+      <div class="game-layout">
+        <section class="game-stage ${ui.paused?'is-paused':''}" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
+        <div class="play-action-dock" role="toolbar" aria-label="Puzzle actions">
+          ${hasHistory?`<div class="play-history"><button data-play-undo aria-label="Undo" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}><span class="action-icon" aria-hidden="true">↶</span><span class="action-label">Undo</span></button><button data-play-redo aria-label="Redo" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}><span class="action-icon" aria-hidden="true">↷</span><span class="action-label">Redo</span></button></div>`:''}
+          <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">${ui.busy?'Thinking…':'Hint'}</span></button>
+          <button data-game-pause ${active.completed?'disabled':''}><span class="action-icon" aria-hidden="true">${ui.paused?'▶':'Ⅱ'}</span><span class="action-label">${ui.paused?'Resume':'Pause'}</span></button>
+        </div>
         ${ui.paused?'<div class="pause-cover" role="region" aria-label="Puzzle paused"><strong>Take your time.</strong><p>The clock is paused and your progress is saved.</p><button class="primary-button" data-resume-puzzle>Resume puzzle</button></div>':''}
-      </div></div>`;
+      </div>
+      <p class="game-save-strip"><span aria-hidden="true">●</span> Autosaved locally · ${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</p>
+    </div>`;
   }
+
   function bindGameShell(game,active){
-    $('[data-game-back]').onclick=()=>go('home');$('[data-game-menu]').onclick=()=>gameMenu(game,active);
+    $('[data-game-back]').onclick=()=>go('home');
+    $('[data-game-menu]').onclick=()=>gameMenu(game,active);
     $$('[data-game-rules]').forEach(b=>b.onclick=()=>showRules(game));
     $('[data-game-hint]').onclick=()=>requestGameHint(game,active);
-    $('[data-game-favorite]').onclick=()=>{toggleFavorite(game.id);const b=$('[data-game-favorite]');if(b){const on=state.favorites.includes(game.id);b.textContent=on?'★ Favorite':'☆ Favorite';b.setAttribute('aria-pressed',String(on));}};
     $('[data-play-difficulty]').onchange=e=>newGame(game.id,e.target.value);
-    $('[data-play-guide]').onclick=()=>{playSession(active).guide=!playSession(active).guide;game.render(active);$('[data-play-guide]')?.focus({preventScroll:true});};
-    $('[data-game-pause]').onclick=()=>pauseGame(game,active);const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
+    $('[data-game-pause]').onclick=()=>pauseGame(game,active);
+    const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
     const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.onclick=()=>game.undo(active);if(redo)redo.onclick=()=>redoGame(game,active);
     const dismiss=$('[data-hint-dismiss]');if(dismiss)dismiss.onclick=()=>dismissGameHint(active);
     startTimer(active);
   }
 
   function gameMenu(game, active){
-    const difficulties=game.difficulties||['Standard'];
-    showModal(game.name, `<p>${esc(game.description)}</p><p class="subtle">Difficulty</p><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div>`, [
+    const difficulties=game.difficulties||['Standard'],ui=playSession(active),favorite=state.favorites.includes(game.id);
+    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
       {label:'Close',kind:'secondary',action:closeOverlay},
       {label:'New Puzzle',kind:'primary',action:async()=>{ closeOverlay(); await newGame(game.id, active.difficulty); }},
     ]);
     $$('[data-diff]',overlayRoot).forEach(b=>b.onclick=async()=>{const d=b.dataset.diff;closeOverlay();await newGame(game.id,d);});
+    const guide=$('[data-menu-guide]',overlayRoot);if(guide)guide.onclick=()=>{closeOverlay();ui.guide=!ui.guide;game.render(active);requestAnimationFrame(()=>$('[data-game-menu]')?.focus({preventScroll:true}));};
+    const rules=$('[data-menu-rules]',overlayRoot);if(rules)rules.onclick=()=>{closeOverlay();showRules(game);};
+    const fav=$('[data-menu-favorite]',overlayRoot);if(fav)fav.onclick=()=>{toggleFavorite(game.id);const on=state.favorites.includes(game.id);fav.textContent=on?'★ Favorite':'☆ Favorite';fav.setAttribute('aria-pressed',String(on));};
+    const pause=$('[data-menu-pause]',overlayRoot);if(pause)pause.onclick=()=>{closeOverlay();pauseGame(game,active);};
   }
+
 
   function showRules(game){
     showModal(`${game.name} — Rules`, `<p>${esc(game.rules.objective)}</p><ol class="rule-list">${game.rules.items.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`);
