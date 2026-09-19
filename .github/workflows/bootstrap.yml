@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: puzzle-production
+  group: puzzle-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
