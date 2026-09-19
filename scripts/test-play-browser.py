@@ -135,6 +135,24 @@ with sync_playwright() as p:
     for gid in ['sudoku','cryptogram','five-letters','nonogram','kakuro']:
         open_game(gid,'Hard','small-screen');page.wait_for_timeout(100)
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),f'320px overflow: {gid}'
+
+    # Phase 9 accessibility/control behavior.
+    page.set_viewport_size({'width':390,'height':844});navigate('home');page.locator('[data-library-search]').wait_for()
+    page.keyboard.type('?');page.locator('.modal[role="dialog"]').wait_for()
+    assert 'Keyboard & touch controls' in page.locator('.modal').inner_text()
+    page.keyboard.press('Escape');assert page.locator('.modal').count()==0
+    navigate('settings');page.locator('[data-motion-choice="reduced"]').wait_for()
+    page.locator('[data-motion-choice="reduced"]').click();assert page.locator('html').get_attribute('data-motion')=='reduced'
+    page.locator('[data-contrast-choice="high"]').click();assert page.locator('html').get_attribute('data-contrast')=='high'
+    page.locator('[data-controls-choice="large"]').click();assert page.locator('html').get_attribute('data-controls')=='large'
+    open_game('word-grid','Easy','phase9-keyboard')
+    first=page.locator('[data-wg]').first;first.focus();page.keyboard.press('Enter');page.wait_for_timeout(50)
+    assert first.get_attribute('aria-pressed')=='true'
+    open_game('sudoku','Easy','phase9-focus')
+    page.locator('[data-game-pause]').click()
+    page.wait_for_function('() => document.activeElement===document.querySelector("[data-resume-puzzle]")')
+    page.locator('[data-resume-puzzle]').click()
+    page.wait_for_function('() => document.activeElement===document.querySelector("[data-game-pause]")')
     browser.close()
 result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
 (OUT/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
