@@ -145,10 +145,13 @@ with sync_playwright() as p:
     assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'320px home overflow'
     page.screenshot(path=str(OUT/'home-active-320.png'),full_page=True)
     page.locator('[data-library-search]').fill('sudoku')
+    page.wait_for_function('() => [...document.querySelectorAll("[data-catalog-grid] .game-card")].filter(el=>!el.hidden).length===2')
     assert page.locator('[data-catalog-grid] .game-card:visible').count()==2
     page.locator('[data-library-search]').fill('no such puzzle')
+    page.wait_for_function('() => !document.querySelector("[data-library-empty]")?.hidden')
     assert page.locator('[data-library-empty]').is_visible()
     page.locator('[data-library-search]').fill('')
+    page.wait_for_function('() => [...document.querySelectorAll("[data-catalog-grid] .game-card")].filter(el=>!el.hidden).length===36')
     page.locator('[data-discover-category="spatial"]').click()
     page.wait_for_function('() => document.querySelector("[data-category-filter=spatial]")?.getAttribute("aria-pressed")=="true"')
     assert page.locator('[data-catalog-grid] .game-card:visible').count()==4
