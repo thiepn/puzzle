@@ -1,3 +1,12 @@
+# 1.2.0 — Accessibility, Controls & Device Polish
+
+- Added explicit reduced-motion, high-contrast, and large-control preferences while still respecting system settings.
+- Added keyboard/touch controls help, route announcements, active-route semantics, board/status landmarks, shortcut metadata, and completion/pause focus management.
+- Fixed the missing screen-reader-only utility and keyboard activation for trace-board games.
+- Added coarse-pointer, forced-colors, dynamic viewport, narrow-landscape, and non-color state cues.
+- Avoided duplicate screen-reader announcements from in-game visual toasts.
+- Added Phase 9 static and browser regression coverage; storage schema remains 1; PWA cache is v21.
+
 # 1.1.0 — Play Experience
 
 Shared controls and individual guides across all 36 games; undo/redo; persistent hints; pause; search and resume improvements; dictionary-compatible progress recovery; Word Ladder, Groups, Five Letters, Sudoku, Nonogram, and Cryptogram improvements. Regression and HTTP browser tests added. Runtime cache v20; storage schema remains 1.
