@@ -965,6 +965,7 @@
     if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
     if(game.id==='cryptogram'){const counts={};for(const c of a.puzzle.cipher)if(/[A-Z]/.test(c))counts[c]=(counts[c]||0)+1;const items=Object.entries(counts).sort((a,b)=>b[1]-a[1]);$('.game-board-wrap')?.insertAdjacentHTML('beforeend',`<details class="cipher-frequency"><summary>Letter frequency · ${items.length} symbols</summary><div>${items.map(([c,n])=>`<span>${c} <b>${n}</b></span>`).join('')}</div></details>`);}
     applyIndividualGamePolish(game,a);
+    applyMotionGameFeel(game,a);
   }
 
   function p5El(tag,className,text){
@@ -1039,6 +1040,137 @@
       document.querySelectorAll('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});document.querySelectorAll('[data-edge]').forEach(el=>{const edge=a.puzzle.edges[+el.dataset.edge]||[];el.classList.toggle('selected-edge',edge.includes(a.state.selected));});
       const count=$('.crossing-count');if(count){count.textContent='';const top=p5El('div'),num=p5El('strong','',current),label=p5El('span','','crossings'),bar=p5El('div','untangle-progress'),fill=p5El('i'),small=p5El('small','',progress+'% cleared · best '+(a.state.bestCrossings??current));bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','Crossings removed');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress));fill.style.width=progress+'%';bar.append(fill);top.append(num,label);count.append(top,bar,small);}
     }
+  }
+
+
+  const motionSessions=new WeakMap();
+  function p6MotionSession(a){
+    if(!motionSessions.has(a))motionSessions.set(a,{mounted:false,sig:null,selected:null,completed:false,wrong:null,solved:null,found:null,picked:null,mapping:null,crossings:null,hintLevel:null,feedback:null,paused:null});
+    return motionSessions.get(a);
+  }
+  function p6ReducedMotion(){
+    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  }
+  function p6Pulse(el,className,duration=420){
+    if(!el||p6ReducedMotion())return;
+    el.classList.remove(className);
+    void el.offsetWidth;
+    el.classList.add(className);
+    setTimeout(()=>el.isConnected&&el.classList.remove(className),duration);
+  }
+  function p6SelectedElement(game,a){
+    const selected=Number.isInteger(a.state?.selected)?a.state.selected:null;
+    const selectors={
+      sudoku:selected==null?null:'[data-cell="'+selected+'"]',
+      'killer-sudoku':selected==null?null:'[data-killer-cell="'+selected+'"]',
+      kakuro:selected==null?null:'[data-kakuro="'+selected+'"]',
+      unequal:selected==null?null:'[data-unequal="'+selected+'"]',
+      'arithmetic-cages':selected==null?null:'[data-arith="'+selected+'"]',
+      binary:selected==null?null:'[data-binary="'+selected+'"]',
+      queens:selected==null?null:'[data-queen="'+selected+'"]',
+      'number-path':selected==null?null:'[data-path-cell="'+selected+'"]',
+      tents:selected==null?null:'[data-tent-cell="'+selected+'"]',
+      rectangles:selected==null?null:'[data-rect-cell="'+selected+'"]',
+      towers:selected==null?null:'[data-tower-cell="'+selected+'"]',
+      fillomino:selected==null?null:'[data-fill="'+selected+'"]',
+      network:selected==null?null:'[data-net-cell="'+selected+'"]',
+      'sliding-tiles':selected==null?null:'[data-slide="'+selected+'"]',
+      untangle:selected==null?null:'[data-node="'+selected+'"]',
+      'word-grid':selected==null?null:'[data-wg="'+selected+'"]'
+    };
+    if(game.id==='nonogram'){
+      const cursor=playSession(a).cursor;
+      return Number.isInteger(cursor)?document.querySelector('[data-nono="'+cursor+'"]'):null;
+    }
+    return selectors[game.id]?document.querySelector(selectors[game.id]):document.querySelector('.game-board-wrap .selected');
+  }
+  function p6SolveBurst(panel){
+    if(!panel||p6ReducedMotion()||panel.querySelector('.solve-burst'))return;
+    const burst=document.createElement('div');burst.className='solve-burst';burst.setAttribute('aria-hidden','true');
+    for(let i=0;i<7;i++){const dot=document.createElement('i');dot.style.setProperty('--burst-i',String(i));burst.append(dot);}
+    panel.prepend(burst);
+    setTimeout(()=>burst.isConnected&&burst.remove(),900);
+  }
+  function applyMotionGameFeel(game,a){
+    const root=document.querySelector('.game-page');if(!root)return;
+    const m=p6MotionSession(a),reduced=p6ReducedMotion(),stage=document.querySelector('.game-stage'),ui=playSession(a);
+    root.dataset.motion=reduced?'reduced':'full';
+    root.classList.toggle('motion-system',!reduced);
+    const sig=playSignature(a),selected=Number.isInteger(a.state?.selected)?a.state.selected:(game.id==='nonogram'?ui.cursor:null);
+    const wrong=document.querySelectorAll('.game-board-wrap .wrong').length;
+    const solved=Array.isArray(a.state?.solved)?a.state.solved.length:null;
+    const found=Array.isArray(a.state?.found)?a.state.found.length:null;
+    const picked=game.id==='anagrams'?(a.state.selected?.length||0):null;
+    const mapping=game.id==='cryptogram'?Object.keys(a.state.mapping||{}).length:null;
+    const crossings=game.id==='untangle'?untangleCrossings(a.puzzle.edges,a.state.positions):null;
+    const hintLevel=a.state?._proofHintView?.level??null;
+    const feedback=ui.feedback||'';
+    const paused=!!ui.paused;
+
+    if(!m.mounted){
+      m.mounted=true;
+      root.dataset.motionEvent='enter';
+      if(!reduced){
+        p6Pulse(document.querySelector('.game-chrome'),'motion-chrome-enter',520);
+        p6Pulse(stage,'motion-stage-enter',560);
+        p6Pulse(document.querySelector('.play-action-dock'),'motion-dock-enter',620);
+      }
+    } else {
+      if(m.sig!==null&&m.sig!==sig&&!a.completed){
+        root.dataset.motionEvent='move';
+        p6Pulse(stage,'motion-board-commit',260);
+        p6Pulse(p6SelectedElement(game,a),'motion-value-in',300);
+      }
+      if(m.selected!==null&&selected!==null&&m.selected!==selected){
+        root.dataset.motionEvent='focus';
+        p6Pulse(p6SelectedElement(game,a),'motion-focus-in',260);
+      }
+      if(m.wrong!==null&&wrong>m.wrong){
+        root.dataset.motionEvent='error';
+        document.querySelectorAll('.game-board-wrap .wrong').forEach(el=>p6Pulse(el,'motion-error',380));
+      }
+      if(game.id==='groups'&&m.solved!==null&&solved>m.solved){
+        root.dataset.motionEvent='group-solved';
+        const cards=document.querySelectorAll('.group-solved');p6Pulse(cards[cards.length-1],'motion-group-solved',560);
+      }
+      if(game.id==='anagrams'&&m.picked!==null&&picked>m.picked){
+        root.dataset.motionEvent='tile-picked';
+        const tile=document.querySelector('[data-anagram-tile][data-pick-order="'+picked+'"]');
+        const slot=document.querySelector('.anagram-answer span:nth-child('+picked+')');
+        p6Pulse(tile,'motion-tile-picked',300);p6Pulse(slot,'motion-letter-land',360);
+      }
+      if(game.id==='cryptogram'&&m.mapping!==null&&mapping!==m.mapping){
+        root.dataset.motionEvent='mapping';
+        p6Pulse(document.querySelector('.crypto-letter.selected'),'motion-pair-map',320);
+        p6Pulse(document.querySelector('.crypto-map.selected'),'motion-pair-map',320);
+      }
+      if(game.id==='nonogram'&&m.sig!==null&&m.sig!==sig){
+        root.dataset.motionEvent='mark';
+        p6Pulse(p6SelectedElement(game,a),'motion-cell-mark',300);
+      }
+      if(game.id==='word-grid'&&m.found!==null&&found>m.found){
+        root.dataset.motionEvent='word-found';
+        const words=document.querySelectorAll('.found-words span');p6Pulse(words[words.length-1],'motion-word-found',460);
+      }
+      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings){
+        root.dataset.motionEvent='crossing-cleared';
+        p6Pulse(document.querySelector('.crossing-count'),'motion-progress-good',420);
+        p6Pulse(p6SelectedElement(game,a),'motion-node-good',360);
+      }
+    }
+
+    if(a.completed&&!m.completed){
+      root.dataset.motionEvent='complete';
+      if(!reduced){
+        p6Pulse(stage,'motion-complete',760);
+        const panel=document.querySelector('.result-panel');p6Pulse(panel,'motion-result-in',720);p6SolveBurst(panel);
+      }
+    }
+    if(hintLevel!==null&&hintLevel!==m.hintLevel)p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);
+    if(feedback&&feedback!==m.feedback)p6Pulse(document.querySelector('.play-feedback'),'motion-feedback-in',320);
+    if(paused!==m.paused&&paused)p6Pulse(document.querySelector('.pause-cover'),'motion-pause-in',420);
+
+    m.sig=sig;m.selected=selected;m.completed=!!a.completed;m.wrong=wrong;m.solved=solved;m.found=found;m.picked=picked;m.mapping=mapping;m.crossings=crossings;m.hintLevel=hintLevel;m.feedback=feedback;m.paused=paused;
   }
 
   function installPlayExperience(){
