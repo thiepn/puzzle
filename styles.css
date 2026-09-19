@@ -2729,3 +2729,395 @@ body {
     transition: none;
   }
 }
+
+
+/* ========================================================================== */
+/* v1.2 Phase 4 — Puzzle Family Systems                                      */
+/* Four related but distinct play languages: Word, Number, Logic, Spatial.   */
+/* ========================================================================== */
+
+.game-page {
+  --family-accent: var(--play-accent);
+  --family-soft: color-mix(in srgb, var(--family-accent) 8%, var(--surface));
+  --family-faint: color-mix(in srgb, var(--family-accent) 4%, transparent);
+  --family-line: color-mix(in srgb, var(--family-accent) 22%, var(--line));
+  --family-strong: color-mix(in srgb, var(--family-accent) 72%, var(--ink));
+}
+
+/* Family badge in the compact Phase 2 header. */
+.game-category-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.game-category-label::before {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--family-line);
+  border-radius: 6px;
+  background: var(--family-soft);
+  color: var(--family-accent);
+  font: 800 10px/1 var(--ui-font);
+  letter-spacing: 0;
+}
+.game-page[data-play-category="word"] .game-category-label::before { content: "Aa"; font-family: var(--display-font); }
+.game-page[data-play-category="number"] .game-category-label::before { content: "123"; font-size: 7px; font-variant-numeric: tabular-nums; }
+.game-page[data-play-category="logic"] .game-category-label::before { content: "◇"; font-size: 13px; }
+.game-page[data-play-category="spatial"] .game-category-label::before { content: "↗"; font-size: 13px; }
+
+/* The stage itself becomes category-aware, but the pattern stays quiet enough
+   that dense puzzle geometry remains the primary information. */
+.game-stage {
+  position: relative;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--surface) 97%, var(--family-accent) 3%);
+  border-color: var(--family-line);
+}
+.game-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .56;
+}
+
+/* WORD — letterpress / desk / movable tile language. */
+.game-page[data-play-category="word"] .game-stage::before {
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--word) 7%, transparent) 0 1px, transparent 1.5px) 0 0 / 22px 22px,
+    linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--word) 5%, transparent) 31px 32px) 0 0 / 100% 32px;
+  opacity: .6;
+}
+.game-page[data-play-category="word"] .game-title-line h1 {
+  text-decoration-color: color-mix(in srgb, var(--word) 20%, transparent);
+  text-decoration-thickness: 5px;
+  text-underline-offset: 5px;
+}
+.game-page[data-play-category="word"] .play-action-dock {
+  border-color: color-mix(in srgb, var(--word) 22%, var(--line));
+  background: color-mix(in srgb, var(--surface) 96%, var(--word) 4%);
+}
+.game-page[data-play-category="word"] .play-action-dock .play-hint-button {
+  background: color-mix(in srgb, var(--word) 86%, var(--ink));
+}
+.game-page[data-play-category="word"] :is(
+  .wordle-tile,.group-tile,.anagram-tiles button,.pieces-grid button,
+  .key,.cross-cell,.crypto-map,.wg-cell,.trail-cell,.ws-cell
+) {
+  border-color: color-mix(in srgb, var(--word) 16%, var(--line-strong));
+}
+.game-page[data-play-category="word"] :is(
+  .wordle-tile,.group-tile,.anagram-tiles button,.pieces-grid button,.key
+) {
+  background: color-mix(in srgb, var(--surface-raised) 98%, var(--word) 2%);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--word) 13%, var(--line)), 0 6px 14px rgba(34,31,26,.05);
+}
+.game-page[data-play-category="word"] :is(.group-tile,.anagram-tiles button,.pieces-grid button,.key):active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--word) 12%, var(--line));
+}
+.game-page[data-play-category="word"] .group-tile.selected {
+  background: color-mix(in srgb, var(--word) 88%, var(--ink));
+  border-color: var(--word);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--word) 35%, var(--ink)), 0 8px 18px color-mix(in srgb, var(--word) 17%, transparent);
+}
+.game-page[data-play-category="word"] .anagram-answer {
+  padding: 8px 10px 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--word) 4%, var(--surface));
+}
+.game-page[data-play-category="word"] .anagram-answer span {
+  border-bottom-width: 2px;
+  border-bottom-color: color-mix(in srgb, var(--word) 44%, var(--ink));
+}
+.game-page[data-play-category="word"] .crypto-text {
+  font-family: var(--display-font);
+  letter-spacing: .015em;
+  background:
+    linear-gradient(to bottom, transparent calc(1.7em - 1px), color-mix(in srgb, var(--word) 7%, transparent) calc(1.7em - 1px) 1.7em) 0 0 / 100% 1.7em,
+    color-mix(in srgb, var(--surface) 98%, var(--word) 2%);
+}
+.game-page[data-play-category="word"] :is(.wg-cell.path,.trail-cell.path,.ws-cell.active) {
+  background: color-mix(in srgb, var(--word) 19%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--word) 72%, transparent);
+}
+.game-page[data-play-category="word"] .found-words,
+.game-page[data-play-category="word"] .word-list {
+  color: color-mix(in srgb, var(--word) 72%, var(--ink));
+}
+
+/* NUMBER — precise instrument / graph-paper / tabular language. */
+.game-page[data-play-category="number"] .game-stage::before {
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--number) 5%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(to bottom, color-mix(in srgb, var(--number) 5%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(to right, color-mix(in srgb, var(--number) 7%, transparent) 1px, transparent 1px) 0 0 / 120px 120px,
+    linear-gradient(to bottom, color-mix(in srgb, var(--number) 7%, transparent) 1px, transparent 1px) 0 0 / 120px 120px;
+  opacity: .6;
+}
+.game-page[data-play-category="number"] :is(
+  .sudoku-cell,.killer-cell,.kakuro-cell,.unequal-cell,.arith-cell,
+  .tower-cell,.value-tile,.number-pad button,.kakuro-pad button,.tower-pad button
+) {
+  font-variant-numeric: tabular-nums;
+}
+.game-page[data-play-category="number"] :is(
+  .sudoku-board,.killer-board,.kakuro-board,.unequal-board,.arith-board,.towers-board
+) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--number) 16%, transparent), 0 12px 28px rgba(34,31,26,.09);
+}
+.game-page[data-play-category="number"] .play-action-dock {
+  border-radius: 10px;
+  border-color: color-mix(in srgb, var(--number) 22%, var(--line));
+  background: color-mix(in srgb, var(--surface) 97%, var(--number) 3%);
+}
+.game-page[data-play-category="number"] .play-action-dock button {
+  border-radius: 7px;
+}
+.game-page[data-play-category="number"] .play-action-dock .play-hint-button {
+  background: color-mix(in srgb, var(--number) 88%, var(--ink));
+}
+.game-page[data-play-category="number"] :is(.number-pad,.kakuro-pad,.tower-pad) {
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--number) 15%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--number) 4%, var(--surface));
+}
+.game-page[data-play-category="number"] :is(.number-pad button,.kakuro-pad button,.tower-pad button) {
+  border-color: color-mix(in srgb, var(--number) 23%, var(--line));
+  background: var(--surface-raised);
+  color: color-mix(in srgb, var(--number) 76%, var(--ink));
+  box-shadow: none;
+}
+.game-page[data-play-category="number"] :is(.number-pad button,.kakuro-pad button,.tower-pad button):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--number) 58%, var(--line));
+  background: color-mix(in srgb, var(--number) 8%, var(--surface));
+}
+.game-page[data-play-category="number"] :is(.sudoku-cell,.killer-cell).selected {
+  outline: 2px solid color-mix(in srgb, var(--number) 82%, transparent);
+  outline-offset: -2px;
+}
+.game-page[data-play-category="number"] .kakuro-clue {
+  background: color-mix(in srgb, var(--number) 82%, var(--ink));
+}
+.game-page[data-play-category="number"] .arith-cell[class*="cage-"] {
+  --number-cage: color-mix(in srgb, var(--number) 82%, var(--ink));
+}
+
+/* LOGIC — constraint board / notation / solved-state language. */
+.game-page[data-play-category="logic"] .game-stage::before {
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--logic) 8%, transparent) 0 1.2px, transparent 1.4px) 0 0 / 18px 18px;
+  opacity: .52;
+}
+.game-page[data-play-category="logic"] .game-stage {
+  border-radius: 14px;
+}
+.game-page[data-play-category="logic"] .play-action-dock {
+  border-radius: 9px;
+  border-color: color-mix(in srgb, var(--logic) 24%, var(--line));
+  background: color-mix(in srgb, var(--surface) 97%, var(--logic) 3%);
+}
+.game-page[data-play-category="logic"] .play-action-dock button {
+  border-radius: 6px;
+}
+.game-page[data-play-category="logic"] .play-action-dock .play-hint-button {
+  background: color-mix(in srgb, var(--logic) 88%, var(--ink));
+}
+.game-page[data-play-category="logic"] :is(
+  .nonogram-board,.binary-board,.loop-board,.bridges-board,.light-board,
+  .islands-board,.hitori-board,.queens-board,.number-path-board,.tents-board,
+  .rect-board,.domino-board,.fill-board
+) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--logic) 18%, transparent), 0 10px 24px rgba(34,31,26,.08);
+}
+.game-page[data-play-category="logic"] :is(
+  .nono-cell,.binary-cell,.light-cell,.island-cell,.hitori-cell,.queen-cell,
+  .number-path-cell,.tent-cell,.rect-cell,.domino-cell,.fill-cell
+) {
+  transition: background 90ms ease, box-shadow 90ms ease, color 90ms ease;
+}
+.game-page[data-play-category="logic"] :is(
+  .nono-tools,.binary-pad,.queen-pad,.state-pad
+) {
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--logic) 14%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--logic) 4%, var(--surface));
+}
+.game-page[data-play-category="logic"] :is(
+  .nono-tools button,.binary-pad button,.queen-pad button,.state-pad button
+) {
+  border-radius: 6px;
+  border-color: color-mix(in srgb, var(--logic) 20%, var(--line));
+  box-shadow: none;
+}
+.game-page[data-play-category="logic"] :is(
+  .nono-cell.filled,.binary-cell.selected,.queen-cell.queen,.tent-cell.tent,
+  .light-cell.lamp,.island-cell.land,.hitori-cell.white
+) {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--logic) 56%, transparent);
+}
+.game-page[data-play-category="logic"] .bridge-line,
+.game-page[data-play-category="logic"] .loop-edge.on {
+  color: var(--logic);
+}
+.game-page[data-play-category="logic"] .domino-inventory span {
+  border-color: color-mix(in srgb, var(--logic) 18%, var(--line));
+}
+.game-page[data-play-category="logic"] .domino-inventory span.used {
+  background: color-mix(in srgb, var(--logic) 7%, var(--surface-soft));
+}
+
+/* SPATIAL — canvas / motion / node-and-edge language. */
+.game-page[data-play-category="spatial"] .game-stage {
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--spatial) 7%, var(--surface)), var(--surface) 64%);
+}
+.game-page[data-play-category="spatial"] .game-stage::before {
+  background:
+    linear-gradient(30deg, transparent 0 48%, color-mix(in srgb, var(--spatial) 5%, transparent) 49% 51%, transparent 52% 100%) 0 0 / 56px 56px,
+    radial-gradient(circle at center, color-mix(in srgb, var(--spatial) 6%, transparent) 0 1px, transparent 1.3px) 0 0 / 28px 28px;
+  opacity: .5;
+}
+.game-page[data-play-category="spatial"] .play-action-dock {
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--spatial) 25%, var(--line));
+  background: color-mix(in srgb, var(--surface) 96%, var(--spatial) 4%);
+}
+.game-page[data-play-category="spatial"] .play-action-dock button {
+  border-radius: 999px;
+}
+.game-page[data-play-category="spatial"] .play-action-dock .play-hint-button {
+  background: color-mix(in srgb, var(--spatial) 90%, var(--ink));
+}
+.game-page[data-play-category="spatial"] :is(.network-board,.sliding-board,.lights-board,.untangle-svg) {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--spatial) 19%, transparent), 0 16px 36px rgba(34,31,26,.11);
+}
+.game-page[data-play-category="spatial"] .network-cell {
+  background: color-mix(in srgb, var(--surface-raised) 98%, var(--spatial) 2%);
+}
+.game-page[data-play-category="spatial"] .network-cell:hover {
+  background: color-mix(in srgb, var(--spatial) 9%, var(--surface));
+}
+.game-page[data-play-category="spatial"] .net-arm,
+.game-page[data-play-category="spatial"] .net-center {
+  color: var(--spatial);
+}
+.game-page[data-play-category="spatial"] .slide-tile:not(.blank) {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-raised) 96%, var(--spatial) 4%);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--spatial) 22%, var(--line-strong)), 0 8px 16px rgba(34,31,26,.08);
+}
+.game-page[data-play-category="spatial"] .slide-tile:not(.blank):active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--spatial) 20%, var(--line-strong));
+}
+.game-page[data-play-category="spatial"] .light-cell {
+  border-color: color-mix(in srgb, var(--spatial) 16%, var(--line));
+}
+.game-page[data-play-category="spatial"] .light-cell.on {
+  background: color-mix(in srgb, var(--spatial) 46%, #f3c34a);
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, white 22%, transparent), 0 0 14px color-mix(in srgb, var(--spatial) 16%, transparent);
+}
+.game-page[data-play-category="spatial"] .untangle-svg {
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--spatial) 5%, var(--surface)) 0 1.3px, transparent 1.5px) 0 0 / 22px 22px,
+    color-mix(in srgb, var(--surface) 98%, var(--spatial) 2%);
+}
+.game-page[data-play-category="spatial"] .untangle-svg line:not(.crossing) {
+  stroke: color-mix(in srgb, var(--spatial) 25%, var(--ink-soft));
+  opacity: .58;
+}
+.game-page[data-play-category="spatial"] .untangle-svg line.crossing {
+  stroke: color-mix(in srgb, var(--danger) 86%, var(--spatial));
+  opacity: .96;
+}
+.game-page[data-play-category="spatial"] .untangle-node circle {
+  fill: color-mix(in srgb, var(--surface-raised) 95%, var(--spatial) 5%);
+  stroke: var(--spatial);
+  stroke-width: 1.9;
+}
+.game-page[data-play-category="spatial"] .untangle-node.selected circle,
+.game-page[data-play-category="spatial"] .untangle-node:focus circle {
+  fill: color-mix(in srgb, var(--spatial) 18%, var(--surface));
+  stroke: color-mix(in srgb, var(--spatial) 78%, var(--ink));
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--spatial) 24%, transparent));
+}
+
+/* Family-specific feedback surfaces make hints feel like part of the game,
+   not generic application alerts. */
+.game-page .play-feedback,
+.game-page .play-guide,
+.game-page .play-hint-zone .proof-hint {
+  border-color: var(--family-line);
+  background: color-mix(in srgb, var(--surface) 97%, var(--family-accent) 3%);
+}
+.game-page[data-play-category="word"] :is(.play-feedback,.play-guide,.proof-hint) {
+  border-radius: 13px;
+}
+.game-page[data-play-category="number"] :is(.play-feedback,.play-guide,.proof-hint) {
+  border-radius: 8px;
+}
+.game-page[data-play-category="logic"] :is(.play-feedback,.play-guide,.proof-hint) {
+  border-radius: 6px;
+}
+.game-page[data-play-category="spatial"] :is(.play-feedback,.play-guide,.proof-hint) {
+  border-radius: 16px;
+}
+
+/* Family-specific completion cards. */
+.game-page[data-play-category="word"] .result-panel {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--word) 8%, var(--surface)), var(--surface));
+}
+.game-page[data-play-category="number"] .result-panel {
+  border-radius: 9px;
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--number) 5%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    color-mix(in srgb, var(--surface) 98%, var(--number) 2%);
+}
+.game-page[data-play-category="logic"] .result-panel {
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 97%, var(--logic) 3%);
+}
+.game-page[data-play-category="spatial"] .result-panel {
+  border-radius: 18px;
+  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--spatial) 10%, transparent), transparent 46%), var(--surface);
+}
+
+@media (max-width: 720px) {
+  .game-category-label::before {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    font-size: 8px;
+  }
+  .game-page[data-play-category="number"] .game-category-label::before { font-size: 6px; }
+  .game-page[data-play-category="logic"] .game-category-label::before,
+  .game-page[data-play-category="spatial"] .game-category-label::before { font-size: 11px; }
+
+  .game-page[data-play-category="number"] :is(.number-pad,.kakuro-pad,.tower-pad),
+  .game-page[data-play-category="logic"] :is(.nono-tools,.binary-pad,.queen-pad,.state-pad) {
+    padding: 4px;
+  }
+
+  .game-page[data-play-category="spatial"] .game-stage {
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-page[data-play-category="logic"] :is(
+    .nono-cell,.binary-cell,.light-cell,.island-cell,.hitori-cell,.queen-cell,
+    .number-path-cell,.tent-cell,.rect-cell,.domino-cell,.fill-cell
+  ) {
+    transition: none;
+  }
+}
