@@ -1410,7 +1410,7 @@
     const category=byId[game.id]?.category||'logic',streak=resultStreak(active),allCompleted=[result,...completed].filter(h=>h.outcome==='completed'),totalSolved=allCompleted.length,categorySolved=allCompleted.filter(h=>byId[h.gameId]?.category===category).length;
     const milestones=[5,10,25,50,100,250,500],totalMilestone=milestones.includes(totalSolved)?totalSolved:null,categoryMilestone=milestones.includes(categorySolved)?categorySolved:null,badges=[];
     if(clean)badges.push({kind:'clean',icon:'◇',label:'Clean solve'});
-    if(newBest)badges.push({kind:'best',icon:'↗',label:'New fastest'});else if(firstDifficulty)badges.push({kind:'first',icon:'1',label:'First '+active.difficulty});else if(firstGame)badges.push({kind:'first',icon:'1',label:'First solve'});
+    if(newBest)badges.push({kind:'best',icon:'↗',label:'New fastest'});else if(firstGame)badges.push({kind:'first',icon:'1',label:'First solve'});else if(firstDifficulty)badges.push({kind:'first',icon:'1',label:'First '+active.difficulty});
     if(streak>=3)badges.push({kind:'streak',icon:'×'+streak,label:'Solve streak'});
     if(totalMilestone)badges.push({kind:'milestone',icon:String(totalMilestone),label:'Total solves'});else if(categoryMilestone)badges.push({kind:'milestone',icon:String(categoryMilestone),label:CATEGORIES[category].label+' solves'});
     let message='';
