@@ -1001,7 +1001,7 @@
     }
     if(game.id==='anagrams'){
       const answer=$('.anagram-answer'),tiles=$('.anagram-tiles');if(answer&&tiles){
-        const picked=a.state.selected?.length||0,total=a.puzzle.letters.length,progress=p5El('div','anagram-progress');progress.append(p5El('span','','Build a '+total+'-letter word'),p5El('strong','',picked+'/'+total));answer.before(progress);
+        const picked=a.state.selected?.length||0,total=a.puzzle.letters.length,progress=p5El('div','anagram-progress');answer.style.setProperty('--anagram-count',String(total));progress.append(p5El('span','','Build a '+total+'-letter word'),p5El('strong','',picked+'/'+total));answer.before(progress);
         $$('[data-anagram-tile]',tiles).forEach(el=>{const k=a.state.selected.indexOf(+el.dataset.anagramTile);el.dataset.pickOrder=k>=0?String(k+1):'';});
       }
     }
@@ -1036,7 +1036,7 @@
     }
     if(game.id==='untangle'){
       const counts=typeof w6NodeCrossingCounts==='function'?w6NodeCrossingCounts(a.puzzle.edges,a.state.positions):Array(a.puzzle.n).fill(0),current=untangleCrossings(a.puzzle.edges,a.state.positions),start=Math.max(1,a.puzzle.startCrossings||current),progress=Math.max(0,Math.min(100,Math.round((1-current/start)*100))),max=Math.max(0,...counts);
-      $$('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});
+      $('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});$('[data-edge]').forEach(el=>{const edge=a.puzzle.edges[+el.dataset.edge]||[];el.classList.toggle('selected-edge',edge.includes(a.state.selected));});
       const count=$('.crossing-count');if(count){count.textContent='';const top=p5El('div'),num=p5El('strong','',current),label=p5El('span','','crossings'),bar=p5El('div','untangle-progress'),fill=p5El('i'),small=p5El('small','',progress+'% cleared · best '+(a.state.bestCrossings??current));bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','Crossings removed');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress));fill.style.width=progress+'%';bar.append(fill);top.append(num,label);count.append(top,bar,small);}
     }
   }
