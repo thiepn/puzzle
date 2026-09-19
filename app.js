@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.1.0';
-  const BUILD_PHASE = 'Play Experience';
+  const APP_VERSION = '1.2.0';
+  const BUILD_PHASE = 'Accessibility, Controls & Device Polish';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -12,6 +12,7 @@
   const main = $('#main');
   const overlayRoot = $('#overlay-root');
   const toastRoot = $('#toast-root');
+  const routeStatus = $('#route-status');
 
   const CATEGORIES = {
     word: { label: 'Word', accent: 'word' },
@@ -386,7 +387,7 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard' },
     favorites: [],
     active: [],
     history: [],
@@ -425,7 +426,9 @@
   function toast(msg) {
     if(state.currentActive&&/^Hint [1-4]\/4 · /.test(String(msg))&&state.currentActive.state._proofHintView){playSession(state.currentActive).feedback='';return;}
     if(state.currentActive)gameFeedback(msg);
-    const el=document.createElement('div'); el.className='toast'; el.textContent=msg; toastRoot.appendChild(el);
+    const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+    if(state.currentActive)el.setAttribute('aria-hidden','true');
+    toastRoot.appendChild(el);
     setTimeout(()=>el.remove(),2200);
   }
 
@@ -444,6 +447,22 @@
     }
   }
   themeMedia.addEventListener?.('change', syncThemeChrome);
+
+  function applyAccessibilitySettings(persist=true) {
+    const motion=['system','reduced'].includes(state.settings.motion)?state.settings.motion:'system';
+    const contrast=['system','high'].includes(state.settings.contrast)?state.settings.contrast:'system';
+    const controls=['standard','large'].includes(state.settings.controls)?state.settings.controls:'standard';
+    state.settings.motion=motion;state.settings.contrast=contrast;state.settings.controls=controls;
+    document.documentElement.dataset.motion=motion;
+    document.documentElement.dataset.contrast=contrast;
+    document.documentElement.dataset.controls=controls;
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function announceRoute(label) {
+    if(!routeStatus)return;
+    routeStatus.textContent='';
+    requestAnimationFrame(()=>{routeStatus.textContent=label;});
+  }
 
   function parseHash() {
     const raw=location.hash.replace(/^#\/?/,'') || 'home';
@@ -467,7 +486,11 @@
   }
 
   function updateNav(route) {
-    $$('.nav-link').forEach(b=>b.classList.toggle('is-active', b.dataset.route===route));
+    $('.nav-link').forEach(b=>{
+      const active=b.dataset.route===route;
+      b.classList.toggle('is-active',active);
+      if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+    });
   }
 
   function cardPreview(id) {
@@ -526,6 +549,9 @@
     return {
       theme:['system','light','dark'].includes(v.theme)?v.theme:'system',
       playMode:['relaxed','challenge'].includes(v.playMode)?v.playMode:'relaxed',
+      motion:['system','reduced'].includes(v.motion)?v.motion:'system',
+      contrast:['system','high'].includes(v.contrast)?v.contrast:'system',
+      controls:['standard','large'].includes(v.controls)?v.controls:'standard',
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -570,6 +596,7 @@
     state.active = sanitizeActiveList(await activeRecords());
     state.history = sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     setTheme(state.settings.theme, false);
+    applyAccessibilitySettings(false);
   }
 
   async function renderHome(ticket=routeGeneration){
@@ -708,7 +735,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
