@@ -928,7 +928,8 @@
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
-    $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
