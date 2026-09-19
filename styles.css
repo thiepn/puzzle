@@ -4648,3 +4648,25 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Completion state: keep the solved board, remove controls that can no longer
+   affect it, and let the result card follow immediately. */
+.game-page[data-play-completed="true"] .play-action-dock,
+.game-page[data-play-completed="true"] .toolbar,
+.game-page[data-play-completed="true"] .number-pad,
+.game-page[data-play-completed="true"] .binary-pad,
+.game-page[data-play-completed="true"] .queen-pad,
+.game-page[data-play-completed="true"] .nono-tools,
+.game-page[data-play-completed="true"] .state-pad,
+.game-page[data-play-completed="true"] .letter-keyboard,
+.game-page[data-play-completed="true"] .cross-keyboard,
+.game-page[data-play-completed="true"] .op-row,
+.game-page[data-play-completed="true"] .dense-board-controls,
+.game-page[data-play-completed="true"] .play-shuffle,
+.game-page[data-play-completed="true"] .mine-input-mode {
+  display: none !important;
+}
+.game-page[data-play-completed="true"] .result-panel--reward {
+  margin-top: 10px;
+}
