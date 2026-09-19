@@ -981,7 +981,7 @@
       poly.setAttribute('points',pts.map(p=>p.join(',')).join(' '));svg.append(poly);
       pts.forEach((p,i)=>{const c=document.createElementNS(ns,'circle');c.setAttribute('cx',p[0]);c.setAttribute('cy',p[1]);c.setAttribute('r',i===pts.length-1?'7':'5');svg.append(c);});
     }
-    $$('[data-wg]',board).forEach(el=>{const i=+el.dataset.wg,k=a.state.path.indexOf(i);el.dataset.pathOrder=k>=0?String(k+1):'';});
+    $board.querySelectorAll('[data-wg]').forEach(el=>{const i=+el.dataset.wg,k=a.state.path.indexOf(i);el.dataset.pathOrder=k>=0?String(k+1):'';});
   }
   function applyIndividualGamePolish(game,a){
     if(game.id==='sudoku'){
@@ -989,25 +989,25 @@
       const context=p5El('div','sudoku-context');context.setAttribute('aria-live','polite');
       context.append(p5El('span','', 'R'+r+'C'+c),p5El('strong','',v?'Value '+v:(candidates.length?'Candidates '+candidates.join(' · '):'No candidates')),p5El('em','',a.state.noteMode?'Pencil mode':'Value mode'));
       $('.sudoku-board')?.after(context);
-      $$('[data-num]').forEach(el=>{const n=+el.dataset.num;if(!n)return;el.dataset.remaining=String(Math.max(0,9-a.state.board.filter(x=>x===n).length));});
+      $document.querySelectorAll('[data-num]').forEach(el=>{const n=+el.dataset.num;if(!n)return;el.dataset.remaining=String(Math.max(0,9-a.state.board.filter(x=>x===n).length));});
     }
     if(game.id==='groups'){
       const wrap=$('.groups-wrap'),grid=$('.groups-grid');if(wrap&&grid){
         const selected=a.state.selected||[],mission=p5El('div','groups-mission'),copy=p5El('div'),small=p5El('small','', 'Group '+Math.min(4,(a.state.solved?.length||0)+1)+' of 4'),strong=p5El('strong','',(4-(a.state.solved?.length||0))?'Find '+(4-(a.state.solved?.length||0))+' more '+((4-(a.state.solved?.length||0))===1?'group':'groups'):'All groups found'),dots=p5El('div','groups-selection-dots');
         dots.setAttribute('aria-label',selected.length+' of 4 selected');copy.append(small,strong);for(let k=0;k<4;k++)dots.append(p5El('i',k<selected.length?'on':''));mission.append(copy,dots);grid.before(mission);
-        $$('[data-group-tile]',grid).forEach(el=>{const k=selected.indexOf(el.dataset.groupTile);el.dataset.selectionOrder=k>=0?String(k+1):'';});
-        $$('.group-solved',wrap).forEach((el,k)=>el.dataset.solvedIndex=String(k));
+        $grid.querySelectorAll('[data-group-tile]').forEach(el=>{const k=selected.indexOf(el.dataset.groupTile);el.dataset.selectionOrder=k>=0?String(k+1):'';});
+        $wrap.querySelectorAll('.group-solved').forEach((el,k)=>el.dataset.solvedIndex=String(k));
       }
     }
     if(game.id==='anagrams'){
       const answer=$('.anagram-answer'),tiles=$('.anagram-tiles');if(answer&&tiles){
         const picked=a.state.selected?.length||0,total=a.puzzle.letters.length,progress=p5El('div','anagram-progress');answer.style.setProperty('--anagram-count',String(total));progress.append(p5El('span','','Build a '+total+'-letter word'),p5El('strong','',picked+'/'+total));answer.before(progress);
-        $$('[data-anagram-tile]',tiles).forEach(el=>{const k=a.state.selected.indexOf(+el.dataset.anagramTile);el.dataset.pickOrder=k>=0?String(k+1):'';});
+        $tiles.querySelectorAll('[data-anagram-tile]').forEach(el=>{const k=a.state.selected.indexOf(+el.dataset.anagramTile);el.dataset.pickOrder=k>=0?String(k+1):'';});
       }
     }
     if(game.id==='word-grid'){
       const board=$('.word-grid-board');if(board&&!$('.word-grid-path-svg',board)){
-        $$('[data-wg]',board).forEach(el=>{if(!el.querySelector('span')){const span=p5El('span','',el.textContent);el.textContent='';el.append(span);}});
+        $board.querySelectorAll('[data-wg]').forEach(el=>{if(!el.querySelector('span')){const span=p5El('span','',el.textContent);el.textContent='';el.append(span);}});
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('word-grid-path-svg');svg.setAttribute('aria-hidden','true');board.prepend(svg);
         const observer=new MutationObserver(()=>p5DrawWordGridPath(a));observer.observe(board,{subtree:true,attributes:true,attributeFilter:['class']});
         const cleanup=pointerCleanup;pointerCleanup=()=>{observer.disconnect();cleanup?.();};requestAnimationFrame(()=>p5DrawWordGridPath(a));
@@ -1018,25 +1018,25 @@
       const selected=a.state.selected,mapped=a.state.mapping[selected]||'?',sel=$('.crypto-selected');
       if(sel){sel.textContent='';const label=p5El('span','','Selected symbol'),pair=p5El('strong'),left=p5El('b','',selected),arrow=p5El('i','', '→'),right=p5El('b','',mapped),help=p5El('small','',mapped==='?'?'Choose a plaintext letter below':'Click another cipher symbol or type a replacement');arrow.setAttribute('aria-hidden','true');pair.append(left,arrow,right);sel.append(label,pair,help);}
       const owners=new Map(Object.entries(a.state.mapping).map(([cipher,plain])=>[plain,cipher]));
-      $$('.crypto-keyboard [data-key]').forEach(key=>{const plain=key.dataset.key;if(!/^[A-Z]$/.test(plain))return;const owner=owners.get(plain);key.classList.toggle('assigned',!!owner);if(owner)key.dataset.owner=owner;else delete key.dataset.owner;});
-      $$('.crypto-map').forEach(el=>el.classList.toggle('mapped',!!a.state.mapping[el.dataset.crypto]));
+      $document.querySelectorAll('.crypto-keyboard [data-key]').forEach(key=>{const plain=key.dataset.key;if(!/^[A-Z]$/.test(plain))return;const owner=owners.get(plain);key.classList.toggle('assigned',!!owner);if(owner)key.dataset.owner=owner;else delete key.dataset.owner;});
+      $document.querySelectorAll('.crypto-map').forEach(el=>el.classList.toggle('mapped',!!a.state.mapping[el.dataset.crypto]));
       const freq=$('.cipher-frequency'),maps=$('.crypto-mappings');if(freq&&maps){const inspector=p5El('div','crypto-inspector');maps.before(inspector);inspector.append(maps,freq);}
     }
     if(game.id==='nonogram'){
       const n=a.puzzle.size;
-      $$('.nono-row-clues>div').forEach((el,r)=>{const line=a.state.cells.slice(r*n,r*n+n);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.rowClues[r]));});
-      $$('.nono-col-clues>div').forEach((el,c)=>{const line=Array.from({length:n},(_,r)=>a.state.cells[r*n+c]);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.colClues[c]));});
+      $document.querySelectorAll('.nono-row-clues>div').forEach((el,r)=>{const line=a.state.cells.slice(r*n,r*n+n);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.rowClues[r]));});
+      $document.querySelectorAll('.nono-col-clues>div').forEach((el,c)=>{const line=Array.from({length:n},(_,r)=>a.state.cells[r*n+c]);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.colClues[c]));});
       const tools=$('.nono-tools');if(tools)tools.prepend(p5El('span','nono-tool-label',a.state.tool===1?'Fill cells':'Mark empty'));
       const dense=$('.dense-board-controls');if(dense){dense.classList.add('nonogram-view-controls');const fit=$('[data-board-fit]',dense);if(fit&&fit.getAttribute('aria-pressed')!=='true')fit.click();}
     }
     if(game.id==='kakuro'){
       const p=a.puzzle,selected=a.state.selected,runs=p.runOf?.[selected]||[],related=new Set(runs.flatMap(ri=>p.runs?.[ri]?.cells||[]));
-      $$('[data-kakuro]').forEach(el=>el.classList.toggle('run-related',related.has(+el.dataset.kakuro)&&+el.dataset.kakuro!==selected));
+      $document.querySelectorAll('[data-kakuro]').forEach(el=>el.classList.toggle('run-related',related.has(+el.dataset.kakuro)&&+el.dataset.kakuro!==selected));
       const pad=$('.kakuro-pad');if(pad)pad.prepend(p5El('span','kakuro-pad-label','Digit'));
     }
     if(game.id==='untangle'){
       const counts=typeof w6NodeCrossingCounts==='function'?w6NodeCrossingCounts(a.puzzle.edges,a.state.positions):Array(a.puzzle.n).fill(0),current=untangleCrossings(a.puzzle.edges,a.state.positions),start=Math.max(1,a.puzzle.startCrossings||current),progress=Math.max(0,Math.min(100,Math.round((1-current/start)*100))),max=Math.max(0,...counts);
-      $('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});$('[data-edge]').forEach(el=>{const edge=a.puzzle.edges[+el.dataset.edge]||[];el.classList.toggle('selected-edge',edge.includes(a.state.selected));});
+      document.querySelectorAll('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});document.querySelectorAll('[data-edge]').forEach(el=>{const edge=a.puzzle.edges[+el.dataset.edge]||[];el.classList.toggle('selected-edge',edge.includes(a.state.selected));});
       const count=$('.crossing-count');if(count){count.textContent='';const top=p5El('div'),num=p5El('strong','',current),label=p5El('span','','crossings'),bar=p5El('div','untangle-progress'),fill=p5El('i'),small=p5El('small','',progress+'% cleared · best '+(a.state.bestCrossings??current));bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','Crossings removed');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress));fill.style.width=progress+'%';bar.append(fill);top.append(num,label);count.append(top,bar,small);}
     }
   }
