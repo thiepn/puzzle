@@ -1407,12 +1407,12 @@
     const result=active.result||{},previous=resultHistory(active),completed=previous.filter(h=>h.outcome==='completed'),sameGame=completed.filter(h=>h.gameId===game.id),sameDifficulty=sameGame.filter(h=>h.difficulty===active.difficulty);
     const hints=active.hintsUsed||result.metrics?.hintsUsed||0,duration=active.durationMs||result.durationMs||0,prevBest=sameDifficulty.length?Math.min(...sameDifficulty.map(h=>h.durationMs||Infinity)):null;
     const clean=result.outcome==='completed'&&hints===0,firstGame=result.outcome==='completed'&&sameGame.length===0,firstDifficulty=result.outcome==='completed'&&sameDifficulty.length===0,newBest=result.outcome==='completed'&&prevBest!=null&&duration<prevBest;
-    const streak=resultStreak(active),allCompleted=[result,...completed].filter(h=>h.outcome==='completed'),totalSolved=allCompleted.length,categorySolved=allCompleted.filter(h=>byId[h.gameId]?.category===game.category).length;
+    const category=byId[game.id]?.category||'logic',streak=resultStreak(active),allCompleted=[result,...completed].filter(h=>h.outcome==='completed'),totalSolved=allCompleted.length,categorySolved=allCompleted.filter(h=>byId[h.gameId]?.category===category).length;
     const milestones=[5,10,25,50,100,250,500],totalMilestone=milestones.includes(totalSolved)?totalSolved:null,categoryMilestone=milestones.includes(categorySolved)?categorySolved:null,badges=[];
     if(clean)badges.push({kind:'clean',icon:'◇',label:'Clean solve'});
     if(newBest)badges.push({kind:'best',icon:'↗',label:'New fastest'});else if(firstDifficulty)badges.push({kind:'first',icon:'1',label:'First '+active.difficulty});else if(firstGame)badges.push({kind:'first',icon:'1',label:'First solve'});
     if(streak>=3)badges.push({kind:'streak',icon:'×'+streak,label:'Solve streak'});
-    if(totalMilestone)badges.push({kind:'milestone',icon:String(totalMilestone),label:'Total solves'});else if(categoryMilestone)badges.push({kind:'milestone',icon:String(categoryMilestone),label:CATEGORIES[game.category].label+' solves'});
+    if(totalMilestone)badges.push({kind:'milestone',icon:String(totalMilestone),label:'Total solves'});else if(categoryMilestone)badges.push({kind:'milestone',icon:String(categoryMilestone),label:CATEGORIES[category].label+' solves'});
     let message='';
     if(result.outcome!=='completed')message='This attempt is saved. A fresh board is ready whenever you want another run.';
     else if(newBest)message='New fastest '+active.difficulty.toLowerCase()+' solve'+(prevBest-duration>=1000?' — '+formatTime(prevBest-duration)+' faster than your previous best.':'.');
