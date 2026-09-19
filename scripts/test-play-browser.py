@@ -38,6 +38,25 @@ with sync_playwright() as p:
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'desktop home overflow'
         page.screenshot(path=str(OUT/'home-1365.png'),full_page=True)
     if not opt.quick:
+        # Phase 6 motion contract: full motion emits lifecycle events, reduced motion opts out.
+        page.emulate_media(reduced_motion='no-preference')
+        page.set_viewport_size({'width':390,'height':844})
+        navigate('game/sudoku?seed=motion-system&difficulty=Easy')
+        page.wait_for_function('() => document.querySelector(".game-page")?.dataset.playGame==="sudoku"')
+        assert page.locator('.game-page').get_attribute('data-motion')=='full'
+        assert 'motion-system' in (page.locator('.game-page').get_attribute('class') or '')
+        assert page.locator('.game-page').get_attribute('data-motion-event')=='enter'
+        motion_cell=page.locator('[data-cell]:not(.given)').first
+        motion_cell.click()
+        page.locator('[data-num="1"]').click()
+        page.wait_for_function('() => document.querySelector(".game-page")?.dataset.motionEvent==="move"')
+        page.emulate_media(reduced_motion='reduce')
+        navigate('game/groups?seed=motion-reduced&difficulty=Easy')
+        page.wait_for_function('() => document.querySelector(".game-page")?.dataset.playGame==="groups"')
+        assert page.locator('.game-page').get_attribute('data-motion')=='reduced'
+        assert 'motion-system' not in (page.locator('.game-page').get_attribute('class') or '')
+        page.emulate_media(reduced_motion='no-preference')
+    if not opt.quick:
         family_reps={'word':'groups','number':'sudoku','logic':'nonogram','spatial':'untangle'}
         page.set_viewport_size({'width':1365,'height':900})
         for family,gid in family_reps.items():
