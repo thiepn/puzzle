@@ -244,6 +244,53 @@ with sync_playwright() as p:
     page.wait_for_timeout(750)
     page.screenshot(path=str(OUT/'result-reward-sudoku-390.png'),full_page=True)
 
+    # Phase 8: populate a representative local record and verify desktop/mobile Stats.
+    synthetic_now=page.evaluate('Date.now()')
+    synthetic=[
+        ('stats-groups','groups','completed','Medium',84000,0,1),
+        ('stats-nono','nonogram','completed','Hard',146000,2,2),
+        ('stats-untangle','untangle','failed','Hard',92000,1,3),
+        ('stats-kakuro','kakuro','completed','Medium',113000,0,4),
+        ('stats-wordgrid','word-grid','completed','Easy',73000,1,5),
+        ('stats-network','network','completed','Medium',67000,0,6),
+        ('stats-five','five-letters','completed','Easy',51000,0,7),
+        ('stats-sudoku-best','sudoku','completed','Easy',42000,0,8),
+    ]
+    page.evaluate("""([now,rows]) => new Promise((resolve,reject)=>{
+      const req=indexedDB.open('puzzle-arcade',1);
+      req.onerror=()=>reject(req.error);
+      req.onsuccess=()=>{
+        const tx=req.result.transaction('history','readwrite'),store=tx.objectStore('history');
+        for(const row of rows){
+          const [id,gameId,outcome,difficulty,durationMs,hintsUsed,daysAgo]=row;
+          store.put({id,gameId,puzzleIdentity:gameId+':stats:'+id,outcome,difficulty,durationMs,metrics:{hintsUsed},endedAt:now-daysAgo*86400000});
+        }
+        tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);
+      };
+    })""",arg=[synthetic_now,synthetic])
+    page.set_viewport_size({'width':1365,'height':900});navigate('stats');page.locator('.stats-page').wait_for()
+    assert page.locator('.stats-overview > div').count()==4
+    assert page.locator('.stats-family-card').count()==4
+    assert page.locator('.stats-day').count()==28
+    assert page.locator('.stats-game-record').count()>=6
+    assert page.locator('.stats-history-row').count()>=9
+    assert page.locator('.stats-best-chips').count()>=1
+    assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'desktop stats overflow'
+    page.screenshot(path=str(OUT/'stats-records-1365.png'),full_page=True)
+    page.locator('[data-stats-filter="ended"]').click()
+    assert page.locator('.stats-history-row:visible').count()>=1
+    assert all(x!='completed' for x in page.locator('.stats-history-row:visible').evaluate_all('(els)=>els.map(e=>e.dataset.outcome)'))
+    page.locator('[data-stats-filter="all"]').click()
+    first_record=page.locator('.stats-game-record [data-stats-game]').first
+    first_game=first_record.get_attribute('data-stats-game')
+    first_record.click()
+    page.wait_for_function('(id)=>document.querySelector(".game-page")?.dataset.playGame===id',arg=first_game)
+    page.set_viewport_size({'width':390,'height':844});navigate('stats');page.locator('.stats-page').wait_for()
+    assert page.locator('.stats-family-card').count()==4
+    assert page.locator('.stats-game-record').count()>=6
+    assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'mobile stats overflow'
+    page.screenshot(path=str(OUT/'stats-records-390.png'),full_page=True)
+
     # Phase 3 discovery hierarchy and full-library fallback remain usable at a narrow width.
     page.set_viewport_size({'width':320,'height':800});navigate('home');page.locator('[data-library-search]').wait_for()
     assert page.locator('.discovery-hero').is_visible()
