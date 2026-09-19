@@ -42,7 +42,10 @@ with sync_playwright() as p:
         page.set_viewport_size({'width':1365,'height':900})
         for family,gid in family_reps.items():
             navigate(f'game/{gid}?seed=family-system&difficulty=Easy')
-            page.wait_for_function('(x)=>document.querySelector(".game-page")?.dataset.playGame===x[0]&&document.querySelector(".game-page")?.dataset.playCategory===x[1]',arg=[gid,family])
+            page.wait_for_timeout(350)
+            assert page.locator('.game-page').count()==1,(gid,errors,page.locator('body').inner_text()[:800])
+            assert page.locator('.game-page').get_attribute('data-play-game')==gid,(gid,'wrong game page')
+            assert page.locator('.game-page').get_attribute('data-play-category')==family,(gid,'wrong family')
             badge=page.evaluate('getComputedStyle(document.querySelector(".game-category-label"),"::before").content')
             pattern=page.evaluate('getComputedStyle(document.querySelector(".game-stage"),"::before").backgroundImage')
             assert badge not in ('none','normal','""'),(family,'missing family badge')
