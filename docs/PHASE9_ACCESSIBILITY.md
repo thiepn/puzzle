@@ -44,4 +44,4 @@ node scripts/release-check.mjs
 python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
 ```
 
-The release gate also retains the puzzle-content, service-worker, word-entry, and Play Experience regression tests.
+The release gate also retains the puzzle-content, service-worker, word-entry, and Play Experience regression tests. Pull requests run this gate without deploying production.
