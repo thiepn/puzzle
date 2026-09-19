@@ -3952,3 +3952,29 @@ body {
     transition: none;
   }
 }
+
+
+/* Phase 5 visual QA fixes */
+.game-page[data-play-game="kakuro"] .kakuro-board.kakuro-board--deep {
+  aspect-ratio: 1 / 1 !important;
+  height: auto;
+  max-height: none;
+}
+.game-page[data-play-game="untangle"] .untangle-svg line.crossing {
+  opacity: .28;
+}
+.game-page[data-play-game="untangle"] .untangle-svg line.selected-edge {
+  opacity: .78;
+  stroke: color-mix(in srgb, var(--spatial) 76%, var(--ink-soft));
+  stroke-width: 1.8;
+}
+.game-page[data-play-game="untangle"] .untangle-svg line.selected-edge.crossing {
+  opacity: 1;
+  stroke: color-mix(in srgb, var(--danger) 86%, var(--spatial));
+  stroke-width: 2.05;
+}
+@media (max-width:720px) {
+  .game-page[data-play-game="kakuro"] .kakuro-board.kakuro-board--deep {
+    width: min(calc(100vw - 22px), 560px);
+  }
+}
