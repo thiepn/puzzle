@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.2.0';
-  const BUILD_PHASE = 'Accessibility, Controls & Device Polish';
+  const APP_VERSION = '1.3.0';
+  const BUILD_PHASE = 'Integration, Final Certification & Ship';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -486,7 +486,7 @@
   }
 
   function updateNav(route) {
-    $$('.nav-link').forEach(b=>{
+    $('.nav-link').forEach(b=>{
       const active=b.dataset.route===route;
       b.classList.toggle('is-active',active);
       if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
@@ -534,14 +534,50 @@
   }
 
   function gameCard(g) {
-    const fav=state.favorites.includes(g.id);
+    const fav=state.favorites.includes(g.id),active=state.active.find(a=>a.gameId===g.id);
     return `<article class="game-card" data-game="${g.id}" data-category="${g.category}">
-      <button class="game-card__open" data-game-open="${g.id}" aria-label="Open ${esc(g.name)}"></button>
+      <button class="game-card__open" data-game-open="${g.id}" aria-label="${active?'Continue':'Open'} ${esc(g.name)}"></button>
       <button class="game-card__star ${fav?'is-on':''}" data-favorite="${g.id}" aria-label="${fav?'Remove':'Add'} ${esc(g.name)} ${fav?'from':'to'} favorites">${fav?'★':'☆'}</button>
-      <div class="game-card__preview">${cardPreview(g.id)}</div>
+      <div class="game-card__preview"><div class="game-card__preview-inner">${cardPreview(g.id)}</div></div>
+      <div class="game-card__eyebrow"><span>${esc(CATEGORIES[g.category].label)}</span>${active?'<b>In progress</b>':''}</div>
       <div class="game-card__title">${esc(g.name)}</div>
-      <p class="game-card__description">${esc(g.description)}</p><div class="game-card__meta">${CATEGORIES[g.category].label} · ${state.active.some(a=>a.gameId===g.id)?'Continue puzzle':'Play now'}</div>
+      <p class="game-card__description">${esc(g.description)}</p>
+      <div class="game-card__meta">${active?`${esc(active.difficulty)} · ${esc(safeProgressLabel(active))}`:'Start a puzzle'} <span aria-hidden="true">→</span></div>
     </article>`;
+  }
+
+  function homeCategoryPortal(id,available){
+    const games=available.filter(g=>g.category===id),cat=CATEGORIES[id],marks={word:'Aa',number:'123',logic:'◇',spatial:'↗'};
+    const descriptors={word:'Words, language & patterns',number:'Arithmetic & deduction',logic:'Constraints & inference',spatial:'Shape, movement & systems'};
+    return `<button class="category-portal category-portal--${id}" data-discover-category="${id}">
+      <span class="category-portal__mark" aria-hidden="true">${marks[id]}</span>
+      <span class="category-portal__copy"><strong>${esc(cat.label)}</strong><small>${descriptors[id]}</small></span>
+      <span class="category-portal__count">${games.length}</span>
+      <span class="category-portal__arrow" aria-hidden="true">→</span>
+    </button>`;
+  }
+
+  function homeMiniCard(g,kind='recent'){
+    const active=state.active.find(a=>a.gameId===g.id);
+    return `<article class="home-mini-card" data-category="${g.category}">
+      <button class="home-mini-card__open" data-home-open="${g.id}" aria-label="${active?'Continue':'Open'} ${esc(g.name)}"></button>
+      <div class="home-mini-card__preview">${cardPreview(g.id)}</div>
+      <div class="home-mini-card__copy"><small>${esc(CATEGORIES[g.category].label)} · ${kind==='favorite'?'Favorite':active?'In progress':'Played'}</small><strong>${esc(g.name)}</strong><span>${active?esc(safeProgressLabel(active)):esc(g.description)}</span></div>
+      <span class="home-mini-card__arrow" aria-hidden="true">→</span>
+    </article>`;
+  }
+
+  function homeUniqueRecent(available,limit=5){
+    const allowed=new Set(available.map(g=>g.id)),ids=[];
+    for(const a of [...state.active].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)))if(allowed.has(a.gameId)&&!ids.includes(a.gameId))ids.push(a.gameId);
+    for(const h of state.history)if(allowed.has(h.gameId)&&!ids.includes(h.gameId))ids.push(h.gameId);
+    return ids.slice(0,limit).map(id=>byId[id]);
+  }
+
+  function homeFeaturedGame(available){
+    if(!available.length)return null;
+    const day=Math.floor(Date.now()/86400000);
+    return available[day%available.length];
   }
 
   function sanitizeSettings(value) {
@@ -602,16 +638,56 @@
   async function renderHome(ticket=routeGeneration){
     stopTimer();state.currentGame=null;state.currentActive=null;updateNav('home');document.title='Puzzle Arcade';
     state.active=sanitizeActiveList(await activeRecords());if(!routeIsCurrent(ticket))return;
-    const available=ALL_GAMES.filter(g=>g.status==='available'),activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4);
+    const available=ALL_GAMES.filter(g=>g.status==='available');
+    const activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,6);
+    const primaryActive=activeSorted[0]||null,featured=homeFeaturedGame(available);
+    const recent=homeUniqueRecent(available,5);
+    const favoriteGames=state.favorites.map(id=>byId[id]).filter(g=>g?.status==='available').slice(0,6);
     const filtered=available.filter(g=>state.category==='all'||(state.category==='favorites'?state.favorites.includes(g.id):g.category===state.category));
-    main.innerHTML=`<div class="page play-library"><section class="hero-row"><div><p class="page-kicker">Your puzzle arcade</p><h1 class="hero-title">Pick a puzzle.<br>Keep going.</h1><p class="hero-copy">36 games. Unlimited puzzles. No accounts, lives, or daily lockouts.</p></div><button class="random-button" data-action="random">↻ Surprise me</button></section>
-      ${activeSorted.length?`<section class="section"><div class="section-head"><div><h2>Pick up where you left off</h2></div></div><div class="continue-row">${activeSorted.map(a=>`<button class="continue-card" data-game="${a.gameId}"><strong>${esc(byId[a.gameId].name)}</strong><span>${esc(a.difficulty)} · ${esc(safeProgressLabel(a))}</span></button>`).join('')}</div></section>`:''}
-      <section class="section"><div class="library-search-row"><h2>Find your next puzzle</h2><label class="library-search"><span class="sr-only">Search games</span><input type="search" data-library-search placeholder="Search games or skills…" value="${esc(state.libraryQuery||'')}" autocomplete="off"></label></div>
-      <div class="filterbar" aria-label="Game categories">${['all','word','number','logic','spatial','favorites'].map(c=>{const count=c==='all'?available.length:c==='favorites'?state.favorites.length:available.filter(g=>g.category===c).length;return `<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}" aria-pressed="${state.category===c}">${c==='all'?'All':c==='favorites'?'Favorites':CATEGORIES[c].label} <span>${count}</span></button>`;}).join('')}</div>
-      <p class="library-count" data-catalog-count aria-live="polite"></p><div class="game-grid" data-catalog-grid>${filtered.map(gameCard).join('')}</div><p class="library-empty" data-library-empty hidden>No games match this search. Try a shorter name or another category.</p></section></div>`;
-    bindCommon();const search=$('[data-library-search]');const filter=()=>{state.libraryQuery=search.value;const q=search.value.trim().toLowerCase();let count=0;$$('[data-catalog-grid] .game-card').forEach(el=>{const g=byId[el.dataset.game],show=!q||`${g.name} ${g.description} ${CATEGORIES[g.category].label}`.toLowerCase().includes(q);el.hidden=!show;if(show)count++;});$('[data-catalog-count]').textContent=`${count} ${count===1?'game':'games'}`;$('[data-library-empty]').hidden=count>0;};search.oninput=filter;filter();
-  }
+    const heroGame=primaryActive?byId[primaryActive.gameId]:featured;
 
+    main.innerHTML=`<div class="page play-library discovery-home">
+      <section class="discovery-hero">
+        <div class="discovery-intro">
+          <p class="page-kicker">36 games · unlimited play</p>
+          <h1 class="hero-title">${primaryActive?'Your next move is waiting.':'What do you feel like solving?'}</h1>
+          <p class="hero-copy">Word, number, logic and spatial puzzles in one quiet arcade. No lives, no lockouts, no account required.</p>
+          <div class="discovery-hero-actions"><button class="random-button" data-action="random-all">↻ Surprise me</button><button class="secondary-button discovery-browse" data-action="browse-all">Browse all 36</button></div>
+        </div>
+        ${heroGame?`<article class="continue-spotlight" data-category="${heroGame.category}">
+          <div class="continue-spotlight__visual">${cardPreview(heroGame.id)}</div>
+          <div class="continue-spotlight__body">
+            <small>${primaryActive?'Continue playing':'Featured puzzle'}</small>
+            <h2>${esc(heroGame.name)}</h2>
+            <p>${primaryActive?esc(safeProgressLabel(primaryActive)):esc(heroGame.description)}</p>
+            ${primaryActive?`<div class="continue-spotlight__meta"><span>${esc(primaryActive.difficulty)}</span><span>${formatTime(activeDuration(primaryActive))}</span></div>`:''}
+            <button class="primary-button continue-spotlight__cta" data-home-open="${heroGame.id}">${primaryActive?'Continue':'Play now'} <span aria-hidden="true">→</span></button>
+          </div>
+        </article>`:''}
+      </section>
+
+      ${activeSorted.length>1?`<section class="home-section home-continue-section"><div class="home-section-head"><div><p class="home-section-kicker">In progress</p><h2>Keep going</h2></div><span>${activeSorted.length} open puzzles</span></div><div class="continue-rail">${activeSorted.slice(primaryActive?1:0).map(a=>`<button class="continue-tile" data-home-open="${a.gameId}" data-category="${byId[a.gameId].category}"><span class="continue-tile__preview">${cardPreview(a.gameId)}</span><span class="continue-tile__copy"><small>${esc(CATEGORIES[byId[a.gameId].category].label)} · ${esc(a.difficulty)}</small><strong>${esc(byId[a.gameId].name)}</strong><span>${esc(safeProgressLabel(a))}</span></span><span class="continue-tile__arrow" aria-hidden="true">→</span></button>`).join('')}</div></section>`:''}
+
+      <section class="home-section category-discovery"><div class="home-section-head"><div><p class="home-section-kicker">Choose a lane</p><h2>Browse by puzzle type</h2></div><span>Every game is always unlocked</span></div><div class="category-portals">${['word','number','logic','spatial'].map(id=>homeCategoryPortal(id,available)).join('')}</div></section>
+
+      ${recent.length?`<section class="home-section"><div class="home-section-head"><div><p class="home-section-kicker">Your rotation</p><h2>Recently played</h2></div></div><div class="home-mini-grid">${recent.map(g=>homeMiniCard(g,'recent')).join('')}</div></section>`:''}
+
+      ${favoriteGames.length?`<section class="home-section"><div class="home-section-head"><div><p class="home-section-kicker">Saved</p><h2>Favorites</h2></div><button class="text-button" data-discover-category="favorites">See all favorites</button></div><div class="home-mini-grid">${favoriteGames.slice(0,5).map(g=>homeMiniCard(g,'favorite')).join('')}</div></section>`:''}
+
+      <section class="section catalog-section" data-catalog-section>
+        <div class="library-search-row"><div><p class="home-section-kicker">Full library</p><h2>All puzzles</h2></div><label class="library-search"><span class="sr-only">Search games</span><input type="search" data-library-search placeholder="Search games or skills…" value="${esc(state.libraryQuery||'')}" autocomplete="off"></label></div>
+        <div class="filterbar" aria-label="Game categories">${['all','word','number','logic','spatial','favorites'].map(c=>{const count=c==='all'?available.length:c==='favorites'?state.favorites.length:available.filter(g=>g.category===c).length;return `<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}" aria-pressed="${state.category===c}">${c==='all'?'All':c==='favorites'?'Favorites':CATEGORIES[c].label} <span>${count}</span></button>`;}).join('')}</div>
+        <p class="library-count" data-catalog-count aria-live="polite"></p>
+        <div class="game-grid catalog-game-grid" data-catalog-grid>${filtered.map(gameCard).join('')}</div>
+        <p class="library-empty" data-library-empty hidden>No games match this search. Try a shorter name or another category.</p>
+      </section>
+    </div>`;
+
+    bindCommon();
+    const search=$('[data-library-search]');
+    const filter=()=>{state.libraryQuery=search.value;const q=search.value.trim().toLowerCase();let count=0;$$('[data-catalog-grid] .game-card').forEach(el=>{const g=byId[el.dataset.game],show=!q||`${g.name} ${g.description} ${CATEGORIES[g.category].label}`.toLowerCase().includes(q);el.hidden=!show;if(show)count++;});$('[data-catalog-count]').textContent=`${count} ${count===1?'game':'games'}`;$('[data-library-empty]').hidden=count>0;};
+    search.oninput=filter;filter();
+  }
   function safeProgressLabel(a){ try { return progressLabel(a); } catch { return 'In progress'; } }
 
   function progressLabel(a){
@@ -654,24 +730,88 @@
     return 'In progress';
   }
 
+
+  function statsDayKey(ts){
+    const d=new Date(ts);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+  }
+  function statsHumanDuration(ms=0){
+    const total=Math.max(0,Math.floor(ms/1000)),h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
+    if(h)return h+'h '+m+'m';if(m)return m+'m '+sec+'s';return sec+'s';
+  }
+  function statsRecord(history){
+    const rows=sanitizeHistory(history).sort((a,b)=>b.endedAt-a.endedAt),completed=rows.filter(h=>h.outcome==='completed'),totalTime=completed.reduce((sum,h)=>sum+(h.durationMs||0),0),clean=completed.filter(h=>(h.metrics?.hintsUsed||0)===0);
+    let currentStreak=0;for(const h of rows){if(h.outcome==='completed')currentStreak++;else break;}
+    let bestStreak=0,run=0;for(const h of [...rows].reverse()){if(h.outcome==='completed'){run++;bestStreak=Math.max(bestStreak,run);}else run=0;}
+    const uniqueGames=new Set(completed.map(h=>h.gameId)).size,attempts=rows.length;
+    const categories={};
+    for(const id of Object.keys(CATEGORIES))categories[id]={id,label:CATEGORIES[id].label,solves:0,games:new Set(),time:0,clean:0};
+    for(const h of completed){const cat=byId[h.gameId]?.category;if(!categories[cat])continue;const c=categories[cat];c.solves++;c.games.add(h.gameId);c.time+=h.durationMs||0;if((h.metrics?.hintsUsed||0)===0)c.clean++;}
+    const gameMap=new Map();
+    for(const h of rows){
+      if(!gameMap.has(h.gameId))gameMap.set(h.gameId,{gameId:h.gameId,attempts:0,solves:0,clean:0,time:0,hints:0,lastPlayed:0,bests:{}});
+      const g=gameMap.get(h.gameId);g.attempts++;g.lastPlayed=Math.max(g.lastPlayed,h.endedAt||0);
+      if(h.outcome==='completed'){g.solves++;g.time+=h.durationMs||0;g.hints+=h.metrics?.hintsUsed||0;if((h.metrics?.hintsUsed||0)===0)g.clean++;const d=h.difficulty||'Standard';if(!g.bests[d]||(h.durationMs||Infinity)<g.bests[d].durationMs)g.bests[d]={durationMs:h.durationMs||0,endedAt:h.endedAt};}
+    }
+    const games=[...gameMap.values()].map(g=>({...g,avgTime:g.solves?Math.round(g.time/g.solves):0,avgHints:g.solves?g.hints/g.solves:0,category:byId[g.gameId]?.category||'logic'})).sort((a,b)=>b.solves-a.solves||b.lastPlayed-a.lastPlayed);
+    const days=[];const now=new Date();now.setHours(12,0,0,0);const counts=new Map();
+    for(const h of completed)counts.set(statsDayKey(h.endedAt),(counts.get(statsDayKey(h.endedAt))||0)+1);
+    for(let offset=27;offset>=0;offset--){const d=new Date(now);d.setDate(now.getDate()-offset);const key=statsDayKey(d.getTime());days.push({key,date:d,count:counts.get(key)||0});}
+    return {rows,completed,totalTime,clean,currentStreak,bestStreak,uniqueGames,attempts,categories:Object.values(categories).map(c=>({...c,games:c.games.size})),games,days};
+  }
+  function statsBestChips(record){
+    const game=GAMES[record.gameId],levels=game?.difficulties||Object.keys(record.bests);
+    const chips=levels.filter(d=>record.bests[d]).map(d=>'<span><b>'+esc(d)+'</b> '+formatTime(record.bests[d].durationMs)+'</span>').join('');
+    return chips||'<span class="stats-no-best">No completed difficulty yet</span>';
+  }
+  function statsRecentRow(h){
+    const game=byId[h.gameId],solved=h.outcome==='completed',hints=h.metrics?.hintsUsed||0;
+    return '<button class="stats-history-row" data-stats-game="'+esc(h.gameId)+'" data-outcome="'+esc(h.outcome)+'" data-category="'+esc(game?.category||'logic')+'">'+
+      '<span class="stats-history-mark" aria-hidden="true">'+(solved?'✓':'×')+'</span>'+
+      '<span class="stats-history-main"><strong>'+esc(game?.name||h.gameId)+'</strong><small>'+esc(h.difficulty||'Standard')+' · '+esc(CATEGORIES[game?.category||'logic'].label)+'</small></span>'+
+      '<span class="stats-history-meta"><strong>'+formatTime(h.durationMs||0)+'</strong><small>'+hints+' hint '+(hints===1?'step':'steps')+'</small></span>'+
+      '<span class="stats-history-date">'+new Date(h.endedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</span>'+
+    '</button>';
+  }
+
   async function renderStats(ticket=routeGeneration){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('stats'); document.title='Statistics — Puzzle Arcade';
     state.history=sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     if (!routeIsCurrent(ticket)) return;
-    const completed=state.history.filter(h=>h.outcome==='completed');
-    const totalTime=completed.reduce((s,h)=>s+(h.durationMs||0),0);
-    let streak=0; for(const h of state.history){ if(h.outcome==='completed') streak++; else break; }
-    let best=0,cur=0; [...state.history].reverse().forEach(h=>{ if(h.outcome==='completed'){cur++;best=Math.max(best,cur)} else cur=0; });
-    main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Local statistics</p><h1>Your puzzles</h1><p class="subtle">Everything here stays on this device.</p></div></div>
-      ${state.history.length?`<div class="stats-grid">
-        <div class="stat-block"><strong>${completed.length}</strong><span>Solved</span></div>
-        <div class="stat-block"><strong>${formatTime(totalTime)}</strong><span>Play time</span></div>
-        <div class="stat-block"><strong>${streak}</strong><span>Solve streak</span></div>
-        <div class="stat-block"><strong>${best}</strong><span>Best streak</span></div>
-      </div>
-      <section class="section"><div class="section-head"><div><h2>Recent</h2></div></div><div class="recent-list">${state.history.slice(0,30).map(h=>`<div class="recent-row"><strong>${esc(byId[h.gameId]?.name||h.gameId)}</strong><span>${h.outcome==='completed'?'Solved':'Ended'}</span><span>${formatTime(h.durationMs||0)} · ${new Date(h.endedAt).toLocaleDateString()}</span></div>`).join('')}</div></section>`:`<div class="empty"><h2>No puzzles solved yet.</h2><p>Pick a game and your results will appear here.</p><button class="primary-button" data-action="home">Choose a puzzle</button></div>`}
-    </div>`;
+    const record=statsRecord(state.history);
+    if(!record.rows.length){
+      main.innerHTML='<div class="page stats-page"><div class="page-head"><div><p class="page-kicker">Local record</p><h1>Your puzzle record</h1><p class="subtle">Everything here stays on this device.</p></div></div><div class="empty stats-empty"><div class="stats-empty-mark">◇</div><h2>No puzzle record yet.</h2><p>Finish a puzzle and your solves, times, streaks, and personal bests will appear here.</p><button class="primary-button" data-action="home">Choose a puzzle</button></div></div>';
+      bindCommon();return;
+    }
+    const cleanRate=record.completed.length?Math.round(record.clean.length/record.completed.length*100):0,coverage=Math.round(record.uniqueGames/playableIds.length*100),maxDay=Math.max(1,...record.days.map(d=>d.count));
+    const categoryHtml=record.categories.map(c=>{
+      const total=ALL_GAMES.filter(g=>g.status==='available'&&g.category===c.id).length,cover=total?Math.round(c.games/total*100):0;
+      return '<article class="stats-family-card" data-category="'+c.id+'"><div class="stats-family-head"><span>'+esc(c.label)+'</span><strong>'+c.solves+'</strong></div><p>'+c.games+' of '+total+' games solved</p><div class="stats-family-bar"><i style="width:'+cover+'%"></i></div><div><span>'+statsHumanDuration(c.time)+'</span><span>'+c.clean+' clean</span></div></article>';
+    }).join('');
+    const gameHtml=record.games.filter(g=>g.solves>0).slice(0,12).map(g=>{
+      const meta=byId[g.gameId];return '<article class="stats-game-record" data-category="'+g.category+'"><button data-stats-game="'+esc(g.gameId)+'" aria-label="Play '+esc(meta?.name||g.gameId)+'"></button><div class="stats-game-preview">'+cardPreview(g.gameId)+'</div><div class="stats-game-copy"><small>'+esc(CATEGORIES[g.category].label)+'</small><h3>'+esc(meta?.name||g.gameId)+'</h3><div class="stats-game-numbers"><span><b>'+g.solves+'</b> solves</span><span><b>'+g.clean+'</b> clean</span><span><b>'+statsHumanDuration(g.avgTime)+'</b> avg</span></div><div class="stats-best-chips">'+statsBestChips(g)+'</div></div><span class="stats-game-arrow" aria-hidden="true">→</span></article>';
+    }).join('');
+    const activity=record.days.map(d=>{const level=d.count?Math.max(1,Math.ceil(d.count/maxDay*4)):0;return '<div class="stats-day level-'+level+'" title="'+d.date.toLocaleDateString()+' · '+d.count+' solved" aria-label="'+d.date.toLocaleDateString()+': '+d.count+' solved"><i></i><span>'+d.date.getDate()+'</span></div>';}).join('');
+
+    main.innerHTML='<div class="page stats-page">'+
+      '<section class="stats-hero"><div><p class="page-kicker">Local record</p><h1>Your puzzle record</h1><p>Actual solves, personal bests, and play history from this device. No score inflation or account required.</p></div><div class="stats-hero-streak"><span>Current streak</span><strong>'+record.currentStreak+'</strong><small>Best '+record.bestStreak+'</small></div></section>'+
+      '<section class="stats-overview" aria-label="Puzzle statistics">'+
+        '<div><strong>'+record.completed.length+'</strong><span>Solved</span><small>'+record.attempts+' total attempts</small></div>'+
+        '<div><strong>'+record.uniqueGames+'<em>/'+playableIds.length+'</em></strong><span>Games solved</span><small>'+coverage+'% of the arcade</small></div>'+
+        '<div><strong>'+cleanRate+'<em>%</em></strong><span>Clean solves</span><small>'+record.clean.length+' without hints</small></div>'+
+        '<div><strong>'+statsHumanDuration(record.totalTime)+'</strong><span>Solve time</span><small>Completed puzzles only</small></div>'+
+      '</section>'+
+      '<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Last 28 days</p><h2>Activity</h2></div><span>'+record.days.reduce((n,d)=>n+d.count,0)+' solves</span></div><div class="stats-activity" role="group" aria-label="Puzzle solves during the last 28 days">'+activity+'</div></section>'+
+      '<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Puzzle families</p><h2>Where you play</h2></div><span>'+record.uniqueGames+' games explored</span></div><div class="stats-family-grid">'+categoryHtml+'</div></section>'+
+      (gameHtml?'<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Personal records</p><h2>Game records</h2></div><span>Fastest by difficulty</span></div><div class="stats-game-grid">'+gameHtml+'</div></section>':'')+
+      '<section class="stats-section"><div class="stats-section-head stats-history-head"><div><p class="home-section-kicker">Play history</p><h2>Recent attempts</h2></div><div class="stats-history-filters" role="group" aria-label="Filter recent attempts"><button class="is-active" data-stats-filter="all" aria-pressed="true">All</button><button data-stats-filter="completed" aria-pressed="false">Solved</button><button data-stats-filter="ended" aria-pressed="false">Ended</button></div></div><div class="stats-history-list" data-stats-history>'+record.rows.slice(0,40).map(statsRecentRow).join('')+'</div><p class="stats-history-empty" data-stats-history-empty hidden>No attempts match this filter.</p></section>'+
+    '</div>';
     bindCommon();
+    document.querySelectorAll('[data-stats-game]').forEach(el=>el.onclick=()=>openGame(el.dataset.statsGame));
+    document.querySelectorAll('[data-stats-filter]').forEach(button=>button.onclick=()=>{
+      const filter=button.dataset.statsFilter;document.querySelectorAll('[data-stats-filter]').forEach(x=>{const on=x===button;x.classList.toggle('is-active',on);x.setAttribute('aria-pressed',String(on));});
+      let shown=0;document.querySelectorAll('.stats-history-row').forEach(row=>{const visible=filter==='all'||(filter==='completed'&&row.dataset.outcome==='completed')||(filter==='ended'&&row.dataset.outcome!=='completed');row.hidden=!visible;if(visible)shown++;});
+      $('[data-stats-history-empty]').hidden=shown>0;
+    });
   }
 
   async function renderSettings(){
@@ -788,12 +928,15 @@
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
-    $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
-    $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
-    $$('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
-    $$('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
-    $$('.game-card__open,.continue-card').forEach(el => {
-      el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game);
+    $('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
+    document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
+    document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
+    document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
+    document.querySelectorAll('[data-action="random-all"]').forEach(b=>b.onclick=()=>{state.category='all';randomGame();});
+    document.querySelectorAll('[data-action="browse-all"]').forEach(b=>b.onclick=async()=>{state.category='all';state.libraryQuery='';await renderHome();requestAnimationFrame(()=>{$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'});$('[data-library-search]')?.focus({preventScroll:true});});});
+    document.querySelectorAll('.game-card__open,.continue-card,[data-home-open]').forEach(el => {
+      el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game || el.dataset.homeOpen);
     });
   }
 
@@ -936,7 +1079,215 @@
     if(['groups','anagrams','letter-hive'].includes(game.id)&&!a.completed){const selector={groups:'[data-group-tile]',anagrams:'[data-anagram-tile]','letter-hive':'[data-hive-letter]'}[game.id];const nodes=$$(selector);if(nodes.length){const parent=nodes[0].parentElement;if(game.id!=='letter-hive'){if(!ui.order.length)ui.order=nodes.map(n=>n.getAttribute(selector.slice(1,-1)));for(const node of nodes){node.style.order=String(ui.order.indexOf(node.getAttribute(selector.slice(1,-1))));}const shuffleButton=document.createElement('button');shuffleButton.className='small-button play-shuffle';shuffleButton.textContent='Shuffle tiles';shuffleButton.dataset.playShuffle='';shuffleButton.onclick=()=>{ui.order=shuffle(ui.order);game.render(a);$('[data-play-shuffle]')?.focus({preventScroll:true});};parent.insertAdjacentElement('afterend',shuffleButton);}}}
     if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
     if(game.id==='cryptogram'){const counts={};for(const c of a.puzzle.cipher)if(/[A-Z]/.test(c))counts[c]=(counts[c]||0)+1;const items=Object.entries(counts).sort((a,b)=>b[1]-a[1]);$('.game-board-wrap')?.insertAdjacentHTML('beforeend',`<details class="cipher-frequency"><summary>Letter frequency · ${items.length} symbols</summary><div>${items.map(([c,n])=>`<span>${c} <b>${n}</b></span>`).join('')}</div></details>`);}
+    applyIndividualGamePolish(game,a);
+    applyMotionGameFeel(game,a);
   }
+
+  function p5El(tag,className,text){
+    const el=document.createElement(tag);if(className)el.className=className;if(text!=null)el.textContent=String(text);return el;
+  }
+  function p5SameClues(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+  function p5DrawWordGridPath(a){
+    const board=$('.word-grid-board'),svg=$('.word-grid-path-svg',board);if(!board||!svg)return;
+    const rect=board.getBoundingClientRect(),pts=a.state.path.map(i=>{const cell=$('[data-wg="'+i+'"]',board);if(!cell)return null;const r=cell.getBoundingClientRect();return [r.left-rect.left+r.width/2,r.top-rect.top+r.height/2];}).filter(Boolean);
+    while(svg.firstChild)svg.firstChild.remove();
+    svg.setAttribute('viewBox','0 0 '+Math.max(1,rect.width)+' '+Math.max(1,rect.height));
+    if(pts.length){
+      const ns='http://www.w3.org/2000/svg',poly=document.createElementNS(ns,'polyline');
+      poly.setAttribute('points',pts.map(p=>p.join(',')).join(' '));svg.append(poly);
+      pts.forEach((p,i)=>{const c=document.createElementNS(ns,'circle');c.setAttribute('cx',p[0]);c.setAttribute('cy',p[1]);c.setAttribute('r',i===pts.length-1?'7':'5');svg.append(c);});
+    }
+    board.querySelectorAll('[data-wg]').forEach(el=>{const i=+el.dataset.wg,k=a.state.path.indexOf(i);el.dataset.pathOrder=k>=0?String(k+1):'';});
+  }
+  function applyIndividualGamePolish(game,a){
+    if(game.id==='sudoku'){
+      const i=a.state.selected,r=Math.floor(i/9)+1,c=i%9+1,v=a.state.board[i],candidates=!v?sudokuCandidates(a.state.board,i):[];
+      const context=p5El('div','sudoku-context');context.setAttribute('aria-live','polite');
+      context.append(p5El('span','', 'R'+r+'C'+c),p5El('strong','',v?'Value '+v:(candidates.length?'Candidates '+candidates.join(' · '):'No candidates')),p5El('em','',a.state.noteMode?'Pencil mode':'Value mode'));
+      $('.sudoku-board')?.after(context);
+      document.querySelectorAll('[data-num]').forEach(el=>{const n=+el.dataset.num;if(!n)return;el.dataset.remaining=String(Math.max(0,9-a.state.board.filter(x=>x===n).length));});
+    }
+    if(game.id==='groups'){
+      const wrap=$('.groups-wrap'),grid=$('.groups-grid');if(wrap&&grid){
+        const selected=a.state.selected||[],mission=p5El('div','groups-mission'),copy=p5El('div'),small=p5El('small','', 'Group '+Math.min(4,(a.state.solved?.length||0)+1)+' of 4'),strong=p5El('strong','',(4-(a.state.solved?.length||0))?'Find '+(4-(a.state.solved?.length||0))+' more '+((4-(a.state.solved?.length||0))===1?'group':'groups'):'All groups found'),dots=p5El('div','groups-selection-dots');
+        dots.setAttribute('aria-label',selected.length+' of 4 selected');copy.append(small,strong);for(let k=0;k<4;k++)dots.append(p5El('i',k<selected.length?'on':''));mission.append(copy,dots);grid.before(mission);
+        grid.querySelectorAll('[data-group-tile]').forEach(el=>{const k=selected.indexOf(el.dataset.groupTile);el.dataset.selectionOrder=k>=0?String(k+1):'';});
+        wrap.querySelectorAll('.group-solved').forEach((el,k)=>el.dataset.solvedIndex=String(k));
+      }
+    }
+    if(game.id==='anagrams'){
+      const answer=$('.anagram-answer'),tiles=$('.anagram-tiles');if(answer&&tiles){
+        const picked=a.state.selected?.length||0,total=a.puzzle.letters.length,progress=p5El('div','anagram-progress');answer.style.setProperty('--anagram-count',String(total));progress.append(p5El('span','','Build a '+total+'-letter word'),p5El('strong','',picked+'/'+total));answer.before(progress);
+        tiles.querySelectorAll('[data-anagram-tile]').forEach(el=>{const k=a.state.selected.indexOf(+el.dataset.anagramTile);el.dataset.pickOrder=k>=0?String(k+1):'';});
+      }
+    }
+    if(game.id==='word-grid'){
+      const board=$('.word-grid-board');if(board&&!$('.word-grid-path-svg',board)){
+        board.querySelectorAll('[data-wg]').forEach(el=>{if(!el.querySelector('span')){const span=p5El('span','',el.textContent);el.textContent='';el.append(span);}});
+        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('word-grid-path-svg');svg.setAttribute('aria-hidden','true');board.prepend(svg);
+        const observer=new MutationObserver(()=>p5DrawWordGridPath(a));observer.observe(board,{subtree:true,attributes:true,attributeFilter:['class']});
+        const cleanup=pointerCleanup;pointerCleanup=()=>{observer.disconnect();cleanup?.();};requestAnimationFrame(()=>p5DrawWordGridPath(a));
+      }
+      const current=$('.word-grid-current');if(current){current.classList.toggle('is-empty',!a.state.path.length);current.dataset.length=String(a.state.path.length);}
+    }
+    if(game.id==='cryptogram'){
+      const selected=a.state.selected,mapped=a.state.mapping[selected]||'?',sel=$('.crypto-selected');
+      if(sel){sel.textContent='';const label=p5El('span','','Selected symbol'),pair=p5El('strong'),left=p5El('b','',selected),arrow=p5El('i','', '→'),right=p5El('b','',mapped),help=p5El('small','',mapped==='?'?'Choose a plaintext letter below':'Click another cipher symbol or type a replacement');arrow.setAttribute('aria-hidden','true');pair.append(left,arrow,right);sel.append(label,pair,help);}
+      const owners=new Map(Object.entries(a.state.mapping).map(([cipher,plain])=>[plain,cipher]));
+      document.querySelectorAll('.crypto-keyboard [data-key]').forEach(key=>{const plain=key.dataset.key;if(!/^[A-Z]$/.test(plain))return;const owner=owners.get(plain);key.classList.toggle('assigned',!!owner);if(owner)key.dataset.owner=owner;else delete key.dataset.owner;});
+      document.querySelectorAll('.crypto-map').forEach(el=>el.classList.toggle('mapped',!!a.state.mapping[el.dataset.crypto]));
+      const freq=$('.cipher-frequency'),maps=$('.crypto-mappings');if(freq&&maps){const inspector=p5El('div','crypto-inspector');maps.before(inspector);inspector.append(maps,freq);}
+    }
+    if(game.id==='nonogram'){
+      const n=a.puzzle.size;
+      document.querySelectorAll('.nono-row-clues>div').forEach((el,r)=>{const line=a.state.cells.slice(r*n,r*n+n);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.rowClues[r]));});
+      document.querySelectorAll('.nono-col-clues>div').forEach((el,c)=>{const line=Array.from({length:n},(_,r)=>a.state.cells[r*n+c]);el.classList.toggle('complete',line.every(Boolean)&&p5SameClues(nonogramClues(line.map(v=>v===1)),a.puzzle.colClues[c]));});
+      const tools=$('.nono-tools');if(tools)tools.prepend(p5El('span','nono-tool-label',a.state.tool===1?'Fill cells':'Mark empty'));
+      const dense=$('.dense-board-controls');if(dense){dense.classList.add('nonogram-view-controls');const fit=$('[data-board-fit]',dense);if(fit&&fit.getAttribute('aria-pressed')!=='true')fit.click();}
+    }
+    if(game.id==='kakuro'){
+      const p=a.puzzle,selected=a.state.selected,runs=p.runOf?.[selected]||[],related=new Set(runs.flatMap(ri=>p.runs?.[ri]?.cells||[]));
+      document.querySelectorAll('[data-kakuro]').forEach(el=>el.classList.toggle('run-related',related.has(+el.dataset.kakuro)&&+el.dataset.kakuro!==selected));
+      const pad=$('.kakuro-pad');if(pad)pad.prepend(p5El('span','kakuro-pad-label','Digit'));
+    }
+    if(game.id==='untangle'){
+      const counts=typeof w6NodeCrossingCounts==='function'?w6NodeCrossingCounts(a.puzzle.edges,a.state.positions):Array(a.puzzle.n).fill(0),current=untangleCrossings(a.puzzle.edges,a.state.positions),start=Math.max(1,a.puzzle.startCrossings||current),progress=Math.max(0,Math.min(100,Math.round((1-current/start)*100))),max=Math.max(0,...counts);
+      document.querySelectorAll('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});document.querySelectorAll('[data-edge]').forEach(el=>{const edge=a.puzzle.edges[+el.dataset.edge]||[];el.classList.toggle('selected-edge',edge.includes(a.state.selected));});
+      const count=$('.crossing-count');if(count){count.textContent='';const top=p5El('div'),num=p5El('strong','',current),label=p5El('span','','crossings'),bar=p5El('div','untangle-progress'),fill=p5El('i'),small=p5El('small','',progress+'% cleared · best '+(a.state.bestCrossings??current));bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','Crossings removed');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress));fill.style.width=progress+'%';bar.append(fill);top.append(num,label);count.append(top,bar,small);}
+    }
+  }
+
+
+  const motionSessions=new WeakMap();
+  function p6MotionSession(a){
+    if(!motionSessions.has(a))motionSessions.set(a,{mounted:false,sig:null,selected:null,completed:false,wrong:null,solved:null,found:null,picked:null,mapping:null,crossings:null,hintLevel:null,feedback:null,paused:null});
+    return motionSessions.get(a);
+  }
+  function p6ReducedMotion(){
+    return state.settings.motion==='reduced'||!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  }
+  function p6Pulse(el,className,duration=420){
+    if(!el||p6ReducedMotion())return;
+    el.classList.remove(className);
+    void el.offsetWidth;
+    el.classList.add(className);
+    setTimeout(()=>el.isConnected&&el.classList.remove(className),duration);
+  }
+  function p6SelectedElement(game,a){
+    const selected=Number.isInteger(a.state?.selected)?a.state.selected:null;
+    const selectors={
+      sudoku:selected==null?null:'[data-cell="'+selected+'"]',
+      'killer-sudoku':selected==null?null:'[data-killer-cell="'+selected+'"]',
+      kakuro:selected==null?null:'[data-kakuro="'+selected+'"]',
+      unequal:selected==null?null:'[data-unequal="'+selected+'"]',
+      'arithmetic-cages':selected==null?null:'[data-arith="'+selected+'"]',
+      binary:selected==null?null:'[data-binary="'+selected+'"]',
+      queens:selected==null?null:'[data-queen="'+selected+'"]',
+      'number-path':selected==null?null:'[data-path-cell="'+selected+'"]',
+      tents:selected==null?null:'[data-tent-cell="'+selected+'"]',
+      rectangles:selected==null?null:'[data-rect-cell="'+selected+'"]',
+      towers:selected==null?null:'[data-tower-cell="'+selected+'"]',
+      fillomino:selected==null?null:'[data-fill="'+selected+'"]',
+      network:selected==null?null:'[data-net-cell="'+selected+'"]',
+      'sliding-tiles':selected==null?null:'[data-slide="'+selected+'"]',
+      untangle:selected==null?null:'[data-node="'+selected+'"]',
+      'word-grid':selected==null?null:'[data-wg="'+selected+'"]'
+    };
+    if(game.id==='nonogram'){
+      const cursor=playSession(a).cursor;
+      return Number.isInteger(cursor)?document.querySelector('[data-nono="'+cursor+'"]'):null;
+    }
+    return selectors[game.id]?document.querySelector(selectors[game.id]):document.querySelector('.game-board-wrap .selected');
+  }
+  function p6SolveBurst(panel){
+    if(!panel||p6ReducedMotion()||panel.querySelector('.solve-burst'))return;
+    const burst=document.createElement('div');burst.className='solve-burst';burst.setAttribute('aria-hidden','true');
+    for(let i=0;i<7;i++){const dot=document.createElement('i');dot.style.setProperty('--burst-i',String(i));burst.append(dot);}
+    panel.prepend(burst);
+    setTimeout(()=>burst.isConnected&&burst.remove(),900);
+  }
+  function applyMotionGameFeel(game,a){
+    const root=document.querySelector('.game-page');if(!root)return;
+    const m=p6MotionSession(a),reduced=p6ReducedMotion(),stage=document.querySelector('.game-stage'),ui=playSession(a);
+    root.dataset.motion=reduced?'reduced':'full';
+    root.classList.toggle('motion-system',!reduced);
+    const sig=playSignature(a),selected=Number.isInteger(a.state?.selected)?a.state.selected:(game.id==='nonogram'?ui.cursor:null);
+    const wrong=document.querySelectorAll('.game-board-wrap .wrong').length;
+    const solved=Array.isArray(a.state?.solved)?a.state.solved.length:null;
+    const found=Array.isArray(a.state?.found)?a.state.found.length:null;
+    const picked=game.id==='anagrams'?(a.state.selected?.length||0):null;
+    const mapping=game.id==='cryptogram'?Object.keys(a.state.mapping||{}).length:null;
+    const crossings=game.id==='untangle'?untangleCrossings(a.puzzle.edges,a.state.positions):null;
+    const hintLevel=a.state?._proofHintView?.level??null;
+    const feedback=ui.feedback||'';
+    const paused=!!ui.paused;
+
+    if(!m.mounted){
+      m.mounted=true;
+      root.dataset.motionEvent='enter';
+      if(!reduced){
+        p6Pulse(document.querySelector('.game-chrome'),'motion-chrome-enter',520);
+        p6Pulse(stage,'motion-stage-enter',560);
+        p6Pulse(document.querySelector('.play-action-dock'),'motion-dock-enter',620);
+      }
+    } else {
+      if(m.sig!==null&&m.sig!==sig&&!a.completed){
+        root.dataset.motionEvent='move';
+        p6Pulse(stage,'motion-board-commit',260);
+        p6Pulse(p6SelectedElement(game,a),'motion-value-in',300);
+      }
+      if(m.selected!==null&&selected!==null&&m.selected!==selected){
+        root.dataset.motionEvent='focus';
+        p6Pulse(p6SelectedElement(game,a),'motion-focus-in',260);
+      }
+      if(m.wrong!==null&&wrong>m.wrong){
+        root.dataset.motionEvent='error';
+        document.querySelectorAll('.game-board-wrap .wrong').forEach(el=>p6Pulse(el,'motion-error',380));
+      }
+      if(game.id==='groups'&&m.solved!==null&&solved>m.solved){
+        root.dataset.motionEvent='group-solved';
+        const cards=document.querySelectorAll('.group-solved');p6Pulse(cards[cards.length-1],'motion-group-solved',560);
+      }
+      if(game.id==='anagrams'&&m.picked!==null&&picked>m.picked){
+        root.dataset.motionEvent='tile-picked';
+        const tile=document.querySelector('[data-anagram-tile][data-pick-order="'+picked+'"]');
+        const slot=document.querySelector('.anagram-answer span:nth-child('+picked+')');
+        p6Pulse(tile,'motion-tile-picked',300);p6Pulse(slot,'motion-letter-land',360);
+      }
+      if(game.id==='cryptogram'&&m.mapping!==null&&mapping!==m.mapping){
+        root.dataset.motionEvent='mapping';
+        p6Pulse(document.querySelector('.crypto-letter.selected'),'motion-pair-map',320);
+        p6Pulse(document.querySelector('.crypto-map.selected'),'motion-pair-map',320);
+      }
+      if(game.id==='nonogram'&&m.sig!==null&&m.sig!==sig){
+        root.dataset.motionEvent='mark';
+        p6Pulse(p6SelectedElement(game,a),'motion-cell-mark',300);
+      }
+      if(game.id==='word-grid'&&m.found!==null&&found>m.found){
+        root.dataset.motionEvent='word-found';
+        const words=document.querySelectorAll('.found-words span');p6Pulse(words[words.length-1],'motion-word-found',460);
+      }
+      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings){
+        root.dataset.motionEvent='crossing-cleared';
+        p6Pulse(document.querySelector('.crossing-count'),'motion-progress-good',420);
+        p6Pulse(p6SelectedElement(game,a),'motion-node-good',360);
+      }
+    }
+
+    if(a.completed&&!m.completed){
+      root.dataset.motionEvent='complete';
+      if(!reduced){
+        p6Pulse(stage,'motion-complete',760);
+        const panel=document.querySelector('.result-panel');p6Pulse(panel,'motion-result-in',720);p6SolveBurst(panel);
+      }
+    }
+    if(hintLevel!==null&&hintLevel!==m.hintLevel)p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);
+    if(feedback&&feedback!==m.feedback)p6Pulse(document.querySelector('.play-feedback'),'motion-feedback-in',320);
+    if(paused!==m.paused&&paused)p6Pulse(document.querySelector('.pause-cover'),'motion-pause-in',420);
+
+    m.sig=sig;m.selected=selected;m.completed=!!a.completed;m.wrong=wrong;m.solved=solved;m.found=found;m.picked=picked;m.mapping=mapping;m.crossings=crossings;m.hintLevel=hintLevel;m.feedback=feedback;m.paused=paused;
+  }
+
   function installPlayExperience(){
     for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
     const wordleKey=fiveLetters.key;fiveLetters.key=function(a,key){if(key==='ENTER'&&a.state.guesses.some(g=>g.word===a.state.current)){toast('You already tried that word. Use the feedback to try a different guess.');return;}return wordleKey.call(this,a,key);};
@@ -946,49 +1297,64 @@
   }
 
   function baseGameShell(g, active, boardHtml, extraHtml=''){
-    const game=GAMES[g.id],ui=playSession(active),favorite=state.favorites.includes(g.id),difficulties=game.difficulties||['Standard'];
-    return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}">
-      <div class="game-top"><button class="game-back" data-game-back aria-label="Back to puzzles">←</button><div class="game-title"><small>${esc(CATEGORIES[g.category].label)} puzzles</small><h1>${esc(g.name)}</h1></div><button class="game-menu" data-game-menu aria-label="Game menu" aria-haspopup="dialog">•••</button></div>
-      <p class="game-objective" id="game-objective">${esc(game.rules.objective)}</p>
-      <div class="play-commandbar" role="group" aria-label="Puzzle controls">
-        <label class="play-difficulty"><span>Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label>
-        ${typeof game.undo==='function'?`<div class="play-history"><button data-play-undo aria-label="Undo" aria-keyshortcuts="Control+Z Meta+Z" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}>↶ <span>Undo</span></button><button data-play-redo aria-label="Redo" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}>↷ <span>Redo</span></button></div>`:''}
-        <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}>${ui.busy?'Thinking…':'Hint'}</button>
-        <button data-play-guide aria-expanded="${ui.guide}" aria-controls="play-guide">Guide</button>
-        <button data-game-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button>
-      </div>
+    const game=GAMES[g.id],ui=playSession(active),difficulties=game.difficulties||['Standard'];
+    const hasHistory=typeof game.undo==='function';
+    return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}" data-play-completed="${active.completed?'true':'false'}">
+      <header class="game-chrome">
+        <button class="game-back chrome-icon" data-game-back aria-label="Back to puzzles"><span aria-hidden="true">←</span></button>
+        <div class="game-heading">
+          <small class="game-category-label">${esc(CATEGORIES[g.category].label)} puzzle</small>
+          <div class="game-title-line"><h1>${esc(g.name)}</h1><label class="difficulty-chip"><span class="sr-only">Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label></div>
+          <p class="game-objective" id="game-objective">${esc(game.rules.objective)}</p>
+        </div>
+        <div class="game-status-cluster">
+          <div class="chrome-stat chrome-stat--time"><span>${ui.paused?'Paused':'Time'}</span><strong data-timer aria-label="Elapsed time ${formatTime(activeDuration(active))}">${formatTime(activeDuration(active))}</strong></div>
+          <div class="chrome-stat chrome-stat--progress"><span>Progress</span><strong>${esc(safeProgressLabel(active))}</strong></div>
+          <button class="game-menu chrome-icon" data-game-menu aria-label="Game options" aria-haspopup="dialog"><span aria-hidden="true">•••</span></button>
+        </div>
+      </header>
       ${playGuide(game,active)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
-      <div class="game-layout"><section class="game-stage ${ui.paused?'is-paused':''}" role="region" aria-label="${esc(g.name)} puzzle board" aria-describedby="game-objective" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
-        <aside class="game-side" aria-label="Puzzle status"><div class="play-session-summary"><div class="side-stat"><span class="side-label">${ui.paused?'Paused':'Time'}</span><div class="timer" data-timer aria-label="Elapsed time ${formatTime(activeDuration(active))}">${formatTime(activeDuration(active))}</div></div><div class="side-stat play-progress"><span class="side-label">Progress</span><strong>${esc(safeProgressLabel(active))}</strong></div></div>
-          <p class="play-start-tip">${esc(PLAY_GUIDES[g.id][0])}</p><button class="small-button" data-game-rules>Full rules</button><button class="small-button" data-game-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button>
-          <p class="play-save-note">${state.settings.playMode==='challenge'?'Challenge mode':'Relaxed mode'} · Autosaved locally</p>
-        </aside>
+      <div class="game-layout">
+        <section class="game-stage ${ui.paused?'is-paused':''}" role="region" aria-label="${esc(g.name)} puzzle board" aria-describedby="game-objective" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
+        <div class="play-action-dock" role="toolbar" aria-label="Puzzle actions">
+          ${hasHistory?`<div class="play-history"><button data-play-undo aria-label="Undo" aria-keyshortcuts="Control+Z Meta+Z" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}><span class="action-icon" aria-hidden="true">↶</span><span class="action-label">Undo</span></button><button data-play-redo aria-label="Redo" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}><span class="action-icon" aria-hidden="true">↷</span><span class="action-label">Redo</span></button></div>`:''}
+          <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">${ui.busy?'Thinking…':'Hint'}</span></button>
+          <button data-game-pause ${active.completed?'disabled':''}><span class="action-icon" aria-hidden="true">${ui.paused?'▶':'Ⅱ'}</span><span class="action-label">${ui.paused?'Resume':'Pause'}</span></button>
+        </div>
         ${ui.paused?'<div class="pause-cover" role="region" aria-label="Puzzle paused"><strong>Take your time.</strong><p>The clock is paused and your progress is saved.</p><button class="primary-button" data-resume-puzzle>Resume puzzle</button></div>':''}
-      </div></div>`;
+      </div>
+      <p class="game-save-strip"><span aria-hidden="true">●</span> Autosaved locally · ${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</p>
+    </div>`;
   }
+
   function bindGameShell(game,active){
-    $('[data-game-back]').onclick=()=>go('home');$('[data-game-menu]').onclick=()=>gameMenu(game,active);
+    $('[data-game-back]').onclick=()=>go('home');
+    $('[data-game-menu]').onclick=()=>gameMenu(game,active);
     $$('[data-game-rules]').forEach(b=>b.onclick=()=>showRules(game));
     $('[data-game-hint]').onclick=()=>requestGameHint(game,active);
-    $('[data-game-favorite]').onclick=()=>{toggleFavorite(game.id);const b=$('[data-game-favorite]');if(b){const on=state.favorites.includes(game.id);b.textContent=on?'★ Favorite':'☆ Favorite';b.setAttribute('aria-pressed',String(on));}};
     $('[data-play-difficulty]').onchange=e=>newGame(game.id,e.target.value);
-    $('[data-play-guide]').onclick=()=>{playSession(active).guide=!playSession(active).guide;game.render(active);$('[data-play-guide]')?.focus({preventScroll:true});};
-    $('[data-game-pause]').onclick=()=>pauseGame(game,active);const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
+    $('[data-game-pause]').onclick=()=>pauseGame(game,active);
+    const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
     const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.onclick=()=>game.undo(active);if(redo)redo.onclick=()=>redoGame(game,active);
     const dismiss=$('[data-hint-dismiss]');if(dismiss)dismiss.onclick=()=>dismissGameHint(active);
     startTimer(active);
   }
 
   function gameMenu(game, active){
-    const difficulties=game.difficulties||['Standard'];
-    showModal(game.name, `<p>${esc(game.description)}</p><p class="subtle">Difficulty</p><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div>`, [
+    const difficulties=game.difficulties||['Standard'],ui=playSession(active),favorite=state.favorites.includes(game.id);
+    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
       {label:'Close',kind:'secondary',action:closeOverlay},
       {label:'New Puzzle',kind:'primary',action:async()=>{ closeOverlay(); await newGame(game.id, active.difficulty); }},
     ]);
     $$('[data-diff]',overlayRoot).forEach(b=>b.onclick=async()=>{const d=b.dataset.diff;closeOverlay();await newGame(game.id,d);});
+    const guide=$('[data-menu-guide]',overlayRoot);if(guide)guide.onclick=()=>{closeOverlay();ui.guide=!ui.guide;game.render(active);requestAnimationFrame(()=>$('[data-game-menu]')?.focus({preventScroll:true}));};
+    const rules=$('[data-menu-rules]',overlayRoot);if(rules)rules.onclick=()=>{closeOverlay();showRules(game);};
+    const fav=$('[data-menu-favorite]',overlayRoot);if(fav)fav.onclick=()=>{toggleFavorite(game.id);const on=state.favorites.includes(game.id);fav.textContent=on?'★ Favorite':'☆ Favorite';fav.setAttribute('aria-pressed',String(on));};
+    const pause=$('[data-menu-pause]',overlayRoot);if(pause)pause.onclick=()=>{closeOverlay();pauseGame(game,active);};
   }
+
 
   function showRules(game){
     showModal(`${game.name} — Rules`, `<p>${esc(game.rules.objective)}</p><ol class="rule-list">${game.rules.items.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`);
@@ -1142,11 +1508,58 @@
     return routeIsCurrent(ticket)?active:null;
   }
 
+  function resultHistory(active){
+    const currentId=active?.result?.id;
+    return [...state.history].filter(h=>h&&h.id!==currentId).sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+  }
+  function resultStreak(active){
+    const current=active?.result;
+    if(!current||current.outcome!=='completed')return 0;
+    const ordered=[current,...resultHistory(active)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+    let streak=0;for(const h of ordered){if(h.outcome==='completed')streak++;else break;}return streak;
+  }
+  function resultRewardSummary(active,game){
+    const result=active.result||{},previous=resultHistory(active),completed=previous.filter(h=>h.outcome==='completed'),sameGame=completed.filter(h=>h.gameId===game.id),sameDifficulty=sameGame.filter(h=>h.difficulty===active.difficulty);
+    const hints=active.hintsUsed||result.metrics?.hintsUsed||0,duration=active.durationMs||result.durationMs||0,prevBest=sameDifficulty.length?Math.min(...sameDifficulty.map(h=>h.durationMs||Infinity)):null;
+    const clean=result.outcome==='completed'&&hints===0,firstGame=result.outcome==='completed'&&sameGame.length===0,firstDifficulty=result.outcome==='completed'&&sameDifficulty.length===0,newBest=result.outcome==='completed'&&prevBest!=null&&duration<prevBest;
+    const category=byId[game.id]?.category||'logic',streak=resultStreak(active),allCompleted=[result,...completed].filter(h=>h.outcome==='completed'),totalSolved=allCompleted.length,categorySolved=allCompleted.filter(h=>byId[h.gameId]?.category===category).length;
+    const milestones=[5,10,25,50,100,250,500],totalMilestone=milestones.includes(totalSolved)?totalSolved:null,categoryMilestone=milestones.includes(categorySolved)?categorySolved:null,badges=[];
+    if(clean)badges.push({kind:'clean',icon:'◇',label:'Clean solve'});
+    if(newBest)badges.push({kind:'best',icon:'↗',label:'New fastest'});else if(firstGame)badges.push({kind:'first',icon:'1',label:'First solve'});else if(firstDifficulty)badges.push({kind:'first',icon:'1',label:'First '+active.difficulty});
+    if(streak>=3)badges.push({kind:'streak',icon:'×'+streak,label:'Solve streak'});
+    if(totalMilestone)badges.push({kind:'milestone',icon:String(totalMilestone),label:'Total solves'});else if(categoryMilestone)badges.push({kind:'milestone',icon:String(categoryMilestone),label:CATEGORIES[category].label+' solves'});
+    let message='';
+    if(result.outcome!=='completed')message='This attempt is saved. A fresh board is ready whenever you want another run.';
+    else if(newBest)message='New fastest '+active.difficulty.toLowerCase()+' solve'+(prevBest-duration>=1000?' — '+formatTime(prevBest-duration)+' faster than your previous best.':'.');
+    else if(firstDifficulty)message='Your first '+active.difficulty.toLowerCase()+' '+game.name+' solve is now in your local record.';
+    else if(clean)message='Solved without using a hint step.';
+    else message='Solved with '+hints+' hint step'+(hints===1?'':'s')+'.';
+    return {hints,duration,prevBest,clean,firstGame,firstDifficulty,newBest,streak,totalSolved,categorySolved,badges:badges.slice(0,4),message};
+  }
+  function nextResultDifficulty(game,active){
+    const levels=game.difficulties||[game.defaultDifficulty||active.difficulty],i=levels.indexOf(active.difficulty);
+    return i>=0&&i<levels.length-1?levels[i+1]:null;
+  }
   function resultPanel(active, game, metricsHtml=''){
-    return `<div class="result-panel" role="region" aria-label="Puzzle result"><h2>${active.outcome==='failed'||active.state.status==='lost'?'Puzzle ended':'Solved'}</h2><div class="result-metrics"><div><strong>${formatTime(active.durationMs||0)}</strong><span>Time</span></div>${metricsHtml}<div><strong>${active.hintsUsed||0}</strong><span>Hint steps</span></div></div><p class="result-next-copy">${active.outcome==='failed'?'A fresh puzzle is ready when you are.':active.hintsUsed?'Solved with assistance. Try the next puzzle using what you learned.':'Puzzle complete. Keep this difficulty or choose a different challenge.'}</p><div class="result-actions"><button class="primary-button" data-next-puzzle>Next Puzzle</button><button class="secondary-button" data-share-puzzle>Share</button><button class="secondary-button" data-replay-puzzle>Replay</button></div></div>`;
+    const reward=resultRewardSummary(active,game),failed=active.outcome==='failed'||active.state.status==='lost',nextDifficulty=failed?null:nextResultDifficulty(game,active),category=CATEGORIES[byId[game.id]?.category||'logic']?.label||'Puzzle';
+    const badges=reward.badges.length?'<div class="result-badges" aria-label="Solve highlights">'+reward.badges.map(b=>'<div class="result-badge result-badge--'+b.kind+'"><strong>'+esc(b.icon)+'</strong><span>'+esc(b.label)+'</span></div>').join('')+'</div>':'';
+    const comparison=reward.prevBest!=null?'<div class="result-comparison"><span>Previous fastest</span><strong>'+formatTime(reward.prevBest)+'</strong>'+(reward.newBest?'<em>'+formatTime(reward.prevBest-reward.duration)+' faster</em>':'')+'</div>':'';
+    const challenge=nextDifficulty?'<button class="secondary-button result-challenge" data-result-challenge data-result-difficulty="'+esc(nextDifficulty)+'">Try '+esc(nextDifficulty)+'</button>':'<button class="secondary-button result-challenge" data-result-challenge data-result-category="'+esc(byId[game.id]?.category||'all')+'">Browse '+esc(category)+' games</button>';
+    return '<div class="result-panel result-panel--reward" data-result-outcome="'+(failed?'failed':'completed')+'" role="region" aria-label="Puzzle result">'+
+      '<div class="result-hero"><div class="result-mark" aria-hidden="true">'+(failed?'×':'✓')+'</div><div><p class="result-eyebrow">'+esc(active.difficulty)+' · '+esc(category)+'</p><h2>'+(failed?'Puzzle ended':'Solved')+'</h2><p class="result-summary">'+esc(reward.message)+'</p></div></div>'+
+      badges+
+      '<div class="result-record"><div class="result-metrics"><div><strong>'+formatTime(active.durationMs||0)+'</strong><span>Time</span></div>'+metricsHtml+'<div><strong>'+reward.hints+'</strong><span>Hint steps</span></div><div><strong>'+reward.streak+'</strong><span>Current streak</span></div></div>'+comparison+'</div>'+
+      '<div class="result-next"><div><span>Next move</span><strong>'+(nextDifficulty?'Step up to '+esc(nextDifficulty):'Keep exploring '+esc(category))+'</strong><p>'+(nextDifficulty?'Same game, one level harder.':'Pick another puzzle from this family or start another board.')+'</p></div><div class="result-next-actions"><button class="primary-button" data-next-puzzle>Next '+esc(game.name)+'</button>'+challenge+'</div></div>'+
+      '<div class="result-actions result-actions--secondary"><button class="secondary-button" data-share-puzzle>Share result</button><button class="secondary-button" data-replay-puzzle>Replay this puzzle</button><button class="text-button" data-result-home>Back to puzzles</button></div>'+
+    '</div>';
   }
   function bindResult(active, game){
     const next=$('[data-next-puzzle]'); if(next) next.onclick=()=>newGame(game.id,active.difficulty);
+    const challenge=$('[data-result-challenge]'); if(challenge) challenge.onclick=()=>{
+      const d=challenge.dataset.resultDifficulty;if(d)return newGame(game.id,d);
+      state.category=challenge.dataset.resultCategory||'all';state.libraryQuery='';go('home');
+    };
+    const home=$('[data-result-home]');if(home)home.onclick=()=>go('home');
     const replay=$('[data-replay-puzzle]'); if(replay) replay.onclick=async()=>{
       if(replayingActives.has(active))return;
       replayingActives.add(active); replay.disabled=true;
@@ -1160,19 +1573,22 @@
         fresh.startedAt=document.hidden?null:Date.now();game.render(fresh);
       } finally { replayingActives.delete(active); }
     };
-    const share=$('[data-share-puzzle]'); if(share) share.onclick=()=>sharePuzzle(active,game);
+    const share=$('[data-share-puzzle]'); if(share) share.onclick=()=>sharePuzzle(active,game,true);
   }
   async function copyTextFallback(text){
     if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(text);return true;}catch{}}
     const el=document.createElement('textarea');el.value=text;el.setAttribute('readonly','');el.style.position='fixed';el.style.opacity='0';document.body.appendChild(el);el.select();
     let ok=false;try{ok=document.execCommand('copy');}catch{}el.remove();return ok;
   }
-  async function sharePuzzle(active,game){
-    const url=new URL(location.href); url.hash=`#/game/${game.id}?seed=${encodeURIComponent(active.seed)}&difficulty=${encodeURIComponent(active.difficulty)}`;
+  async function sharePuzzle(active,game,includeResult=false){
+    const url=new URL(location.href); url.hash='#/game/'+game.id+'?seed='+encodeURIComponent(active.seed)+'&difficulty='+encodeURIComponent(active.difficulty);
+    const reward=includeResult&&active.completed?resultRewardSummary(active,game):null;
+    const resultText=reward?(active.outcome==='completed'?'Solved ':'Played ')+game.name+' · '+active.difficulty+' · '+formatTime(active.durationMs||0)+' · '+reward.hints+' hint step'+(reward.hints===1?'':'s')+'. Try the same puzzle:':'Play this '+game.name+' puzzle:';
+    const copy=resultText+' '+url.toString();
     try {
-      if(navigator.share) await navigator.share({title:`${game.name} puzzle`,text:`Play this ${game.name} puzzle`,url:url.toString()});
-      else if(await copyTextFallback(url.toString())) toast('Puzzle link copied');
-      else toast('Could not copy this puzzle link');
+      if(navigator.share) await navigator.share({title:reward?game.name+' result':game.name+' puzzle',text:resultText,url:url.toString()});
+      else if(await copyTextFallback(copy)) toast(reward?'Result copied':'Puzzle link copied');
+      else toast('Could not copy this puzzle');
     } catch(e){ if(e?.name!=='AbortError') toast('Could not share this puzzle'); }
   }
 
