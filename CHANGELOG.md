@@ -1,3 +1,12 @@
+# 1.3.0 — Integration, Final Certification & Ship
+
+- Unified the cumulative Phase 1–8 v1.2 development branch with the Phase 9 accessibility/device production line.
+- Preserved discovery/home redesign, game chrome, family systems, per-game polish, motion/game feel, results/rewards, and local stats/records.
+- Layered Phase 9 reduced-motion, high-contrast, large-control, route/focus semantics, keyboard/touch help, forced-colors, and device handling onto that cumulative build.
+- Connected the explicit Motion preference to the existing Phase 6 motion engine instead of introducing a second animation system.
+- Added a Phase 10 integration guard that fails if any Phase 1–9 subsystem or browser coverage disappears.
+- Advanced the PWA cache to v22 and kept storage schema 1.
+
 # 1.2.0 — Accessibility, Controls & Device Polish
 
 - Added explicit reduced-motion, high-contrast, and large-control preferences while still respecting system settings.
