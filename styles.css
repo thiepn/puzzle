@@ -3121,3 +3121,834 @@ body {
     transition: none;
   }
 }
+
+
+/* ========================================================================== */
+/* v1.2 Phase 5 — Individual Game Polish                                     */
+/* Game-specific UI work on the eight roughest/highest-value puzzle screens. */
+/* ========================================================================== */
+
+/* --- Sudoku -------------------------------------------------------------- */
+.game-page[data-play-game="sudoku"] .w6-board-stack {
+  gap: 8px;
+}
+.game-page[data-play-game="sudoku"] .w6-meta {
+  width: min(100%, 540px);
+  justify-content: space-between;
+  margin-bottom: 2px;
+  padding: 0 2px;
+}
+.game-page[data-play-game="sudoku"] .w6-meta span {
+  min-height: 22px;
+  border: 0;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--number) 6%, var(--surface));
+}
+.game-page[data-play-game="sudoku"] .sudoku-board {
+  width: min(78vw, 548px);
+  border-width: 3px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.game-page[data-play-game="sudoku"] .sudoku-cell {
+  position: relative;
+  font-family: var(--ui-font);
+  font-weight: 760;
+  transition: background 80ms ease, box-shadow 80ms ease, color 80ms ease;
+}
+.game-page[data-play-game="sudoku"] .sudoku-cell.given {
+  color: color-mix(in srgb, var(--number) 46%, var(--ink));
+  background: color-mix(in srgb, var(--number) 6%, var(--surface));
+}
+.game-page[data-play-game="sudoku"] .sudoku-cell.related:not(.selected) {
+  background: color-mix(in srgb, var(--number) 7%, var(--surface));
+}
+.game-page[data-play-game="sudoku"] .sudoku-cell.same-value:not(.selected) {
+  background: color-mix(in srgb, var(--number) 14%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--number) 35%, transparent);
+}
+.game-page[data-play-game="sudoku"] .sudoku-cell.selected {
+  z-index: 3;
+  background: color-mix(in srgb, var(--number) 22%, var(--surface));
+  box-shadow: inset 0 0 0 3px var(--number);
+}
+.game-page[data-play-game="sudoku"] .sudoku-notes {
+  color: color-mix(in srgb, var(--number) 58%, var(--ink-soft));
+  font-size: clamp(.4rem,1.45vw,.62rem);
+}
+.sudoku-context {
+  width: min(100%, 548px);
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: center;
+  margin-top: 7px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--number) 14%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--number) 4%, var(--surface));
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+.sudoku-context span {
+  color: var(--number);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+.sudoku-context strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sudoku-context em {
+  font-style: normal;
+  font-weight: 750;
+}
+.game-page[data-play-game="sudoku"] .number-pad {
+  width: min(100%,548px);
+  grid-template-columns: repeat(10,1fr);
+  gap: 4px;
+  margin-top: 10px;
+}
+.game-page[data-play-game="sudoku"] .number-pad button {
+  position: relative;
+  min-width: 0;
+  min-height: 50px;
+  padding: 5px 2px 13px;
+  border-radius: 7px;
+  font-size: 17px;
+}
+.game-page[data-play-game="sudoku"] .number-pad button[data-num]:not([data-num="0"])::after {
+  content: attr(data-remaining);
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  color: var(--ink-soft);
+  font-size: 7px;
+  font-weight: 700;
+}
+.game-page[data-play-game="sudoku"] .number-pad button.digit-complete {
+  opacity: .32;
+}
+.game-page[data-play-game="sudoku"] .toolbar {
+  width: min(100%,548px);
+  margin-top: 7px;
+}
+.game-page[data-play-game="sudoku"] [data-sudoku-notes].active {
+  border-color: var(--number);
+  background: color-mix(in srgb, var(--number) 12%, var(--surface));
+  color: var(--number);
+}
+
+/* --- Groups -------------------------------------------------------------- */
+.game-page[data-play-game="groups"] .groups-wrap {
+  width: min(100%, 760px);
+}
+.groups-mission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--word) 5%, var(--surface));
+}
+.groups-mission small {
+  display: block;
+  color: var(--word);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.groups-mission strong {
+  display: block;
+  margin-top: 2px;
+  font: 700 14px/1.2 var(--display-font);
+}
+.groups-selection-dots {
+  display: flex;
+  gap: 5px;
+}
+.groups-selection-dots i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid color-mix(in srgb, var(--word) 32%, var(--line-strong));
+  border-radius: 50%;
+  background: var(--surface);
+}
+.groups-selection-dots i.on {
+  border-color: var(--word);
+  background: var(--word);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--word) 10%, transparent);
+}
+.game-page[data-play-game="groups"] .groups-grid {
+  gap: 7px;
+}
+.game-page[data-play-game="groups"] .group-tile {
+  position: relative;
+  min-height: 78px;
+  border-width: 1px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-raised) 98%, var(--word) 2%);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--word) 12%, var(--line)), 0 7px 14px rgba(34,31,26,.05);
+  transition: transform 90ms ease, box-shadow 90ms ease, background 90ms ease;
+}
+.game-page[data-play-game="groups"] .group-tile:hover:not(.selected) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--word) 16%, var(--line)), 0 9px 18px rgba(34,31,26,.07);
+}
+.game-page[data-play-game="groups"] .group-tile.selected {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--word) 34%, var(--ink)), 0 4px 10px color-mix(in srgb, var(--word) 18%, transparent);
+}
+.game-page[data-play-game="groups"] .group-tile.selected::after {
+  content: attr(data-selection-order);
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, white 88%, transparent);
+  color: var(--word);
+  font-size: 9px;
+  font-weight: 900;
+}
+.game-page[data-play-game="groups"] .group-solved {
+  position: relative;
+  overflow: hidden;
+  border: 0;
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-bottom: 7px;
+  background: color-mix(in srgb, var(--word) 8%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--word);
+}
+.game-page[data-play-game="groups"] .group-solved[data-solved-index="1"] {
+  background: color-mix(in srgb, var(--warning) 9%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--warning);
+}
+.game-page[data-play-game="groups"] .group-solved[data-solved-index="2"] {
+  background: color-mix(in srgb, var(--logic) 8%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--logic);
+}
+.game-page[data-play-game="groups"] .group-solved[data-solved-index="3"] {
+  background: color-mix(in srgb, var(--hint) 8%, var(--surface));
+  box-shadow: inset 4px 0 0 var(--hint);
+}
+.game-page[data-play-game="groups"] .groups-status {
+  margin: 9px 2px 0;
+}
+.game-page[data-play-game="groups"] .play-shuffle {
+  margin-top: 8px;
+}
+
+/* --- Anagrams ------------------------------------------------------------ */
+.game-page[data-play-game="anagrams"] .anagram-wrap {
+  width: min(100%, 720px);
+  gap: 16px;
+  padding: 8px 0;
+}
+.anagram-progress {
+  width: min(100%, 580px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.anagram-progress strong {
+  color: var(--word);
+  font-size: 11px;
+}
+.game-page[data-play-game="anagrams"] .anagram-answer {
+  width: min(100%, 580px);
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: repeat(var(--anagram-count, 8), minmax(34px,1fr));
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--word) 14%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--word) 4%, var(--surface));
+}
+.game-page[data-play-game="anagrams"] .anagram-answer span {
+  width: auto;
+  height: 54px;
+  border: 1px solid color-mix(in srgb, var(--word) 18%, var(--line));
+  border-bottom: 3px solid color-mix(in srgb, var(--word) 42%, var(--line-strong));
+  border-radius: 7px 7px 4px 4px;
+  background: var(--surface-raised);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--word) 12%, var(--line));
+}
+.game-page[data-play-game="anagrams"] .anagram-tiles {
+  gap: 7px;
+  padding: 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.game-page[data-play-game="anagrams"] .anagram-tiles button {
+  position: relative;
+  border-radius: 9px;
+}
+.game-page[data-play-game="anagrams"] .anagram-tiles button.used {
+  opacity: .5;
+  transform: translateY(2px);
+  background: color-mix(in srgb, var(--word) 8%, var(--surface));
+  box-shadow: none;
+}
+.game-page[data-play-game="anagrams"] .anagram-tiles button.used::after {
+  content: attr(data-pick-order);
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  color: var(--word);
+  font: 850 8px/1 var(--ui-font);
+}
+.game-page[data-play-game="anagrams"] .toolbar {
+  margin-top: 3px;
+}
+
+/* --- Word Grid ----------------------------------------------------------- */
+.game-page[data-play-game="word-grid"] .word-grid-wrap {
+  gap: 10px;
+}
+.game-page[data-play-game="word-grid"] .word-grid-current {
+  min-width: 180px;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--word) 8%, var(--surface));
+  color: var(--word);
+  letter-spacing: .1em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--word) 15%, transparent);
+}
+.game-page[data-play-game="word-grid"] .word-grid-current.is-empty {
+  color: var(--ink-soft);
+  letter-spacing: .02em;
+  font: 750 11px/1 var(--ui-font);
+}
+.game-page[data-play-game="word-grid"] .word-grid-board {
+  position: relative;
+  overflow: hidden;
+  border-radius: 13px;
+  gap: 5px;
+  padding: 5px;
+  border: 0;
+  background: color-mix(in srgb, var(--word) 12%, var(--line));
+}
+.game-page[data-play-game="word-grid"] .wg-cell {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--word) 10%, var(--line));
+}
+.game-page[data-play-game="word-grid"] .wg-cell span {
+  position: relative;
+  z-index: 5;
+}
+.game-page[data-play-game="word-grid"] .wg-cell.path {
+  background: color-mix(in srgb, var(--word) 18%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--word) 65%, transparent);
+}
+.game-page[data-play-game="word-grid"] .wg-cell.path::after {
+  content: attr(data-path-order);
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  z-index: 6;
+  color: color-mix(in srgb, var(--word) 72%, var(--ink));
+  font: 850 8px/1 var(--ui-font);
+}
+.word-grid-path-svg {
+  position: absolute;
+  inset: 5px;
+  z-index: 4;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  pointer-events: none;
+  overflow: visible;
+}
+.word-grid-path-svg polyline {
+  fill: none;
+  stroke: color-mix(in srgb, var(--word) 72%, transparent);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.word-grid-path-svg circle {
+  fill: color-mix(in srgb, var(--word) 78%, transparent);
+}
+.game-page[data-play-game="word-grid"] .found-words {
+  gap: 5px;
+  max-height: 120px;
+}
+.game-page[data-play-game="word-grid"] .found-words span {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--word) 7%, var(--surface));
+  color: color-mix(in srgb, var(--word) 70%, var(--ink));
+}
+
+/* --- Cryptogram ---------------------------------------------------------- */
+.game-page[data-play-game="cryptogram"] .crypto-wrap {
+  width: min(100%, 860px);
+  gap: 12px;
+}
+.game-page[data-play-game="cryptogram"] .crypto-text {
+  padding: 20px 12px 22px;
+  border: 1px solid color-mix(in srgb, var(--word) 14%, var(--line));
+  border-radius: 13px;
+  background:
+    linear-gradient(to bottom, transparent calc(1.85em - 1px), color-mix(in srgb, var(--word) 6%, transparent) calc(1.85em - 1px) 1.85em) 0 0 / 100% 1.85em,
+    color-mix(in srgb, var(--surface) 99%, var(--word) 1%);
+}
+.game-page[data-play-game="cryptogram"] .crypto-letter {
+  min-height: 52px;
+  border-radius: 5px;
+}
+.game-page[data-play-game="cryptogram"] .crypto-letter:hover {
+  background: color-mix(in srgb, var(--word) 5%, transparent);
+}
+.game-page[data-play-game="cryptogram"] .crypto-letter.selected {
+  background: color-mix(in srgb, var(--word) 10%, transparent);
+}
+.game-page[data-play-game="cryptogram"] .crypto-selected {
+  width: min(100%, 440px);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--word) 17%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--word) 5%, var(--surface));
+}
+.crypto-selected > span {
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.crypto-selected > strong {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.crypto-selected > strong b {
+  min-width: 26px;
+  color: var(--word);
+  font: 850 22px/1 var(--display-font);
+  text-align: center;
+}
+.crypto-selected > strong i {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+.crypto-selected > small {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+.crypto-inspector {
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+.game-page[data-play-game="cryptogram"] .crypto-mappings {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--word) 14%, var(--line));
+  border-radius: 9px;
+}
+.game-page[data-play-game="cryptogram"] .crypto-map {
+  min-height: 36px;
+}
+.game-page[data-play-game="cryptogram"] .crypto-map.mapped {
+  background: color-mix(in srgb, var(--word) 5%, var(--surface));
+}
+.game-page[data-play-game="cryptogram"] .crypto-map.selected {
+  background: color-mix(in srgb, var(--word) 16%, var(--surface));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--word) 52%, transparent);
+}
+.game-page[data-play-game="cryptogram"] .cipher-frequency {
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--word) 3%, var(--surface));
+}
+.game-page[data-play-game="cryptogram"] .cipher-frequency summary {
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 750;
+}
+.game-page[data-play-game="cryptogram"] .crypto-keyboard .key.assigned {
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--word) 5%, var(--surface-soft));
+  opacity: .62;
+}
+.game-page[data-play-game="cryptogram"] .crypto-keyboard .key.assigned::after {
+  content: attr(data-owner);
+  display: block;
+  margin-top: 2px;
+  color: var(--word);
+  font-size: 7px;
+}
+
+/* --- Nonogram ------------------------------------------------------------ */
+.game-page[data-play-game="nonogram"] .nonogram-wrap {
+  max-width: 620px;
+}
+.game-page[data-play-game="nonogram"] .nono-col-clues>div,
+.game-page[data-play-game="nonogram"] .nono-row-clues>div {
+  color: var(--ink);
+  transition: color 100ms ease, opacity 100ms ease;
+}
+.game-page[data-play-game="nonogram"] :is(.nono-col-clues>div,.nono-row-clues>div).complete {
+  color: var(--logic);
+  opacity: .38;
+}
+.game-page[data-play-game="nonogram"] .nono-cell {
+  position: relative;
+}
+.game-page[data-play-game="nonogram"] .nono-cell.filled {
+  background: color-mix(in srgb, var(--logic) 82%, var(--ink));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 10%, transparent);
+}
+.game-page[data-play-game="nonogram"] .nono-cell.marked {
+  background: color-mix(in srgb, var(--logic) 4%, var(--surface-soft));
+  color: color-mix(in srgb, var(--logic) 58%, var(--ink-soft));
+}
+.game-page[data-play-game="nonogram"] .nono-tools {
+  width: min(100%, 420px);
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 5px;
+  align-items: stretch;
+  margin-top: 9px;
+}
+.nono-tool-label {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--logic);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.game-page[data-play-game="nonogram"] .nono-tools button {
+  min-height: 42px;
+}
+.game-page[data-play-game="nonogram"] .nono-tools button.active {
+  border-color: var(--logic);
+  background: color-mix(in srgb, var(--logic) 14%, var(--surface));
+  color: var(--logic);
+}
+.game-page[data-play-game="nonogram"] .nonogram-view-controls {
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+.game-page[data-play-game="nonogram"] .nonogram-view-controls label {
+  display: none;
+}
+.game-page[data-play-game="nonogram"] .nonogram-view-controls button {
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--logic);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+/* --- Kakuro -------------------------------------------------------------- */
+.game-page[data-play-game="kakuro"] .kakuro-board--deep {
+  border: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--number) 28%, var(--ink));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--number) 24%, var(--ink)), 0 13px 32px rgba(34,31,26,.10);
+}
+.game-page[data-play-game="kakuro"] .kakuro-black {
+  border-color: color-mix(in srgb, var(--number) 12%, var(--ink));
+  background: color-mix(in srgb, var(--number) 17%, var(--ink));
+}
+.game-page[data-play-game="kakuro"] .kakuro-clue {
+  position: relative;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--number) 18%, var(--ink));
+  background:
+    linear-gradient(135deg, transparent calc(50% - .8px), color-mix(in srgb, white 40%, transparent) 50%, transparent calc(50% + .8px)),
+    color-mix(in srgb, var(--number) 24%, var(--ink));
+}
+.game-page[data-play-game="kakuro"] .kakuro-clue span,
+.game-page[data-play-game="kakuro"] .kakuro-clue strong {
+  position: absolute;
+  color: color-mix(in srgb, white 90%, var(--number));
+  font: 800 clamp(8px,1.45vw,12px)/1 var(--ui-font);
+}
+.game-page[data-play-game="kakuro"] .kakuro-clue span {
+  right: 7%;
+  top: 9%;
+}
+.game-page[data-play-game="kakuro"] .kakuro-clue strong {
+  left: 7%;
+  bottom: 9%;
+}
+.game-page[data-play-game="kakuro"] .kakuro-cell {
+  background: color-mix(in srgb, var(--surface-raised) 99%, var(--number) 1%);
+}
+.game-page[data-play-game="kakuro"] .kakuro-cell.run-related {
+  background: color-mix(in srgb, var(--number) 8%, var(--surface));
+}
+.game-page[data-play-game="kakuro"] .kakuro-cell.selected {
+  z-index: 2;
+  outline: 0;
+  background: color-mix(in srgb, var(--number) 19%, var(--surface));
+  box-shadow: inset 0 0 0 3px var(--number);
+}
+.game-page[data-play-game="kakuro"] .kakuro-pad {
+  position: relative;
+  width: min(100%, 580px);
+  grid-template-columns: repeat(10,1fr);
+  padding-top: 20px;
+}
+.kakuro-pad-label {
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  color: var(--number);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.game-page[data-play-game="kakuro"] .kakuro-pad button {
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 2px;
+}
+
+/* --- Untangle ------------------------------------------------------------ */
+.game-page[data-play-game="untangle"] .untangle-wrap {
+  width: min(86vw, 730px);
+  gap: 8px;
+}
+.game-page[data-play-game="untangle"] .untangle-svg {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--spatial) 17%, var(--line)), 0 14px 34px rgba(34,31,26,.10);
+}
+.game-page[data-play-game="untangle"] .untangle-svg line {
+  transition: opacity 90ms ease, stroke 90ms ease, stroke-width 90ms ease;
+}
+.game-page[data-play-game="untangle"] .untangle-svg line:not(.crossing) {
+  opacity: .2;
+}
+.game-page[data-play-game="untangle"] .untangle-svg line.crossing {
+  opacity: .82;
+  stroke-width: 1.65;
+}
+.game-page[data-play-game="untangle"] .untangle-node circle {
+  transition: r 90ms ease, fill 90ms ease, stroke 90ms ease, filter 90ms ease;
+}
+.game-page[data-play-game="untangle"] .untangle-node.clear-node circle {
+  fill: color-mix(in srgb, var(--success) 8%, var(--surface));
+  stroke: color-mix(in srgb, var(--success) 62%, var(--spatial));
+}
+.game-page[data-play-game="untangle"] .untangle-node.hot-node circle {
+  fill: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  stroke: color-mix(in srgb, var(--danger) 70%, var(--spatial));
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--danger) 25%, transparent));
+}
+.game-page[data-play-game="untangle"] .untangle-node.selected circle {
+  stroke: var(--focus);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--focus) 28%, transparent));
+}
+.game-page[data-play-game="untangle"] .crossing-count {
+  width: min(100%, 560px);
+  display: grid;
+  grid-template-columns: auto minmax(120px,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 2px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--spatial) 5%, var(--surface));
+}
+.game-page[data-play-game="untangle"] .crossing-count > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.game-page[data-play-game="untangle"] .crossing-count strong {
+  color: var(--spatial);
+  font: 850 22px/1 var(--display-font);
+}
+.game-page[data-play-game="untangle"] .crossing-count span,
+.game-page[data-play-game="untangle"] .crossing-count small {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+.untangle-progress {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--spatial) 11%, var(--surface-soft));
+}
+.untangle-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--spatial);
+}
+.game-page[data-play-game="untangle"] .w6-meta {
+  margin-top: 2px;
+}
+
+/* Shared polish for game-specific secondary controls: lighter than Phase 2
+   primary actions so the board remains visually dominant. */
+.game-page[data-play-game="groups"] .toolbar,
+.game-page[data-play-game="anagrams"] .toolbar,
+.game-page[data-play-game="word-grid"] .toolbar,
+.game-page[data-play-game="cryptogram"] .toolbar,
+.game-page[data-play-game="untangle"] .toolbar {
+  margin-top: 8px;
+}
+.game-page[data-play-game="groups"] .toolbar button,
+.game-page[data-play-game="anagrams"] .toolbar button,
+.game-page[data-play-game="word-grid"] .toolbar button,
+.game-page[data-play-game="cryptogram"] .toolbar button,
+.game-page[data-play-game="untangle"] .toolbar button {
+  min-height: 38px;
+  border-color: color-mix(in srgb, var(--family-accent) 15%, var(--line));
+  background: color-mix(in srgb, var(--family-accent) 3%, var(--surface));
+  box-shadow: none;
+  font-size: 10px;
+}
+
+@media (max-width: 720px) {
+  .game-page[data-play-game="sudoku"] .sudoku-board {
+    width: min(calc(100vw - 22px), 548px);
+  }
+  .game-page[data-play-game="sudoku"] .number-pad {
+    grid-template-columns: repeat(5,1fr);
+  }
+  .game-page[data-play-game="sudoku"] .number-pad button {
+    min-height: 44px;
+  }
+  .sudoku-context {
+    width: min(calc(100vw - 22px),548px);
+    grid-template-columns: auto 1fr;
+  }
+  .sudoku-context em {
+    display: none;
+  }
+
+  .game-page[data-play-game="groups"] .group-tile {
+    min-height: 66px;
+  }
+  .groups-mission {
+    margin-bottom: 7px;
+  }
+
+  .game-page[data-play-game="anagrams"] .anagram-answer {
+    min-height: 64px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    padding: 7px;
+  }
+  .game-page[data-play-game="anagrams"] .anagram-answer span {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 48px;
+  }
+
+  .word-grid-path-svg polyline {
+    stroke-width: 7;
+  }
+  .word-grid-path-svg circle {
+    r: 4;
+  }
+
+  .game-page[data-play-game="cryptogram"] .crypto-text {
+    padding: 15px 3px 18px;
+  }
+  .game-page[data-play-game="cryptogram"] .crypto-selected {
+    width: 100%;
+  }
+  .game-page[data-play-game="cryptogram"] .crypto-mappings {
+    grid-template-columns: repeat(9,1fr);
+  }
+
+  .game-page[data-play-game="nonogram"] .nono-tools {
+    width: 100%;
+  }
+
+  .game-page[data-play-game="kakuro"] .kakuro-pad {
+    grid-template-columns: repeat(5,1fr);
+    padding-top: 19px;
+  }
+
+  .game-page[data-play-game="untangle"] .untangle-wrap {
+    width: min(calc(100vw - 18px),730px);
+  }
+  .game-page[data-play-game="untangle"] .crossing-count {
+    grid-template-columns: auto 1fr;
+  }
+  .game-page[data-play-game="untangle"] .crossing-count small {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 390px) {
+  .groups-mission strong {
+    font-size: 12px;
+  }
+  .game-page[data-play-game="groups"] .group-tile {
+    min-height: 60px;
+    padding: 7px 5px;
+    font-size: 10px;
+  }
+  .game-page[data-play-game="cryptogram"] .crypto-letter {
+    width: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-page[data-play-game="sudoku"] .sudoku-cell,
+  .game-page[data-play-game="groups"] .group-tile,
+  .game-page[data-play-game="untangle"] .untangle-svg line,
+  .game-page[data-play-game="untangle"] .untangle-node circle {
+    transition: none;
+  }
+}
