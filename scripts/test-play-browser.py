@@ -29,6 +29,14 @@ with sync_playwright() as p:
     else:page.goto(opt.base_url)
     def navigate(route):
         page.evaluate('(route)=>location.hash="#/"+route',route)
+    if not opt.quick:
+        page.set_viewport_size({'width':1365,'height':900})
+        navigate('home');page.locator('.discovery-hero').wait_for()
+        assert page.locator('.category-portal').count()==4
+        assert page.locator('[data-catalog-grid] .game-card').count()==36
+        assert page.locator('.continue-spotlight').is_visible()
+        assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'desktop home overflow'
+        page.screenshot(path=str(OUT/'home-1365.png'),full_page=True)
     for width in ([] if opt.quick else [1365,390]):
         page.set_viewport_size({'width':width,'height':900 if width>700 else 844})
         for gid in IDS:
@@ -128,14 +136,20 @@ with sync_playwright() as p:
     page.locator('.cipher-frequency summary').click()
     assert page.locator('.cipher-frequency b').count()>0
 
-    # Library search and filter controls remain usable at a narrow width.
+    # Phase 3 discovery hierarchy and full-library fallback remain usable at a narrow width.
     page.set_viewport_size({'width':320,'height':800});navigate('home');page.locator('[data-library-search]').wait_for()
+    assert page.locator('.discovery-hero').is_visible()
+    assert page.locator('.category-portal').count()==4
+    assert page.locator('.continue-spotlight').is_visible()
+    assert page.locator('.home-mini-card').count()>=1
+    assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'320px home overflow'
+    page.screenshot(path=str(OUT/'home-active-320.png'),full_page=True)
     page.locator('[data-library-search]').fill('sudoku')
     assert page.locator('[data-catalog-grid] .game-card:visible').count()==2
     page.locator('[data-library-search]').fill('no such puzzle')
     assert page.locator('[data-library-empty]').is_visible()
     page.locator('[data-library-search]').fill('')
-    page.locator('[data-category-filter="spatial"]').click()
+    page.locator('[data-discover-category="spatial"]').click()
     page.wait_for_function('() => document.querySelector("[data-category-filter=spatial]")?.getAttribute("aria-pressed")=="true"')
     assert page.locator('[data-catalog-grid] .game-card:visible').count()==4
     for gid in ['sudoku','cryptogram','five-letters','nonogram','kakuro']:
