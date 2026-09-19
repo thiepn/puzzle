@@ -1420,3 +1420,24 @@ body {
   .key,
   .op-button { transition: none; }
 }
+
+
+/* Phase 1 mobile width hardening: keyboard rows must shrink inside the raised stage. */
+@media (max-width: 720px) {
+  .letter-keyboard,
+  .key-row {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .key-row { gap: 4px; }
+  .key {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 2px;
+  }
+  .key.wide {
+    flex: 1.6 1 0;
+    min-width: 0;
+  }
+}
