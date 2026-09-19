@@ -1465,12 +1465,15 @@
     const el=document.createElement('textarea');el.value=text;el.setAttribute('readonly','');el.style.position='fixed';el.style.opacity='0';document.body.appendChild(el);el.select();
     let ok=false;try{ok=document.execCommand('copy');}catch{}el.remove();return ok;
   }
-  async function sharePuzzle(active,game){
-    const url=new URL(location.href); url.hash=`#/game/${game.id}?seed=${encodeURIComponent(active.seed)}&difficulty=${encodeURIComponent(active.difficulty)}`;
+  async function sharePuzzle(active,game,includeResult=false){
+    const url=new URL(location.href); url.hash='#/game/'+game.id+'?seed='+encodeURIComponent(active.seed)+'&difficulty='+encodeURIComponent(active.difficulty);
+    const reward=includeResult&&active.completed?resultRewardSummary(active,game):null;
+    const resultText=reward?(active.outcome==='completed'?'Solved ':'Played ')+game.name+' · '+active.difficulty+' · '+formatTime(active.durationMs||0)+' · '+reward.hints+' hint step'+(reward.hints===1?'':'s')+'. Try the same puzzle:':'Play this '+game.name+' puzzle:';
+    const copy=resultText+' '+url.toString();
     try {
-      if(navigator.share) await navigator.share({title:`${game.name} puzzle`,text:`Play this ${game.name} puzzle`,url:url.toString()});
-      else if(await copyTextFallback(url.toString())) toast('Puzzle link copied');
-      else toast('Could not copy this puzzle link');
+      if(navigator.share) await navigator.share({title:reward?game.name+' result':game.name+' puzzle',text:resultText,url:url.toString()});
+      else if(await copyTextFallback(copy)) toast(reward?'Result copied':'Puzzle link copied');
+      else toast('Could not copy this puzzle');
     } catch(e){ if(e?.name!=='AbortError') toast('Could not share this puzzle'); }
   }
 
