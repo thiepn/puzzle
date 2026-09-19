@@ -4311,9 +4311,9 @@ body {
     --motion-base: 0ms;
     --motion-slow: 0ms;
   }
-  .motion-system *,
-  .motion-system *::before,
-  .motion-system *::after,
+  body.in-game .game-page *,
+  body.in-game .game-page *::before,
+  body.in-game .game-page *::after,
   .toast,
   .discovery-home * {
     animation:none !important;
