@@ -90,8 +90,8 @@ jobs:
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
           curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
-          grep -q "const APP_VERSION = '1.2.0';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v21';" /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.3.0';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v22';" /tmp/live-sw.js
           grep -q 'trace' /tmp/live-dictionary.js
           grep -q 'adieu' /tmp/live-dictionary.js
           echo 'PRODUCTION_SMOKE=PASS'
