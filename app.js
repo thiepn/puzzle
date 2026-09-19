@@ -766,6 +766,20 @@
   function showLicenseInfo(){
     showModal('Licenses & notices', `<p>Puzzle Arcade has no third-party runtime JavaScript, CSS, font, analytics, or API dependencies.</p><p>The broad accepted-word dictionary is derived from the English Speller Database (ESDB/SCOWL), Copyright 2000–2026 Kevin Atkinson, under its permissive redistribution terms. Full attribution is in THIRD_PARTY_NOTICES.md.</p><p>Puzzle targets, clues, interface assets, and game implementations remain maintained in-project.</p>`);
   }
+  function showControlsHelp(){
+    const game=state.currentGame,gameCopy=game&&PLAY_GUIDES[game.id]?.[1];
+    showModal('Keyboard & touch controls', `<div class="controls-help">
+      <p>Every puzzle can be played with touch or a mouse. Board buttons remain keyboard focusable, and games with directional controls also support the arrow keys.</p>
+      <dl class="shortcut-list">
+        <div><dt><kbd>?</kbd></dt><dd>Open this controls guide</dd></div>
+        <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Z</kbd></dt><dd>Undo in games that support undo</dd></div>
+        <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></dt><dd>Redo</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close dialogs and search</dd></div>
+      </dl>
+      ${gameCopy?`<div class="current-game-controls"><h3>${esc(game.name)}</h3><p>${esc(gameCopy)}</p></div>`:''}
+      <p class="subtle">On touch screens, drag gestures are limited to boards that need tracing or painting. Mines also provides explicit Reveal and Flag modes so long-press is never required.</p>
+    </div>`);
+  }
 
   function bindCommon(){
     $$('[data-action="home"]').forEach(b=>b.onclick=()=>go('home'));
@@ -774,7 +788,8 @@
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
-    $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     $$('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     $$('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
     $$('.game-card__open,.continue-card').forEach(el => {
