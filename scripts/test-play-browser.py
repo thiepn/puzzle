@@ -26,7 +26,9 @@ with sync_playwright() as p:
         page.set_content(html);page.add_style_tag(content=(ROOT/'styles.css').read_text())
         page.evaluate('''() => { const values=Object.create(null); const api={getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=String(v),removeItem:k=>delete values[k],clear:()=>Object.keys(values).forEach(k=>delete values[k]),key:i=>Object.keys(values)[i]??null}; Object.defineProperty(window,'localStorage',{value:new Proxy(api,{get:(t,k)=>k==='length'?Object.keys(values).length:k in t?t[k]:values[k],ownKeys:()=>Object.keys(values),getOwnPropertyDescriptor:(t,k)=>k in values?{enumerable:true,configurable:true,value:values[k]}:undefined})}); }''')
         for name in ['word-dictionary.js','word-content.js','app.js']:page.evaluate((ROOT/name).read_text())
-    else:page.goto(opt.base_url)
+    else:
+        page.goto(opt.base_url)
+        page.locator('[data-library-search]').wait_for(timeout=30000)
     def navigate(route):
         page.evaluate('(route)=>location.hash="#/"+route',route)
     for width in ([] if opt.quick else [1365,390]):
