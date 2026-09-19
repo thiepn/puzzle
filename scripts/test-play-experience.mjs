@@ -9,7 +9,7 @@ const store={};const localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>stor
 const box={console,structuredClone,URL,URLSearchParams,Date,Math,Map,Set,WeakMap,WeakSet,Uint32Array,Uint8Array,Int8Array,Int32Array,performance,crypto:webcrypto,document:{querySelector:()=>el,querySelectorAll:()=>[],createElement:()=>({...el}),addEventListener:noop,documentElement:el,body:el,hidden:false},location:{hash:'',protocol:'https:'},navigator:{},window:{matchMedia:()=>({matches:false,addEventListener:noop}),addEventListener:noop},localStorage,setTimeout:noop,clearTimeout:noop,setInterval:noop,clearInterval:noop,requestAnimationFrame:noop,CSS:{escape:x=>x}};
 vm.createContext(box);for(const f of ['word-dictionary.js','word-content.js'])vm.runInContext(read(f),box);
 let src=read('app.js');const cut=src.lastIndexOf("  document.addEventListener('click',e=>{");assert.ok(cut>0);
-src=src.slice(0,cut)+`globalThis.TEST={GAMES,state,byId,PLAY_GUIDES,playSession,canUndoGame,redoGame,playSignature,repairSavedActive,sanitizeSettings,baseGameShell,acceptedLadderPath,acceptedLadderGraph,acceptedWordSet,acceptedWordsOfLength,hiveDictionaryWords,isWordOnGrid,w6LadderGraph,resultRewardSummary,nextResultDifficulty,resultPanel};})();`;
+src=src.slice(0,cut)+`globalThis.TEST={GAMES,state,byId,PLAY_GUIDES,playSession,canUndoGame,redoGame,playSignature,repairSavedActive,sanitizeSettings,baseGameShell,acceptedLadderPath,acceptedLadderGraph,acceptedWordSet,acceptedWordsOfLength,hiveDictionaryWords,isWordOnGrid,w6LadderGraph,resultRewardSummary,nextResultDifficulty,resultPanel,statsRecord,statsDayKey,statsHumanDuration};})();`;
 vm.runInContext(src,box);const T=box.TEST,plain=x=>JSON.parse(JSON.stringify(x));
 let assertions=0;const ok=(condition,message)=>{assert.ok(condition,message);assertions++;};
 const games=Object.values(T.GAMES);ok(games.length===36,'36 games retained');ok(Object.keys(T.PLAY_GUIDES).length===36,'each game has an individual guide');
@@ -108,6 +108,33 @@ for(const id of ['letter-hive','word-grid']){
  reward=T.resultRewardSummary(milestone,g);
  ok(reward.totalSolved===5&&reward.badges.some(x=>x.kind==='milestone'),'Phase 7: real solve-count milestone is recognized');
  T.state.history=oldHistory;
+}
+
+
+// Phase 8 local record aggregation must be deterministic and purely history-derived.
+{
+ const now=new Date();now.setHours(12,0,0,0);const t=now.getTime(),day=86400000;
+ const history=[
+  {id:'s1',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:60000,metrics:{hintsUsed:0},endedAt:t},
+  {id:'s2',gameId:'sudoku',outcome:'completed',difficulty:'Easy',durationMs:45000,metrics:{hintsUsed:1},endedAt:t-1000},
+  {id:'g1',gameId:'groups',outcome:'completed',difficulty:'Medium',durationMs:80000,metrics:{hintsUsed:0},endedAt:t-day},
+  {id:'u1',gameId:'untangle',outcome:'failed',difficulty:'Hard',durationMs:30000,metrics:{hintsUsed:0},endedAt:t-2*day},
+  {id:'n1',gameId:'nonogram',outcome:'completed',difficulty:'Hard',durationMs:120000,metrics:{hintsUsed:2},endedAt:t-3*day},
+ ];
+ const record=T.statsRecord(history);
+ ok(record.completed.length===4,'Phase 8: only completed results count as solves');
+ ok(record.attempts===5,'Phase 8: attempts include ended runs');
+ ok(record.clean.length===2,'Phase 8: clean solves use zero hint steps');
+ ok(record.currentStreak===3,'Phase 8: current streak stops at first non-completion');
+ ok(record.bestStreak===3,'Phase 8: best streak derived from chronological history');
+ ok(record.uniqueGames===3,'Phase 8: unique solved games excludes failed-only games');
+ const sudoku=record.games.find(g=>g.gameId==='sudoku');
+ ok(sudoku.solves===2&&sudoku.bests.Easy.durationMs===45000,'Phase 8: per-game fastest time retained by difficulty');
+ ok(Math.round(sudoku.avgHints*10)===5,'Phase 8: average hints derived from completed solves');
+ ok(record.categories.find(c=>c.id==='word').solves===1,'Phase 8: family solve totals are correct');
+ ok(record.categories.find(c=>c.id==='number').games===1,'Phase 8: family game coverage is unique');
+ ok(record.days.length===28&&record.days.at(-1).count===2,'Phase 8: 28-day activity bins local-day solves');
+ ok(T.statsHumanDuration(3661000)==='1h 1m','Phase 8: long solve time has readable duration format');
 }
 
 console.log(JSON.stringify({pass:true,games:games.length,generated,hintEngines:hints,assertions,slow},null,2));
