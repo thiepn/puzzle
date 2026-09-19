@@ -3090,7 +3090,9 @@
     if(e.target.closest('.skip-link')){e.preventDefault();main.focus({preventScroll:true});main.scrollIntoView({block:'start'});}
   });
   document.addEventListener('keydown',e=>{
-    if(e.defaultPrevented||overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.defaultPrevented)return;
+    if(e.key==='Escape'&&overlayRoot.firstChild){e.preventDefault();closeOverlay();return;}
+    if(overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
     if(e.key==='?'){e.preventDefault();showControlsHelp();}
   },true);
   window.addEventListener('hashchange',()=>void renderRoute());
