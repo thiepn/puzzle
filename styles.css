@@ -898,3 +898,525 @@ p { line-height:1.55; }
  .anagram-wrap{gap:18px;padding:18px 0;}.game-card__description{font-size:11px;}.result-actions{gap:6px;}.result-actions button{min-height:44px;}
 }
 @media(prefers-reduced-motion:reduce){.play-library .game-card{transition:none;}}
+
+
+/* ========================================================================== */
+/* v1.2 Phase 1 — Visual Foundation                                           */
+/* Editorial base + tactile puzzle surfaces. Information architecture stays. */
+/* ========================================================================== */
+
+:root {
+  --paper: #f3f0e8;
+  --paper-bright: #fffdf8;
+  --paper-muted: #e9e4d9;
+  --ink: #20201d;
+  --ink-soft: #666159;
+  --line: #d9d4c8;
+  --line-strong: #aaa49a;
+  --surface: var(--paper-bright);
+  --surface-soft: color-mix(in srgb, var(--paper-bright) 62%, var(--paper-muted));
+  --surface-raised: color-mix(in srgb, var(--paper-bright) 97%, white 3%);
+  --surface-inset: color-mix(in srgb, var(--paper) 74%, var(--paper-muted));
+  --shadow-xs: 0 1px 2px rgba(34,31,26,.08);
+  --shadow-sm: 0 2px 4px rgba(34,31,26,.06), 0 9px 24px rgba(34,31,26,.07);
+  --shadow-board: 0 2px 4px rgba(34,31,26,.08), 0 16px 44px rgba(34,31,26,.10);
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 18px;
+  --ui-font: "Segoe UI Variable Text", "Aptos", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] {
+    --paper: #171714;
+    --paper-bright: #22221e;
+    --paper-muted: #2c2b26;
+    --ink: #f2efe6;
+    --ink-soft: #b0aba1;
+    --line: #3b3933;
+    --line-strong: #625e55;
+    --surface: #22221e;
+    --surface-soft: #292823;
+    --surface-raised: #272620;
+    --surface-inset: #1d1d1a;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,.28);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,.22), 0 12px 28px rgba(0,0,0,.20);
+    --shadow-board: 0 2px 4px rgba(0,0,0,.28), 0 18px 52px rgba(0,0,0,.30);
+  }
+}
+html[data-theme="dark"] {
+  --paper: #171714;
+  --paper-bright: #22221e;
+  --paper-muted: #2c2b26;
+  --ink: #f2efe6;
+  --ink-soft: #b0aba1;
+  --line: #3b3933;
+  --line-strong: #625e55;
+  --surface: #22221e;
+  --surface-soft: #292823;
+  --surface-raised: #272620;
+  --surface-inset: #1d1d1a;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.28);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,.22), 0 12px 28px rgba(0,0,0,.20);
+  --shadow-board: 0 2px 4px rgba(0,0,0,.28), 0 18px 52px rgba(0,0,0,.30);
+}
+html[data-theme="light"] {
+  --paper: #f3f0e8;
+  --paper-bright: #fffdf8;
+  --paper-muted: #e9e4d9;
+  --ink: #20201d;
+  --ink-soft: #666159;
+  --line: #d9d4c8;
+  --line-strong: #aaa49a;
+  --surface: var(--paper-bright);
+  --surface-soft: color-mix(in srgb, var(--paper-bright) 62%, var(--paper-muted));
+  --surface-raised: color-mix(in srgb, var(--paper-bright) 97%, white 3%);
+  --surface-inset: color-mix(in srgb, var(--paper) 74%, var(--paper-muted));
+  --shadow-xs: 0 1px 2px rgba(34,31,26,.08);
+  --shadow-sm: 0 2px 4px rgba(34,31,26,.06), 0 9px 24px rgba(34,31,26,.07);
+  --shadow-board: 0 2px 4px rgba(34,31,26,.08), 0 16px 44px rgba(34,31,26,.10);
+}
+
+/* Keep the editorial grid in the library, but never behind an active puzzle. */
+body:has(.game-page) {
+  background: var(--paper);
+}
+
+body {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.topbar {
+  border-bottom-color: color-mix(in srgb, var(--line) 82%, transparent);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.nav-link { font-weight: 650; }
+.icon-button { border-radius: 10px; }
+.icon-button:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+/* Foundation control language: less browser-form, more tactile object. */
+.toolbar button,
+.small-button,
+.primary-button,
+.secondary-button,
+.danger-button,
+.play-commandbar button,
+.play-commandbar select,
+.number-pad button,
+.binary-pad button,
+.queen-pad button,
+.nono-tools button,
+.state-pad button,
+.dense-board-controls button,
+.filter,
+.library-search input,
+.ladder-entry input,
+.key,
+.op-button {
+  border-color: color-mix(in srgb, var(--line-strong) 66%, transparent);
+  background: var(--surface-raised);
+  border-radius: 9px;
+  box-shadow: var(--shadow-xs);
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 90ms ease;
+}
+.toolbar button:hover:not(:disabled),
+.small-button:hover:not(:disabled),
+.secondary-button:hover:not(:disabled),
+.play-commandbar button:hover:not(:disabled),
+.number-pad button:hover:not(:disabled),
+.binary-pad button:hover:not(:disabled),
+.queen-pad button:hover:not(:disabled),
+.nono-tools button:hover:not(:disabled),
+.state-pad button:hover:not(:disabled),
+.dense-board-controls button:hover:not(:disabled),
+.filter:hover,
+.key:hover:not(:disabled),
+.op-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ink) 44%, var(--line));
+  background: color-mix(in srgb, var(--surface-raised) 94%, var(--ink) 6%);
+  box-shadow: 0 1px 2px rgba(34,31,26,.10), 0 5px 14px rgba(34,31,26,.08);
+}
+.toolbar button:active:not(:disabled),
+.small-button:active:not(:disabled),
+.secondary-button:active:not(:disabled),
+.play-commandbar button:active:not(:disabled),
+.number-pad button:active:not(:disabled),
+.binary-pad button:active:not(:disabled),
+.queen-pad button:active:not(:disabled),
+.nono-tools button:active:not(:disabled),
+.state-pad button:active:not(:disabled),
+.key:active:not(:disabled),
+.op-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.primary-button,
+.play-commandbar .play-hint-button {
+  background: var(--ink);
+  color: var(--paper-bright);
+  border-color: var(--ink);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 28%, transparent);
+}
+.play-commandbar .play-hint-button:hover:not(:disabled) {
+  background: var(--play-accent);
+  border-color: var(--play-accent);
+  color: #fff;
+}
+.danger-button { background: transparent; box-shadow: none; }
+
+/* Library surfaces: still editorial, but cleaner and more deliberate. */
+.game-card {
+  border-color: color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--surface) 97%, var(--accent) 3%);
+  box-shadow: 0 1px 0 rgba(34,31,26,.03);
+}
+.play-library .game-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  box-shadow: var(--shadow-sm);
+}
+.game-card::before { width: 3px; }
+.game-card__title { letter-spacing: -.015em; }
+.game-card__description { color: color-mix(in srgb, var(--ink-soft) 92%, transparent); }
+.continue-card {
+  border-top-color: color-mix(in srgb, var(--ink) 82%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--line) 80%, transparent);
+}
+.library-search input {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.filter {
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  border-color: var(--line);
+  box-shadow: none;
+}
+.filter.is-active {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 48%, var(--line));
+  background: var(--surface);
+  box-shadow: inset 0 -2px 0 var(--ink), var(--shadow-xs);
+}
+
+/* Active game: hierarchy is now stage > controls > metadata. */
+.game-page {
+  --stage-tint: color-mix(in srgb, var(--play-accent) 4%, var(--surface));
+  padding-top: 22px;
+}
+.game-title h1 { letter-spacing: -.028em; }
+.game-title small { opacity: .88; }
+.game-objective {
+  color: color-mix(in srgb, var(--ink-soft) 94%, transparent);
+  max-width: 720px;
+}
+.play-commandbar {
+  padding: 8px;
+  margin: 0 auto 14px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 78%, transparent);
+}
+.play-commandbar button,
+.play-commandbar select {
+  background: var(--surface-raised);
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+}
+.play-difficulty { padding-left: 4px; }
+
+.play-guide,
+.play-feedback {
+  border: 1px solid color-mix(in srgb, var(--play-accent) 18%, var(--line));
+  border-left: 3px solid var(--play-accent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--play-accent) 4%);
+  box-shadow: var(--shadow-xs);
+}
+.play-hint-zone .proof-hint {
+  border: 1px solid color-mix(in srgb, var(--play-accent) 18%, var(--line));
+  border-radius: 12px;
+  padding: 13px 80px 13px 14px;
+  background: color-mix(in srgb, var(--surface) 97%, var(--play-accent) 3%);
+  box-shadow: var(--shadow-xs);
+}
+.proof-hint-head strong { color: var(--play-accent); }
+.proof-hint li span { color: color-mix(in srgb, var(--play-accent) 78%, var(--ink-soft)); }
+.hint-dismiss { right: 14px; top: 14px; }
+
+.game-layout { gap: 24px; }
+.game-stage {
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--play-accent) 14%, var(--line));
+  border-radius: 18px;
+  background: var(--stage-tint);
+  box-shadow: var(--shadow-board);
+}
+.game-board-wrap {
+  padding: 8px 0;
+}
+.game-side {
+  border-left: 0;
+  padding: 16px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 74%, transparent);
+}
+.side-stat {
+  border-bottom-color: color-mix(in srgb, var(--line) 72%, transparent);
+}
+.side-stat label { color: color-mix(in srgb, var(--ink-soft) 92%, transparent); }
+.play-start-tip { color: var(--ink-soft); }
+.play-save-note { opacity: .78; }
+.pause-cover {
+  border-color: color-mix(in srgb, var(--play-accent) 16%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--play-accent) 4%);
+  box-shadow: var(--shadow-board);
+}
+
+/* The puzzle is a physical object on the stage. Keep square geometry where needed. */
+.sudoku-board,
+.killer-board,
+.mines-board,
+.wordsearch-board,
+.binary-board,
+.nonogram-board,
+.kakuro-board,
+.number-path-board,
+.light-board,
+.tents-board,
+.rect-board,
+.towers-board,
+.network-board,
+.word-grid-board,
+.theme-trail-board,
+.crossword-board,
+.unequal-board,
+.arith-board,
+.islands-board,
+.hitori-board,
+.fill-board,
+.domino-board,
+.untangle-svg,
+.sliding-board,
+.lights-board {
+  box-shadow: 0 1px 2px rgba(34,31,26,.12), 0 10px 26px rgba(34,31,26,.09);
+}
+
+/* Reduce black-rule overload without weakening actual puzzle boundaries. */
+.sudoku-board,
+.killer-board,
+.kakuro-board,
+.crossword-board {
+  border-color: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+.word-grid-board,
+.theme-trail-board,
+.binary-board,
+.nonogram-board,
+.number-path-board,
+.light-board,
+.tents-board,
+.rect-board,
+.towers-board,
+.network-board,
+.unequal-board,
+.arith-board,
+.islands-board,
+.hitori-board,
+.fill-board,
+.domino-board,
+.untangle-svg,
+.mines-board,
+.wordsearch-board {
+  border-color: color-mix(in srgb, var(--ink) 78%, var(--line-strong));
+}
+
+/* Tactile pieces and clearer selection vocabulary. */
+.group-tile,
+.pieces-grid button,
+.anagram-tiles button,
+.hive-board button,
+.value-tile,
+.crypto-map {
+  border-color: color-mix(in srgb, var(--line-strong) 64%, transparent);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-xs);
+}
+.group-tile,
+.pieces-grid button {
+  border-radius: 10px;
+}
+.group-tile.selected,
+.pieces-grid button.selected {
+  background: color-mix(in srgb, var(--word) 88%, var(--ink));
+  color: #fff;
+  border-color: var(--word);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--word) 24%, transparent);
+}
+.group-solved {
+  border: 1px solid color-mix(in srgb, var(--word) 18%, var(--line));
+  border-left: 4px solid var(--word);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--word) 8%, var(--surface));
+}
+.anagram-answer span {
+  border-bottom-color: color-mix(in srgb, var(--word) 38%, var(--ink));
+}
+.anagram-tiles button {
+  border-radius: 10px;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--word) 26%, var(--line-strong)), 0 7px 16px rgba(34,31,26,.08);
+}
+.hive-board button {
+  border-color: color-mix(in srgb, var(--word) 20%, var(--line-strong));
+  box-shadow: 0 3px 10px rgba(34,31,26,.08);
+}
+.hive-board button.center {
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--word) 28%, transparent);
+}
+
+/* Number family: calmer base, stronger focus. */
+.sudoku-cell.given,
+.killer-cell.given { background: color-mix(in srgb, var(--number) 5%, var(--surface)); }
+.sudoku-cell.related,
+.killer-cell.related { background: color-mix(in srgb, var(--number) 7%, var(--surface)); }
+.sudoku-cell.selected,
+.killer-cell.selected { background: color-mix(in srgb, var(--number) 18%, var(--surface)); }
+.sudoku-cell.same-value:not(.selected) {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--number) 52%, transparent);
+  background: color-mix(in srgb, var(--number) 10%, var(--surface));
+}
+.number-pad button {
+  border-color: color-mix(in srgb, var(--number) 16%, var(--line));
+}
+.number-pad button:not(.digit-complete):hover {
+  border-color: color-mix(in srgb, var(--number) 52%, var(--line));
+}
+
+/* Word family: let traces and current state carry the category color. */
+.word-grid-current,
+.crypto-selected strong { color: var(--word); }
+.wg-cell.path,
+.trail-cell.path {
+  background: color-mix(in srgb, var(--word) 18%, var(--surface));
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--word) 78%, transparent);
+}
+.crypto-text {
+  border-top: 0;
+  border-bottom-color: color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 78%, transparent);
+}
+.crypto-mappings {
+  border-color: color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.crypto-map { box-shadow: none; }
+
+/* Logic family: soften empty canvas areas so completed marks read more strongly. */
+.nono-cell,
+.binary-cell,
+.number-path-cell,
+.rect-cell,
+.network-cell,
+.unequal-cell,
+.arith-cell,
+.island-cell,
+.hitori-cell,
+.fill-cell,
+.domino-cell {
+  background-color: var(--surface-raised);
+}
+
+/* Untangle remains a graph puzzle, but the canvas should not look like a debug plot. */
+.untangle-svg {
+  background: color-mix(in srgb, var(--surface) 96%, var(--spatial) 4%);
+}
+.untangle-svg line {
+  stroke: color-mix(in srgb, var(--ink-soft) 44%, transparent);
+  stroke-width: 1;
+}
+.untangle-svg line.crossing {
+  stroke: color-mix(in srgb, var(--danger) 82%, var(--spatial));
+  stroke-width: 1.35;
+}
+.untangle-node circle {
+  fill: var(--surface-raised);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 1px 1px rgba(34,31,26,.12));
+}
+.untangle-node.selected circle,
+.untangle-node:focus circle {
+  fill: color-mix(in srgb, var(--spatial) 10%, var(--surface));
+  stroke: var(--focus);
+  stroke-width: 2.8;
+}
+.crossing-count strong { color: var(--spatial); }
+
+/* Results should feel like a conclusion, not another ruled section. */
+.result-panel {
+  border: 1px solid color-mix(in srgb, var(--play-accent) 20%, var(--line));
+  border-top: 3px solid var(--play-accent);
+  border-radius: 14px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--play-accent) 4%);
+  box-shadow: var(--shadow-sm);
+}
+
+.modal {
+  border-color: color-mix(in srgb, var(--line-strong) 66%, transparent);
+  background: var(--surface-raised);
+  box-shadow: 0 24px 70px rgba(20,18,15,.22);
+}
+
+@media (max-width: 900px) {
+  .game-stage { padding: 18px; }
+  .game-side { padding: 14px; }
+}
+
+@media (max-width: 720px) {
+  .game-page { padding-top: 10px; }
+  .play-commandbar {
+    margin-bottom: 10px;
+    padding: 7px;
+    border-radius: 11px;
+  }
+  .game-layout { gap: 10px; }
+  .game-stage {
+    padding: 12px 8px 14px;
+    border-radius: 15px;
+    box-shadow: 0 1px 2px rgba(34,31,26,.08), 0 10px 28px rgba(34,31,26,.08);
+  }
+  .game-board-wrap { padding: 4px 0; }
+  .game-side {
+    border-top: 0;
+    border-radius: 11px;
+    background: var(--surface-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 74%, transparent);
+  }
+  .play-hint-zone .proof-hint {
+    padding: 38px 12px 12px;
+  }
+  .play-guide,
+  .play-feedback { border-radius: 10px; }
+  .group-tile { border-radius: 8px; }
+  .library-search input { box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar button,
+  .small-button,
+  .primary-button,
+  .secondary-button,
+  .play-commandbar button,
+  .number-pad button,
+  .binary-pad button,
+  .queen-pad button,
+  .nono-tools button,
+  .state-pad button,
+  .key,
+  .op-button { transition: none; }
+}
