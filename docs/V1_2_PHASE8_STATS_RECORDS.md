@@ -33,8 +33,7 @@ A local-day activity strip shows completed puzzles during the previous 28 days.
 - intensity is based only on number of solves that day
 - empty days remain visible
 - no daily target or streak requirement is attached
-- desktop shows 28 days
-- narrow mobile layouts emphasize the most recent 14 days while the underlying 28-day data remains present
+- desktop and mobile both show the full 28-day period
 
 ## Puzzle family record
 
