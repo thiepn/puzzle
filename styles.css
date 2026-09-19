@@ -5170,9 +5170,6 @@ body {
     gap:4px;
     padding:9px;
   }
-  .stats-day:nth-child(-n+14) {
-    display:none;
-  }
   .stats-family-grid {
     gap:7px;
   }
