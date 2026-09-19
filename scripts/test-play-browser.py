@@ -55,6 +55,8 @@ with sync_playwright() as p:
             page.locator('[data-resume-puzzle]').click()
             assert page.locator('.game-stage').get_attribute('inert') is None,gid
             controls+=1
+            if width==1365 and gid in ['sudoku','groups','untangle']:
+                page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
             if width==390:
                 page.locator('[data-game-hint]').click()
                 page.wait_for_function('() => !document.querySelector("[data-game-hint]")?.disabled',timeout=15000)
