@@ -37,6 +37,18 @@ with sync_playwright() as p:
         assert page.locator('.continue-spotlight').is_visible()
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'desktop home overflow'
         page.screenshot(path=str(OUT/'home-1365.png'),full_page=True)
+    if not opt.quick:
+        family_reps={'word':'groups','number':'sudoku','logic':'nonogram','spatial':'untangle'}
+        page.set_viewport_size({'width':1365,'height':900})
+        for family,gid in family_reps.items():
+            navigate(f'game/{gid}?seed=family-system&difficulty=Easy')
+            page.wait_for_function('(x)=>document.querySelector(".game-page")?.dataset.playGame===x[0]&&document.querySelector(".game-page")?.dataset.playCategory===x[1]',arg=[gid,family])
+            badge=page.evaluate('getComputedStyle(document.querySelector(".game-category-label"),"::before").content')
+            pattern=page.evaluate('getComputedStyle(document.querySelector(".game-stage"),"::before").backgroundImage')
+            assert badge not in ('none','normal','""'),(family,'missing family badge')
+            assert pattern!='none',(family,'missing family stage pattern')
+            assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),f'desktop family overflow: {gid}'
+            page.screenshot(path=str(OUT/f'family-{family}-1365.png'),full_page=True)
     for width in ([] if opt.quick else [1365,390]):
         page.set_viewport_size({'width':width,'height':900 if width>700 else 844})
         for gid in IDS:
@@ -63,13 +75,13 @@ with sync_playwright() as p:
             page.locator('[data-resume-puzzle]').click()
             assert page.locator('.game-stage').get_attribute('inert') is None,gid
             controls+=1
-            if width==1365 and gid in ['sudoku','groups','untangle']:
+            if width==1365 and gid in ['sudoku','groups','nonogram','untangle']:
                 page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
             if width==390:
                 page.locator('[data-game-hint]').click()
                 page.wait_for_function('() => !document.querySelector("[data-game-hint]")?.disabled',timeout=15000)
                 hints+=1
-                if gid in ['cryptogram','nonogram','sudoku','groups','anagrams','untangle','kakuro','word-grid']:
+                if gid in ['cryptogram','nonogram','sudoku','groups','anagrams','untangle','kakuro','word-grid','network','bridges','five-letters']:
                     page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
     print('Route matrix finished; checking interactions',flush=True)
     # Play complete input/undo/resume loops rather than only checking render output.
