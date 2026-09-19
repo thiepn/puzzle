@@ -898,3 +898,192 @@ p { line-height:1.55; }
  .anagram-wrap{gap:18px;padding:18px 0;}.game-card__description{font-size:11px;}.result-actions{gap:6px;}.result-actions button{min-height:44px;}
 }
 @media(prefers-reduced-motion:reduce){.play-library .game-card{transition:none;}}
+
+
+/* Phase 9 — Accessibility, controls & device polish. */
+.sr-only {
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+.side-stat .side-label {
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:.09em;
+  font-size:10px;
+  display:block;
+  margin-bottom:4px;
+}
+.setting-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:20px;
+  padding:14px 0;
+  border-top:1px solid var(--line);
+}
+.setting-row:first-of-type { margin-top:8px; }
+.setting-row h3 { font:700 16px/1.3 var(--ui-font);letter-spacing:0; }
+.setting-row p { margin:4px 0 0;max-width:62ch;font-size:13px; }
+.controls-help>p:first-child { margin-top:0; }
+.shortcut-list { display:grid;gap:0;margin:18px 0;border-top:1px solid var(--line); }
+.shortcut-list>div {
+  display:grid;
+  grid-template-columns:minmax(115px,auto) 1fr;
+  gap:18px;
+  padding:10px 0;
+  border-bottom:1px solid var(--line);
+  align-items:center;
+}
+.shortcut-list dt,.shortcut-list dd { margin:0; }
+kbd {
+  display:inline-block;
+  min-width:28px;
+  padding:3px 7px;
+  border:1px solid var(--line-strong);
+  border-bottom-width:2px;
+  border-radius:4px;
+  background:var(--paper);
+  color:var(--ink);
+  font:700 12px/1.4 var(--ui-font);
+  text-align:center;
+}
+.current-game-controls {
+  border-left:3px solid var(--play-accent,var(--focus));
+  padding:10px 14px;
+  margin:18px 0;
+  background:var(--paper);
+}
+.current-game-controls p { margin:5px 0 0; }
+
+body {
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+.topbar {
+  height:calc(var(--topbar-h) + env(safe-area-inset-top));
+  padding-top:env(safe-area-inset-top);
+  padding-left:max(16px,env(safe-area-inset-left));
+  padding-right:max(16px,env(safe-area-inset-right));
+}
+#main { min-height:calc(100vh - var(--topbar-h) - env(safe-area-inset-top)); }
+.toast-root { right:max(16px,env(safe-area-inset-right)); }
+
+@supports (min-height:100dvh) {
+  body { min-height:100dvh; }
+  #main { min-height:calc(100dvh - var(--topbar-h) - env(safe-area-inset-top)); }
+}
+
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  scroll-behavior:auto!important;
+  animation-duration:.001ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.001ms!important;
+}
+html[data-contrast="high"] {
+  --line:color-mix(in srgb,var(--ink) 42%,var(--paper));
+  --line-strong:color-mix(in srgb,var(--ink) 76%,var(--paper));
+}
+html[data-contrast="high"] body { background:var(--paper); }
+html[data-contrast="high"] button,
+html[data-contrast="high"] input,
+html[data-contrast="high"] select { border-color:var(--line-strong); }
+html[data-contrast="high"] .game-card,
+html[data-contrast="high"] .play-guide,
+html[data-contrast="high"] .play-feedback { border-color:var(--line-strong); }
+
+.game-board-wrap button.selected,
+.game-board-wrap [aria-pressed="true"] {
+  outline:3px solid var(--focus);
+  outline-offset:-3px;
+}
+.wg-cell.path,.trail-cell.path,.ws-cell.active {
+  box-shadow:inset 0 0 0 3px var(--focus);
+}
+.ws-cell.found {
+  outline:2px dashed var(--word);
+  outline-offset:-4px;
+}
+.nono-cell.filled { box-shadow:inset 0 0 0 2px var(--ink); }
+.nono-cell.marked { text-decoration:line-through 2px; }
+
+html[data-controls="large"] .topbar .icon-button { width:48px;height:48px; }
+html[data-controls="large"] .nav-link,
+html[data-controls="large"] .play-commandbar button,
+html[data-controls="large"] .play-commandbar select,
+html[data-controls="large"] .toolbar button,
+html[data-controls="large"] .small-button,
+html[data-controls="large"] .primary-button,
+html[data-controls="large"] .secondary-button,
+html[data-controls="large"] .danger-button,
+html[data-controls="large"] .number-pad button,
+html[data-controls="large"] .state-pad button,
+html[data-controls="large"] .result-actions button,
+html[data-controls="large"] .segmented button {
+  min-height:48px;
+}
+
+@media (prefers-contrast: more) {
+  html[data-contrast="system"] {
+    --line:color-mix(in srgb,var(--ink) 42%,var(--paper));
+    --line-strong:color-mix(in srgb,var(--ink) 76%,var(--paper));
+  }
+  html[data-contrast="system"] body { background:var(--paper); }
+}
+@media (forced-colors: active) {
+  .topbar,.game-card,.play-commandbar,.play-guide,.play-feedback,.modal,.result-panel { box-shadow:none!important; }
+  button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible {
+    outline:3px solid Highlight!important;
+  }
+  .game-board-wrap button.selected,
+  .game-board-wrap [aria-pressed="true"],
+  .wg-cell.path,.trail-cell.path,.ws-cell.active,.ws-cell.found {
+    outline:3px solid Highlight!important;
+    outline-offset:-3px;
+    box-shadow:none!important;
+  }
+}
+@media (pointer: coarse) {
+  .topbar .icon-button,
+  .nav-link,
+  .play-commandbar button,
+  .play-commandbar select,
+  .toolbar button,
+  .small-button,
+  .primary-button,
+  .secondary-button,
+  .danger-button,
+  .result-actions button,
+  .segmented button {
+    min-height:44px;
+  }
+  .game-card__star { width:44px;height:44px;right:3px;top:2px; }
+}
+@media (max-width:720px) {
+  .game-page {
+    padding-left:max(10px,env(safe-area-inset-left));
+    padding-right:max(10px,env(safe-area-inset-right));
+  }
+  .setting-row { grid-template-columns:1fr;gap:10px; }
+  .setting-row .segmented {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .setting-row .segmented button { min-width:0; }
+  .shortcut-list>div { grid-template-columns:1fr;gap:6px; }
+}
+@media (max-height:560px) and (orientation:landscape) and (max-width:950px) {
+  .game-page { padding-top:4px; }
+  .game-objective { margin:5px auto 8px; }
+  .play-commandbar { margin-bottom:6px;padding:6px 0; }
+  .game-board-wrap { padding-top:0; }
+}

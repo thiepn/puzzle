@@ -1,8 +1,14 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.1.0 · Play Experience · PWA cache v20**
+**Current release: 1.2.0 · Accessibility, Controls & Device Polish · PWA cache v21**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Accessibility, Controls & Device Polish 1.2.0
+
+Phase 9 hardens the existing 36-game experience for keyboard, touch, screen readers, high-contrast/forced-color modes, reduced motion, large controls, narrow screens, and installed/mobile viewport behavior. It adds a controls reference, route announcements, stronger focus management, semantic puzzle/status regions, and regression coverage while preserving the existing game design and storage schema.
+
+See `docs/PHASE9_ACCESSIBILITY.md` for the implementation scope and verification checklist.
 
 ## Play Experience 1.1.0
 
@@ -123,7 +129,7 @@ Wave 6 certification: **360/360 target runtime cases**, **108/108 full-catalog c
 
 See `docs/WAVE6_EXCEPTIONAL.md`, `docs/WAVE6_CERTIFICATION.json`, `docs/WAVE6_BROWSER_QA.json`, and `docs/WAVE6_FEATURE_METRICS.json`.
 
-The historical Wave 6 build used PWA cache v16; the current release uses v20.
+The historical Wave 6 build used PWA cache v16; the current release uses v21.
 
 ## Word content workflow
 

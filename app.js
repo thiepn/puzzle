@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.1.0';
-  const BUILD_PHASE = 'Play Experience';
+  const APP_VERSION = '1.2.0';
+  const BUILD_PHASE = 'Accessibility, Controls & Device Polish';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -12,6 +12,7 @@
   const main = $('#main');
   const overlayRoot = $('#overlay-root');
   const toastRoot = $('#toast-root');
+  const routeStatus = $('#route-status');
 
   const CATEGORIES = {
     word: { label: 'Word', accent: 'word' },
@@ -386,7 +387,7 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard' },
     favorites: [],
     active: [],
     history: [],
@@ -425,7 +426,9 @@
   function toast(msg) {
     if(state.currentActive&&/^Hint [1-4]\/4 · /.test(String(msg))&&state.currentActive.state._proofHintView){playSession(state.currentActive).feedback='';return;}
     if(state.currentActive)gameFeedback(msg);
-    const el=document.createElement('div'); el.className='toast'; el.textContent=msg; toastRoot.appendChild(el);
+    const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+    if(state.currentActive)el.setAttribute('aria-hidden','true');
+    toastRoot.appendChild(el);
     setTimeout(()=>el.remove(),2200);
   }
 
@@ -444,6 +447,22 @@
     }
   }
   themeMedia.addEventListener?.('change', syncThemeChrome);
+
+  function applyAccessibilitySettings(persist=true) {
+    const motion=['system','reduced'].includes(state.settings.motion)?state.settings.motion:'system';
+    const contrast=['system','high'].includes(state.settings.contrast)?state.settings.contrast:'system';
+    const controls=['standard','large'].includes(state.settings.controls)?state.settings.controls:'standard';
+    state.settings.motion=motion;state.settings.contrast=contrast;state.settings.controls=controls;
+    document.documentElement.dataset.motion=motion;
+    document.documentElement.dataset.contrast=contrast;
+    document.documentElement.dataset.controls=controls;
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function announceRoute(label) {
+    if(!routeStatus)return;
+    routeStatus.textContent='';
+    requestAnimationFrame(()=>{routeStatus.textContent=label;});
+  }
 
   function parseHash() {
     const raw=location.hash.replace(/^#\/?/,'') || 'home';
@@ -467,7 +486,11 @@
   }
 
   function updateNav(route) {
-    $$('.nav-link').forEach(b=>b.classList.toggle('is-active', b.dataset.route===route));
+    $$('.nav-link').forEach(b=>{
+      const active=b.dataset.route===route;
+      b.classList.toggle('is-active',active);
+      if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+    });
   }
 
   function cardPreview(id) {
@@ -526,6 +549,9 @@
     return {
       theme:['system','light','dark'].includes(v.theme)?v.theme:'system',
       playMode:['relaxed','challenge'].includes(v.playMode)?v.playMode:'relaxed',
+      motion:['system','reduced'].includes(v.motion)?v.motion:'system',
+      contrast:['system','high'].includes(v.contrast)?v.contrast:'system',
+      controls:['standard','large'].includes(v.controls)?v.controls:'standard',
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -570,6 +596,7 @@
     state.active = sanitizeActiveList(await activeRecords());
     state.history = sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     setTheme(state.settings.theme, false);
+    applyAccessibilitySettings(false);
   }
 
   async function renderHome(ticket=routeGeneration){
@@ -650,14 +677,23 @@
   async function renderSettings(){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('settings'); document.title='Settings — Puzzle Arcade';
     main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Preferences</p><h1>Settings</h1></div></div>
-      <section class="settings-group"><h2>Appearance</h2><p class="subtle">Use your system theme or choose one explicitly.</p><div class="segmented">${['system','light','dark'].map(t=>`<button data-theme-choice="${t}" class="${state.settings.theme===t?'is-active':''}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
-      <section class="settings-group"><h2>Play mode</h2><p class="subtle">Relaxed keeps pressure low. Challenge emphasizes time and mistakes.</p><div class="segmented">${['relaxed','challenge'].map(t=>`<button data-mode-choice="${t}" class="${state.settings.playMode===t?'is-active':''}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Appearance</h2><p class="subtle">Use your system theme or choose one explicitly.</p><div class="segmented" role="group" aria-label="Color theme">${['system','light','dark'].map(t=>`<button data-theme-choice="${t}" class="${state.settings.theme===t?'is-active':''}" aria-pressed="${state.settings.theme===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Play mode</h2><p class="subtle">Relaxed keeps pressure low. Challenge emphasizes time and mistakes.</p><div class="segmented" role="group" aria-label="Play mode">${['relaxed','challenge'].map(t=>`<button data-mode-choice="${t}" class="${state.settings.playMode===t?'is-active':''}" aria-pressed="${state.settings.playMode===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Accessibility & controls</h2>
+        <div class="setting-row"><div><h3>Motion</h3><p class="subtle">Follow your device preference or suppress interface motion.</p></div><div class="segmented" role="group" aria-label="Motion preference">${['system','reduced'].map(t=>`<button data-motion-choice="${t}" class="${state.settings.motion===t?'is-active':''}" aria-pressed="${state.settings.motion===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <div class="setting-row"><div><h3>Contrast</h3><p class="subtle">Use system contrast or strengthen borders and state cues.</p></div><div class="segmented" role="group" aria-label="Contrast preference">${['system','high'].map(t=>`<button data-contrast-choice="${t}" class="${state.settings.contrast===t?'is-active':''}" aria-pressed="${state.settings.contrast===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <div class="setting-row"><div><h3>Control size</h3><p class="subtle">Large controls increase non-board touch targets without shrinking puzzle space.</p></div><div class="segmented" role="group" aria-label="Control size">${['standard','large'].map(t=>`<button data-controls-choice="${t}" class="${state.settings.controls===t?'is-active':''}" aria-pressed="${state.settings.controls===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <button class="secondary-button" data-action="controls">Keyboard & touch controls</button>
+      </section>
       <section class="settings-group"><h2>Local data</h2><p class="subtle">Progress, favorites, and statistics are stored locally on this device.</p><button class="danger-button" data-action="clear-data">Reset local puzzle data</button></section>
       <section class="settings-group"><h2>Privacy & notices</h2><p class="subtle">No account or analytics are required. Shared puzzle links contain only the game, seed, and difficulty.</p><div class="result-actions"><button class="secondary-button" data-action="privacy-info">Privacy</button><button class="secondary-button" data-action="license-info">Licenses & notices</button></div></section>
       <section class="settings-group"><h2>About this build</h2><p class="subtle">Puzzle Arcade ${APP_VERSION} · ${BUILD_PHASE} · ${playableIds.length}/${ALL_GAMES.length} playable games · local-first PWA.</p></section>
     </div>`;
     $$('[data-theme-choice]').forEach(b=>b.onclick=()=>{setTheme(b.dataset.themeChoice);renderSettings()});
     $$('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
+    $$('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
     bindCommon();
   }
 
@@ -708,7 +744,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
@@ -730,6 +766,20 @@
   function showLicenseInfo(){
     showModal('Licenses & notices', `<p>Puzzle Arcade has no third-party runtime JavaScript, CSS, font, analytics, or API dependencies.</p><p>The broad accepted-word dictionary is derived from the English Speller Database (ESDB/SCOWL), Copyright 2000–2026 Kevin Atkinson, under its permissive redistribution terms. Full attribution is in THIRD_PARTY_NOTICES.md.</p><p>Puzzle targets, clues, interface assets, and game implementations remain maintained in-project.</p>`);
   }
+  function showControlsHelp(){
+    const game=state.currentGame,gameCopy=game&&PLAY_GUIDES[game.id]?.[1];
+    showModal('Keyboard & touch controls', `<div class="controls-help">
+      <p>Every puzzle can be played with touch or a mouse. Board buttons remain keyboard focusable, and games with directional controls also support the arrow keys.</p>
+      <dl class="shortcut-list">
+        <div><dt><kbd>?</kbd></dt><dd>Open this controls guide</dd></div>
+        <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Z</kbd></dt><dd>Undo in games that support undo</dd></div>
+        <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></dt><dd>Redo</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close dialogs and search</dd></div>
+      </dl>
+      ${gameCopy?`<div class="current-game-controls"><h3>${esc(game.name)}</h3><p>${esc(gameCopy)}</p></div>`:''}
+      <p class="subtle">On touch screens, drag gestures are limited to boards that need tracing or painting. Mines also provides explicit Reveal and Flag modes so long-press is never required.</p>
+    </div>`);
+  }
 
   function bindCommon(){
     $$('[data-action="home"]').forEach(b=>b.onclick=()=>go('home'));
@@ -739,6 +789,7 @@
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     $$('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     $$('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
     $$('.game-card__open,.continue-card').forEach(el => {
@@ -866,7 +917,7 @@
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
   function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
   function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
-  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);$('[data-game-pause]')?.focus({preventScroll:true});}
+  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
   async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
   function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
   function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
@@ -880,7 +931,7 @@
     $$('button',main).filter(el=>el.textContent.trim()==='Undo'&&!el.hasAttribute('data-play-undo')).forEach(el=>{el.disabled=!canUndoGame(game,a);el.classList.add('legacy-undo');});
     const oldKeys=window.onkeydown;
     window.onkeydown=e=>{if(ui.paused)return;if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.target?.closest?.('input,textarea,select,[contenteditable="true"]')){if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redoGame(game,a):canUndoGame(game,a)&&game.undo(a);return;}if(e.key.toLowerCase()==='y'){e.preventDefault();redoGame(game,a);return;}}oldKeys?.(e);};
-    if(a.completed){$('.result-panel')?.setAttribute('tabindex','-1');if(!ui.announced){ui.announced=true;gameFeedback(a.outcome==='failed'?'Puzzle ended. Review the answer, or start a fresh puzzle.':'Puzzle solved. Your result has been saved.',a);}}
+    if(a.completed){const result=$('.result-panel');result?.setAttribute('tabindex','-1');if(!ui.announced){ui.announced=true;gameFeedback(a.outcome==='failed'?'Puzzle ended. Review the answer, or start a fresh puzzle.':'Puzzle solved. Your result has been saved.',a);requestAnimationFrame(()=>result?.focus({preventScroll:true}));}}
     if(game.id==='five-letters'){$('.wordle-board')?.insertAdjacentHTML('afterend','<div class="feedback-key" aria-label="Tile feedback"><span><i class="correct"></i>Right place</span><span><i class="present"></i>Elsewhere</span><span><i class="absent"></i>Not this copy</span></div>');if(a.outcome==='failed')$('.result-panel h2')?.insertAdjacentHTML('afterend',`<p class="revealed-answer">The answer was <strong>${esc(a.puzzle.answer)}</strong>.</p>`);}
     if(['groups','anagrams','letter-hive'].includes(game.id)&&!a.completed){const selector={groups:'[data-group-tile]',anagrams:'[data-anagram-tile]','letter-hive':'[data-hive-letter]'}[game.id];const nodes=$$(selector);if(nodes.length){const parent=nodes[0].parentElement;if(game.id!=='letter-hive'){if(!ui.order.length)ui.order=nodes.map(n=>n.getAttribute(selector.slice(1,-1)));for(const node of nodes){node.style.order=String(ui.order.indexOf(node.getAttribute(selector.slice(1,-1))));}const shuffleButton=document.createElement('button');shuffleButton.className='small-button play-shuffle';shuffleButton.textContent='Shuffle tiles';shuffleButton.dataset.playShuffle='';shuffleButton.onclick=()=>{ui.order=shuffle(ui.order);game.render(a);$('[data-play-shuffle]')?.focus({preventScroll:true});};parent.insertAdjacentElement('afterend',shuffleButton);}}}
     if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
@@ -897,11 +948,11 @@
   function baseGameShell(g, active, boardHtml, extraHtml=''){
     const game=GAMES[g.id],ui=playSession(active),favorite=state.favorites.includes(g.id),difficulties=game.difficulties||['Standard'];
     return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}">
-      <div class="game-top"><button class="game-back" data-game-back aria-label="Back to puzzles">←</button><div class="game-title"><small>${esc(CATEGORIES[g.category].label)} puzzles</small><h1>${esc(g.name)}</h1></div><button class="game-menu" data-game-menu aria-label="Game menu">•••</button></div>
-      <p class="game-objective">${esc(game.rules.objective)}</p>
+      <div class="game-top"><button class="game-back" data-game-back aria-label="Back to puzzles">←</button><div class="game-title"><small>${esc(CATEGORIES[g.category].label)} puzzles</small><h1>${esc(g.name)}</h1></div><button class="game-menu" data-game-menu aria-label="Game menu" aria-haspopup="dialog">•••</button></div>
+      <p class="game-objective" id="game-objective">${esc(game.rules.objective)}</p>
       <div class="play-commandbar" role="group" aria-label="Puzzle controls">
         <label class="play-difficulty"><span>Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label>
-        ${typeof game.undo==='function'?`<div class="play-history"><button data-play-undo aria-label="Undo" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}>↶ <span>Undo</span></button><button data-play-redo aria-label="Redo" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}>↷ <span>Redo</span></button></div>`:''}
+        ${typeof game.undo==='function'?`<div class="play-history"><button data-play-undo aria-label="Undo" aria-keyshortcuts="Control+Z Meta+Z" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}>↶ <span>Undo</span></button><button data-play-redo aria-label="Redo" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}>↷ <span>Redo</span></button></div>`:''}
         <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}>${ui.busy?'Thinking…':'Hint'}</button>
         <button data-play-guide aria-expanded="${ui.guide}" aria-controls="play-guide">Guide</button>
         <button data-game-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button>
@@ -909,8 +960,8 @@
       ${playGuide(game,active)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
-      <div class="game-layout"><section class="game-stage ${ui.paused?'is-paused':''}" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
-        <aside class="game-side"><div class="play-session-summary"><div class="side-stat"><label>${ui.paused?'Paused':'Time'}</label><div class="timer" data-timer>${formatTime(activeDuration(active))}</div></div><div class="side-stat play-progress"><label>Progress</label><strong>${esc(safeProgressLabel(active))}</strong></div></div>
+      <div class="game-layout"><section class="game-stage ${ui.paused?'is-paused':''}" role="region" aria-label="${esc(g.name)} puzzle board" aria-describedby="game-objective" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
+        <aside class="game-side" aria-label="Puzzle status"><div class="play-session-summary"><div class="side-stat"><span class="side-label">${ui.paused?'Paused':'Time'}</span><div class="timer" data-timer aria-label="Elapsed time ${formatTime(activeDuration(active))}">${formatTime(activeDuration(active))}</div></div><div class="side-stat play-progress"><span class="side-label">Progress</span><strong>${esc(safeProgressLabel(active))}</strong></div></div>
           <p class="play-start-tip">${esc(PLAY_GUIDES[g.id][0])}</p><button class="small-button" data-game-rules>Full rules</button><button class="small-button" data-game-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button>
           <p class="play-save-note">${state.settings.playMode==='challenge'?'Challenge mode':'Relaxed mode'} · Autosaved locally</p>
         </aside>
@@ -2772,6 +2823,7 @@
     $(`[data-${prefix}-submit]`).onclick=()=>game.submit(a);
     window.onkeydown=e=>{
       if(e.key==='Backspace'){e.preventDefault();a.state.path.pop();paint();return;}
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!a.state.path.length)add(a.state.selected);else if(!a.state.path.includes(a.state.selected))add(a.state.selected);paint();return;}
       const delta={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
       if(!delta)return;e.preventDefault();
       const i=a.state.selected,r=clamp(Math.floor(i/n)+delta[0],0,n-1),c=clamp(i%n+delta[1],0,n-1);
@@ -3025,6 +3077,8 @@
     }
     const {parts,params}=parseHash(),route=parts[0]||'home';
     document.body.classList.toggle('in-game',route==='game');
+    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
+    announceRoute(routeLabel);
     if(route==='home'||route==='games')return renderHome(ticket);
     if(route==='stats')return renderStats(ticket);
     if(route==='settings')return renderSettings();
@@ -3035,6 +3089,10 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('.skip-link')){e.preventDefault();main.focus({preventScroll:true});main.scrollIntoView({block:'start'});}
   });
+  document.addEventListener('keydown',e=>{
+    if(e.defaultPrevented||overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.key==='?'){e.preventDefault();showControlsHelp();}
+  },true);
   window.addEventListener('hashchange',()=>void renderRoute());
   function suspendCurrentGame(){
     const active=state.currentActive;
