@@ -1443,6 +1443,19 @@ body {
 }
 
 
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 /* ========================================================================== */
 /* v1.2 Phase 2 — Game Chrome                                                 */
 /* Compact navigation, board-first hierarchy, contextual action dock.         */
@@ -1874,8 +1887,8 @@ body {
   }
 
   .play-action-dock {
-    position: sticky;
-    bottom: calc(8px + env(safe-area-inset-bottom));
+    position: relative;
+    bottom: auto;
     width: auto;
     min-width: min(100%, 304px);
     max-width: calc(100% - 8px);
