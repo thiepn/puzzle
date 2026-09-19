@@ -1441,3 +1441,513 @@ body {
     min-width: 0;
   }
 }
+
+
+/* ========================================================================== */
+/* v1.2 Phase 2 — Game Chrome                                                 */
+/* Compact navigation, board-first hierarchy, contextual action dock.         */
+/* ========================================================================== */
+
+.game-page {
+  max-width: 1180px;
+  padding-top: 14px;
+}
+
+.game-chrome {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 78px;
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.chrome-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 20px;
+}
+.chrome-icon:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.chrome-icon:active {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.game-heading {
+  min-width: 0;
+}
+.game-category-label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--play-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.game-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.game-title-line h1 {
+  min-width: 0;
+  font: 700 clamp(25px, 3vw, 34px)/1.08 var(--display-font);
+  letter-spacing: -.03em;
+}
+.game-objective {
+  margin: 5px 0 0;
+  max-width: 680px;
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.difficulty-chip {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--play-accent) 24%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--play-accent) 8%, var(--surface));
+  color: var(--play-accent);
+}
+.difficulty-chip::after {
+  content: "⌄";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-54%);
+  pointer-events: none;
+  font-size: 11px;
+}
+.difficulty-chip select {
+  appearance: none;
+  min-height: 30px;
+  padding: 4px 24px 4px 10px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.game-status-cluster {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chrome-stat {
+  min-width: 82px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 68%, transparent);
+}
+.chrome-stat span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chrome-stat strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.chrome-stat--time strong {
+  font-variant-numeric: tabular-nums;
+}
+.chrome-stat--progress {
+  max-width: 154px;
+}
+.chrome-stat--progress strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.game-stage {
+  width: min(100%, 920px);
+  min-width: 0;
+  padding: 24px;
+}
+.game-board-wrap {
+  min-height: 0;
+}
+
+.play-action-dock {
+  z-index: 18;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 5px;
+  width: max-content;
+  max-width: calc(100% - 20px);
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 56%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 10px 26px rgba(34,31,26,.12);
+  backdrop-filter: blur(12px);
+}
+.play-action-dock .play-history {
+  display: contents;
+}
+.play-action-dock button {
+  min-width: 78px;
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: none;
+}
+.play-action-dock button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.play-action-dock button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.play-action-dock button:disabled {
+  opacity: .34;
+  cursor: default;
+}
+.play-action-dock .play-hint-button {
+  background: var(--ink);
+  color: var(--paper-bright);
+}
+.play-action-dock .play-hint-button:hover:not(:disabled) {
+  background: var(--play-accent);
+  color: #fff;
+}
+.action-icon {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+}
+.action-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.game-save-strip {
+  margin: 9px 0 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--ink-soft) 72%, transparent);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.game-save-strip span {
+  color: var(--success);
+  font-size: 8px;
+  vertical-align: 1px;
+}
+
+.play-guide {
+  max-width: 900px;
+  margin: 0 auto 10px;
+}
+.play-feedback,
+.play-hint-zone {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.play-hint-zone {
+  margin-bottom: 10px;
+}
+
+.pause-cover {
+  inset: 0;
+  z-index: 25;
+  border-radius: 18px;
+}
+
+.game-stage.is-paused {
+  min-height: 420px;
+}
+
+/* The legacy sidebar and command bar remain supported by old markup but are no
+   longer part of the Phase 2 shell. */
+.game-side,
+.play-commandbar {
+  display: none;
+}
+
+/* More/options sheet: one place for everything that is not a primary move. */
+.game-menu-sheet {
+  display: grid;
+  gap: 18px;
+}
+.game-menu-description {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.game-menu-section {
+  display: grid;
+  gap: 8px;
+}
+.game-menu-label {
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.game-menu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.game-menu-actions button {
+  min-height: 44px;
+}
+.game-menu-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+.game-menu-meta span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Status belongs to the header now, not to a secondary page rail. */
+.play-session-summary {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .game-chrome {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .chrome-stat--progress {
+    display: none;
+  }
+  .game-stage {
+    width: min(100%, 820px);
+    padding: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .game-page {
+    width: 100%;
+    padding: 4px 8px calc(20px + env(safe-area-inset-bottom));
+  }
+  .game-chrome {
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    min-height: 64px;
+    padding: 6px 2px 8px;
+    margin-bottom: 4px;
+    gap: 6px;
+  }
+  .chrome-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    font-size: 18px;
+  }
+  .game-heading {
+    text-align: center;
+  }
+  .game-category-label {
+    margin-bottom: 1px;
+    font-size: 8px;
+    letter-spacing: .11em;
+  }
+  .game-title-line {
+    justify-content: center;
+    gap: 7px;
+  }
+  .game-title-line h1 {
+    font-size: clamp(20px, 6.1vw, 26px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .difficulty-chip select {
+    min-height: 25px;
+    padding: 2px 21px 2px 8px;
+    font-size: 9px;
+  }
+  .difficulty-chip::after {
+    right: 7px;
+    font-size: 9px;
+  }
+  .game-objective {
+    display: -webkit-box;
+    margin: 3px auto 0;
+    max-width: 46ch;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    text-align: center;
+    font-size: 10.5px;
+    line-height: 1.3;
+  }
+  .game-status-cluster {
+    display: contents;
+  }
+  .game-status-cluster .game-menu {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .chrome-stat {
+    display: none;
+  }
+  .game-layout {
+    gap: 9px;
+    margin-top: 2px;
+  }
+  .game-stage {
+    width: 100%;
+    padding: 10px 6px 12px;
+    border-radius: 14px;
+  }
+  .game-board-wrap {
+    padding: 2px 0;
+  }
+  .play-guide,
+  .play-feedback,
+  .play-hint-zone {
+    width: calc(100% - 4px);
+    margin-bottom: 7px;
+  }
+  .play-guide {
+    padding: 12px;
+  }
+  .play-feedback {
+    padding: 8px 10px;
+  }
+  .play-hint-zone .proof-hint {
+    padding: 34px 10px 10px;
+  }
+
+  .play-action-dock {
+    position: sticky;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    width: auto;
+    min-width: min(100%, 304px);
+    max-width: calc(100% - 8px);
+    padding: 4px;
+    border-radius: 13px;
+    box-shadow: 0 12px 32px rgba(34,31,26,.17);
+  }
+  .play-action-dock button {
+    flex: 1 1 0;
+    min-width: 58px;
+    min-height: 48px;
+    padding: 4px 8px;
+    border-radius: 9px;
+  }
+  .action-icon {
+    font-size: 18px;
+  }
+  .action-label {
+    font-size: 9px;
+  }
+  .game-save-strip {
+    margin-top: 8px;
+    font-size: 9px;
+  }
+  .pause-cover {
+    border-radius: 14px;
+  }
+  .game-stage.is-paused {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 390px) {
+  .game-page {
+    padding-inline: 6px;
+  }
+  .game-chrome {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+  }
+  .chrome-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .game-title-line {
+    gap: 5px;
+  }
+  .game-title-line h1 {
+    font-size: 20px;
+  }
+  .difficulty-chip select {
+    max-width: 76px;
+  }
+  .game-objective {
+    font-size: 10px;
+  }
+  .game-stage {
+    padding-inline: 4px;
+  }
+  .play-action-dock {
+    max-width: calc(100% - 4px);
+  }
+  .play-action-dock button {
+    min-width: 52px;
+    padding-inline: 5px;
+  }
+  .action-label {
+    font-size: 8.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-action-dock button {
+    transition: none;
+  }
+}
