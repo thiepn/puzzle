@@ -288,6 +288,7 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':390,'height':844});navigate('stats');page.locator('.stats-page').wait_for()
     assert page.locator('.stats-family-card').count()==4
     assert page.locator('.stats-game-record').count()>=6
+    assert page.locator('.stats-day:visible').count()==28
     assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'mobile stats overflow'
     page.screenshot(path=str(OUT/'stats-records-390.png'),full_page=True)
 
