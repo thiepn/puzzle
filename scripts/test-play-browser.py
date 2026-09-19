@@ -119,10 +119,13 @@ with sync_playwright() as p:
         open_game_check('kakuro')
         assert page.locator('.kakuro-pad-label').is_visible()
         assert 'linear-gradient' in page.evaluate('getComputedStyle(document.querySelector(".kakuro-clue")).backgroundImage')
+        kakuro_box=page.locator('.kakuro-board').bounding_box()
+        assert kakuro_box and kakuro_box['height']>240,('Kakuro board collapsed',kakuro_box)
         # Untangle: progress meter and conflict classification.
         open_game_check('untangle')
         assert page.locator('.untangle-progress').is_visible()
         assert page.locator('[data-node][data-conflicts]').count()>0
+        assert page.locator('[data-edge].selected-edge').count()>0
     print('Route matrix finished; checking interactions',flush=True)
     # Play complete input/undo/resume loops rather than only checking render output.
     def open_game(gid,diff='Easy',seed='interaction-check'):
