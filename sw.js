@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.1.0: coherent, scope-isolated offline shell. */
-const APP_VERSION = '1.1.0';
-const CACHE_VERSION = 'v20';
+/* Puzzle Arcade 1.2.0: accessibility, controls, and device-polished offline shell. */
+const APP_VERSION = '1.2.0';
+const CACHE_VERSION = 'v21';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
