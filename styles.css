@@ -3978,3 +3978,349 @@ body {
     width: min(calc(100vw - 22px), 560px);
   }
 }
+
+
+/* ========================================================================== */
+/* v1.2 Phase 6 — Motion & Game Feel                                         */
+/* Purposeful micro-motion only: input, state change, feedback, completion.   */
+/* ========================================================================== */
+
+:root {
+  --motion-fast: 110ms;
+  --motion-base: 180ms;
+  --motion-slow: 320ms;
+  --motion-ease: cubic-bezier(.2,.78,.2,1);
+  --motion-spring: cubic-bezier(.16,1.12,.34,1);
+}
+
+/* Shared tactile response */
+.motion-system button:not(:disabled),
+.motion-system .game-card,
+.motion-system .continue-tile,
+.motion-system .category-portal,
+.motion-system .home-mini-card {
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease),
+    background var(--motion-base) var(--motion-ease),
+    border-color var(--motion-base) var(--motion-ease),
+    color var(--motion-base) var(--motion-ease),
+    opacity var(--motion-base) var(--motion-ease);
+}
+.motion-system button:not(:disabled):active {
+  transform: translateY(1px) scale(.985);
+}
+.motion-system .game-board-wrap button:not(:disabled):active {
+  transform: scale(.965);
+}
+
+/* First-entry choreography */
+.motion-chrome-enter {
+  animation: p6-chrome-enter 420ms var(--motion-ease) both;
+}
+.motion-stage-enter {
+  animation: p6-stage-enter 460ms var(--motion-ease) both;
+}
+.motion-dock-enter {
+  animation: p6-dock-enter 520ms var(--motion-spring) both;
+}
+@keyframes p6-chrome-enter {
+  from { opacity:0; transform:translateY(-8px); }
+  to { opacity:1; transform:none; }
+}
+@keyframes p6-stage-enter {
+  from { opacity:0; transform:translateY(9px) scale(.992); }
+  to { opacity:1; transform:none; }
+}
+@keyframes p6-dock-enter {
+  0% { opacity:0; transform:translateY(13px) scale(.96); }
+  65% { opacity:1; transform:translateY(-1px) scale(1.008); }
+  100% { opacity:1; transform:none; }
+}
+
+/* Generic committed move: intentionally subtle, so repeated play stays calm. */
+.motion-board-commit {
+  animation: p6-board-commit 220ms var(--motion-ease);
+}
+@keyframes p6-board-commit {
+  0% { box-shadow: var(--shadow-board); }
+  45% { box-shadow: 0 2px 4px rgba(34,31,26,.08), 0 16px 44px rgba(34,31,26,.10), 0 0 0 2px color-mix(in srgb,var(--family-accent) 13%,transparent); }
+  100% { box-shadow: var(--shadow-board); }
+}
+
+.motion-focus-in {
+  animation: p6-focus 220ms var(--motion-spring);
+}
+@keyframes p6-focus {
+  0% { transform:scale(.93); }
+  55% { transform:scale(1.035); }
+  100% { transform:none; }
+}
+.motion-value-in {
+  animation: p6-value-in 250ms var(--motion-spring);
+}
+@keyframes p6-value-in {
+  0% { transform:scale(.76); opacity:.45; }
+  60% { transform:scale(1.08); opacity:1; }
+  100% { transform:none; opacity:1; }
+}
+
+.motion-error {
+  animation: p6-error 330ms cubic-bezier(.36,.07,.19,.97);
+}
+@keyframes p6-error {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-4px); }
+  40% { transform:translateX(4px); }
+  60% { transform:translateX(-2px); }
+  80% { transform:translateX(2px); }
+}
+
+/* Feedback surfaces */
+.motion-feedback-in {
+  animation: p6-feedback 280ms var(--motion-ease);
+}
+.motion-hint-in {
+  animation: p6-hint 340ms var(--motion-ease);
+}
+.motion-pause-in {
+  animation: p6-pause 360ms var(--motion-ease);
+}
+@keyframes p6-feedback {
+  from { opacity:0; transform:translateY(-5px); }
+  to { opacity:1; transform:none; }
+}
+@keyframes p6-hint {
+  from { opacity:0; transform:translateY(-7px) scale(.99); }
+  to { opacity:1; transform:none; }
+}
+@keyframes p6-pause {
+  from { opacity:0; backdrop-filter:blur(0); }
+  to { opacity:1; backdrop-filter:blur(2px); }
+}
+
+/* Completion: restrained celebratory treatment rather than confetti. */
+.motion-complete {
+  animation: p6-complete-stage 680ms var(--motion-ease);
+}
+.motion-result-in {
+  position:relative;
+  overflow:visible;
+  animation: p6-result 620ms var(--motion-spring);
+}
+@keyframes p6-complete-stage {
+  0% { box-shadow:var(--shadow-board); }
+  35% { box-shadow:var(--shadow-board),0 0 0 4px color-mix(in srgb,var(--success) 18%,transparent); }
+  100% { box-shadow:var(--shadow-board); }
+}
+@keyframes p6-result {
+  0% { opacity:0; transform:translateY(14px) scale(.97); }
+  65% { opacity:1; transform:translateY(-2px) scale(1.008); }
+  100% { opacity:1; transform:none; }
+}
+.solve-burst {
+  position:absolute;
+  left:50%;
+  top:0;
+  width:1px;
+  height:1px;
+  pointer-events:none;
+  z-index:2;
+}
+.solve-burst i {
+  --angle: calc(var(--burst-i) * 51deg - 155deg);
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--family-accent);
+  animation:p6-burst 760ms var(--motion-ease) both;
+  animation-delay:calc(var(--burst-i) * 18ms);
+}
+.solve-burst i:nth-child(2n) {
+  background:var(--success);
+  width:5px;
+  height:5px;
+}
+@keyframes p6-burst {
+  0% { opacity:0; transform:translate(-50%,-50%) rotate(var(--angle)) translateX(0) scale(.5); }
+  18% { opacity:1; }
+  100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--angle)) translateX(52px) scale(1); }
+}
+
+/* Groups */
+.motion-group-solved {
+  animation:p6-group-solved 500ms var(--motion-spring);
+}
+@keyframes p6-group-solved {
+  0% { opacity:.35; transform:translateY(12px) scale(.97); }
+  60% { opacity:1; transform:translateY(-2px) scale(1.012); }
+  100% { transform:none; }
+}
+
+/* Anagrams */
+.motion-tile-picked {
+  animation:p6-tile-picked 260ms var(--motion-spring);
+}
+.motion-letter-land {
+  animation:p6-letter-land 330ms var(--motion-spring);
+}
+@keyframes p6-tile-picked {
+  0% { transform:translateY(0) scale(1); }
+  50% { transform:translateY(3px) scale(.92); }
+  100% { transform:translateY(2px) scale(1); }
+}
+@keyframes p6-letter-land {
+  0% { transform:translateY(-9px) scale(.82); opacity:.35; }
+  65% { transform:translateY(1px) scale(1.05); opacity:1; }
+  100% { transform:none; }
+}
+
+/* Word Grid */
+.game-page[data-play-game="word-grid"] .wg-cell,
+.game-page[data-play-game="word-grid"] .word-grid-path-svg polyline,
+.game-page[data-play-game="word-grid"] .word-grid-path-svg circle {
+  transition:
+    background var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease),
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
+.game-page[data-play-game="word-grid"] .wg-cell.path {
+  transform:scale(.97);
+}
+.motion-word-found {
+  animation:p6-word-found 400ms var(--motion-spring);
+}
+@keyframes p6-word-found {
+  0% { opacity:0; transform:translateY(8px) scale(.88); }
+  60% { opacity:1; transform:translateY(-1px) scale(1.04); }
+  100% { transform:none; }
+}
+
+/* Cryptogram */
+.motion-pair-map {
+  animation:p6-pair-map 280ms var(--motion-spring);
+}
+@keyframes p6-pair-map {
+  0% { transform:scale(.9); }
+  55% { transform:scale(1.06); }
+  100% { transform:none; }
+}
+
+/* Nonogram */
+.motion-cell-mark {
+  animation:p6-cell-mark 250ms var(--motion-spring);
+}
+@keyframes p6-cell-mark {
+  0% { transform:scale(.72); }
+  60% { transform:scale(1.08); }
+  100% { transform:none; }
+}
+.game-page[data-play-game="nonogram"] :is(.nono-row-clues>div,.nono-col-clues>div).complete {
+  transition:opacity 220ms var(--motion-ease),color 220ms var(--motion-ease);
+}
+
+/* Sudoku and Kakuro */
+.game-page[data-play-game="sudoku"] .sudoku-cell,
+.game-page[data-play-game="kakuro"] .kakuro-cell {
+  transition:
+    background var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
+.game-page[data-play-game="sudoku"] .number-pad button:not(:disabled):hover,
+.game-page[data-play-game="kakuro"] .kakuro-pad button:not(:disabled):hover {
+  transform:translateY(-1px);
+}
+
+/* Spatial games */
+.game-page[data-play-category="spatial"] :is(.network-cell,.slide-tile,.light-cell) {
+  transition:
+    transform var(--motion-base) var(--motion-spring),
+    background var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease),
+    opacity var(--motion-base) var(--motion-ease);
+}
+.game-page[data-play-game="network"] .network-cell:active {
+  transform:rotate(2deg) scale(.96);
+}
+.game-page[data-play-game="sliding-tiles"] .slide-tile:not(.blank):active {
+  transform:translateY(2px) scale(.975);
+}
+.game-page[data-play-game="lights-out"] .light-cell.on {
+  transition:background 160ms var(--motion-ease),box-shadow 220ms var(--motion-ease),transform 120ms var(--motion-spring);
+}
+
+.motion-progress-good {
+  animation:p6-progress-good 360ms var(--motion-ease);
+}
+.motion-node-good {
+  animation:p6-node-good 320ms var(--motion-spring);
+}
+@keyframes p6-progress-good {
+  0% { transform:scale(.98); }
+  45% { background:color-mix(in srgb,var(--success) 10%,var(--surface)); }
+  100% { transform:none; }
+}
+@keyframes p6-node-good {
+  0% { transform:scale(.9); }
+  55% { transform:scale(1.09); }
+  100% { transform:none; }
+}
+.game-page[data-play-game="untangle"] .untangle-progress i {
+  transition:width 300ms var(--motion-ease);
+}
+
+/* Toasts now have a readable lifecycle. */
+.toast {
+  animation:p6-toast-in 260ms var(--motion-spring),p6-toast-out 220ms var(--motion-ease) 1.92s forwards;
+}
+@keyframes p6-toast-in {
+  from { opacity:0; transform:translateY(8px) scale(.96); }
+  to { opacity:1; transform:none; }
+}
+@keyframes p6-toast-out {
+  to { opacity:0; transform:translateY(4px) scale(.98); }
+}
+
+/* Home launcher gets light affordance motion, not page-wide theatrics. */
+.discovery-home .continue-spotlight,
+.discovery-home .category-portal,
+.discovery-home .continue-tile,
+.discovery-home .home-mini-card,
+.discovery-home .game-card {
+  transition:
+    transform 150ms var(--motion-ease),
+    box-shadow 190ms var(--motion-ease),
+    border-color 190ms var(--motion-ease);
+}
+.discovery-home .continue-spotlight:hover,
+.discovery-home .category-portal:hover,
+.discovery-home .continue-tile:hover,
+.discovery-home .home-mini-card:hover,
+.discovery-home .game-card:hover {
+  transform:translateY(-2px);
+}
+
+/* Accessibility: remove all nonessential motion, including transitions. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+  .motion-system *,
+  .motion-system *::before,
+  .motion-system *::after,
+  .toast,
+  .discovery-home * {
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+  .solve-burst {
+    display:none !important;
+  }
+}
