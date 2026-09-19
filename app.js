@@ -677,14 +677,23 @@
   async function renderSettings(){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('settings'); document.title='Settings — Puzzle Arcade';
     main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Preferences</p><h1>Settings</h1></div></div>
-      <section class="settings-group"><h2>Appearance</h2><p class="subtle">Use your system theme or choose one explicitly.</p><div class="segmented">${['system','light','dark'].map(t=>`<button data-theme-choice="${t}" class="${state.settings.theme===t?'is-active':''}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
-      <section class="settings-group"><h2>Play mode</h2><p class="subtle">Relaxed keeps pressure low. Challenge emphasizes time and mistakes.</p><div class="segmented">${['relaxed','challenge'].map(t=>`<button data-mode-choice="${t}" class="${state.settings.playMode===t?'is-active':''}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Appearance</h2><p class="subtle">Use your system theme or choose one explicitly.</p><div class="segmented" role="group" aria-label="Color theme">${['system','light','dark'].map(t=>`<button data-theme-choice="${t}" class="${state.settings.theme===t?'is-active':''}" aria-pressed="${state.settings.theme===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Play mode</h2><p class="subtle">Relaxed keeps pressure low. Challenge emphasizes time and mistakes.</p><div class="segmented" role="group" aria-label="Play mode">${['relaxed','challenge'].map(t=>`<button data-mode-choice="${t}" class="${state.settings.playMode===t?'is-active':''}" aria-pressed="${state.settings.playMode===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></section>
+      <section class="settings-group"><h2>Accessibility & controls</h2>
+        <div class="setting-row"><div><h3>Motion</h3><p class="subtle">Follow your device preference or suppress interface motion.</p></div><div class="segmented" role="group" aria-label="Motion preference">${['system','reduced'].map(t=>`<button data-motion-choice="${t}" class="${state.settings.motion===t?'is-active':''}" aria-pressed="${state.settings.motion===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <div class="setting-row"><div><h3>Contrast</h3><p class="subtle">Use system contrast or strengthen borders and state cues.</p></div><div class="segmented" role="group" aria-label="Contrast preference">${['system','high'].map(t=>`<button data-contrast-choice="${t}" class="${state.settings.contrast===t?'is-active':''}" aria-pressed="${state.settings.contrast===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <div class="setting-row"><div><h3>Control size</h3><p class="subtle">Large controls increase non-board touch targets without shrinking puzzle space.</p></div><div class="segmented" role="group" aria-label="Control size">${['standard','large'].map(t=>`<button data-controls-choice="${t}" class="${state.settings.controls===t?'is-active':''}" aria-pressed="${state.settings.controls===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
+        <button class="secondary-button" data-action="controls">Keyboard & touch controls</button>
+      </section>
       <section class="settings-group"><h2>Local data</h2><p class="subtle">Progress, favorites, and statistics are stored locally on this device.</p><button class="danger-button" data-action="clear-data">Reset local puzzle data</button></section>
       <section class="settings-group"><h2>Privacy & notices</h2><p class="subtle">No account or analytics are required. Shared puzzle links contain only the game, seed, and difficulty.</p><div class="result-actions"><button class="secondary-button" data-action="privacy-info">Privacy</button><button class="secondary-button" data-action="license-info">Licenses & notices</button></div></section>
       <section class="settings-group"><h2>About this build</h2><p class="subtle">Puzzle Arcade ${APP_VERSION} · ${BUILD_PHASE} · ${playableIds.length}/${ALL_GAMES.length} playable games · local-first PWA.</p></section>
     </div>`;
     $$('[data-theme-choice]').forEach(b=>b.onclick=()=>{setTheme(b.dataset.themeChoice);renderSettings()});
-    $$('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
+    $('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
+    $('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
+    $('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
+    $('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
     bindCommon();
   }
 
