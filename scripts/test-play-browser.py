@@ -37,14 +37,18 @@ with sync_playwright() as p:
                 page.wait_for_function('(id)=>location.hash.includes("/"+id+"?")&&document.querySelector(".game-page")?.dataset.playGame===id&&document.querySelector(".game-page")?.dataset.playSeed===new URLSearchParams(location.hash.split("?")[1]).get("seed")&&document.querySelector("[data-play-difficulty]")?.value===new URLSearchParams(location.hash.split("?")[1]).get("difficulty")',arg=gid)
                 page.wait_for_timeout(55)
                 assert page.locator('[data-play-difficulty]').input_value()==diff,(gid,diff)
-                assert page.locator('.game-title h1').inner_text().strip(),gid
+                assert page.locator('.game-title-line h1').inner_text().strip(),gid
                 overflow=page.evaluate('document.documentElement.scrollWidth>innerWidth+2')
                 if overflow:errors.append(f'page horizontal overflow: {gid} {diff} {width}px')
                 routes+=1
-            page.locator('[data-play-guide]').click()
+            assert page.locator('.play-action-dock').is_visible(),gid
+            page.locator('[data-game-menu]').click()
+            page.locator('[data-menu-guide]').click()
             assert page.locator('#play-guide').is_visible(),gid
             assert len(page.locator('#play-guide').inner_text())>100,gid
-            page.locator('[data-play-guide]').click()
+            page.locator('[data-game-menu]').click()
+            page.locator('[data-menu-guide]').click()
+            assert not page.locator('#play-guide').is_visible(),gid
             page.locator('[data-game-pause]').click()
             assert page.locator('.game-stage').get_attribute('inert') is not None,gid
             assert page.locator('[data-resume-puzzle]').is_visible(),gid
