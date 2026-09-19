@@ -1393,6 +1393,38 @@
     return routeIsCurrent(ticket)?active:null;
   }
 
+  function resultHistory(active){
+    const currentId=active?.result?.id;
+    return [...state.history].filter(h=>h&&h.id!==currentId).sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+  }
+  function resultStreak(active){
+    const current=active?.result;
+    if(!current||current.outcome!=='completed')return 0;
+    const ordered=[current,...resultHistory(active)].sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+    let streak=0;for(const h of ordered){if(h.outcome==='completed')streak++;else break;}return streak;
+  }
+  function resultRewardSummary(active,game){
+    const result=active.result||{},previous=resultHistory(active),completed=previous.filter(h=>h.outcome==='completed'),sameGame=completed.filter(h=>h.gameId===game.id),sameDifficulty=sameGame.filter(h=>h.difficulty===active.difficulty);
+    const hints=active.hintsUsed||result.metrics?.hintsUsed||0,duration=active.durationMs||result.durationMs||0,prevBest=sameDifficulty.length?Math.min(...sameDifficulty.map(h=>h.durationMs||Infinity)):null;
+    const clean=result.outcome==='completed'&&hints===0,firstGame=result.outcome==='completed'&&sameGame.length===0,firstDifficulty=result.outcome==='completed'&&sameDifficulty.length===0,newBest=result.outcome==='completed'&&prevBest!=null&&duration<prevBest;
+    const streak=resultStreak(active),allCompleted=[result,...completed].filter(h=>h.outcome==='completed'),totalSolved=allCompleted.length,categorySolved=allCompleted.filter(h=>byId[h.gameId]?.category===game.category).length;
+    const milestones=[5,10,25,50,100,250,500],totalMilestone=milestones.includes(totalSolved)?totalSolved:null,categoryMilestone=milestones.includes(categorySolved)?categorySolved:null,badges=[];
+    if(clean)badges.push({kind:'clean',icon:'◇',label:'Clean solve'});
+    if(newBest)badges.push({kind:'best',icon:'↗',label:'New fastest'});else if(firstDifficulty)badges.push({kind:'first',icon:'1',label:'First '+active.difficulty});else if(firstGame)badges.push({kind:'first',icon:'1',label:'First solve'});
+    if(streak>=3)badges.push({kind:'streak',icon:'×'+streak,label:'Solve streak'});
+    if(totalMilestone)badges.push({kind:'milestone',icon:String(totalMilestone),label:'Total solves'});else if(categoryMilestone)badges.push({kind:'milestone',icon:String(categoryMilestone),label:CATEGORIES[game.category].label+' solves'});
+    let message='';
+    if(result.outcome!=='completed')message='This attempt is saved. A fresh board is ready whenever you want another run.';
+    else if(newBest)message='New fastest '+active.difficulty.toLowerCase()+' solve'+(prevBest-duration>=1000?' — '+formatTime(prevBest-duration)+' faster than your previous best.':'.');
+    else if(firstDifficulty)message='Your first '+active.difficulty.toLowerCase()+' '+game.name+' solve is now in your local record.';
+    else if(clean)message='Solved without using a hint step.';
+    else message='Solved with '+hints+' hint step'+(hints===1?'':'s')+'.';
+    return {hints,duration,prevBest,clean,firstGame,firstDifficulty,newBest,streak,totalSolved,categorySolved,badges:badges.slice(0,4),message};
+  }
+  function nextResultDifficulty(game,active){
+    const levels=game.difficulties||[game.defaultDifficulty||active.difficulty],i=levels.indexOf(active.difficulty);
+    return i>=0&&i<levels.length-1?levels[i+1]:null;
+  }
   function resultPanel(active, game, metricsHtml=''){
     return `<div class="result-panel" role="region" aria-label="Puzzle result"><h2>${active.outcome==='failed'||active.state.status==='lost'?'Puzzle ended':'Solved'}</h2><div class="result-metrics"><div><strong>${formatTime(active.durationMs||0)}</strong><span>Time</span></div>${metricsHtml}<div><strong>${active.hintsUsed||0}</strong><span>Hint steps</span></div></div><p class="result-next-copy">${active.outcome==='failed'?'A fresh puzzle is ready when you are.':active.hintsUsed?'Solved with assistance. Try the next puzzle using what you learned.':'Puzzle complete. Keep this difficulty or choose a different challenge.'}</p><div class="result-actions"><button class="primary-button" data-next-puzzle>Next Puzzle</button><button class="secondary-button" data-share-puzzle>Share</button><button class="secondary-button" data-replay-puzzle>Replay</button></div></div>`;
   }
