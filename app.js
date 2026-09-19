@@ -964,6 +964,7 @@
     if(['groups','anagrams','letter-hive'].includes(game.id)&&!a.completed){const selector={groups:'[data-group-tile]',anagrams:'[data-anagram-tile]','letter-hive':'[data-hive-letter]'}[game.id];const nodes=$$(selector);if(nodes.length){const parent=nodes[0].parentElement;if(game.id!=='letter-hive'){if(!ui.order.length)ui.order=nodes.map(n=>n.getAttribute(selector.slice(1,-1)));for(const node of nodes){node.style.order=String(ui.order.indexOf(node.getAttribute(selector.slice(1,-1))));}const shuffleButton=document.createElement('button');shuffleButton.className='small-button play-shuffle';shuffleButton.textContent='Shuffle tiles';shuffleButton.dataset.playShuffle='';shuffleButton.onclick=()=>{ui.order=shuffle(ui.order);game.render(a);$('[data-play-shuffle]')?.focus({preventScroll:true});};parent.insertAdjacentElement('afterend',shuffleButton);}}}
     if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
     if(game.id==='cryptogram'){const counts={};for(const c of a.puzzle.cipher)if(/[A-Z]/.test(c))counts[c]=(counts[c]||0)+1;const items=Object.entries(counts).sort((a,b)=>b[1]-a[1]);$('.game-board-wrap')?.insertAdjacentHTML('beforeend',`<details class="cipher-frequency"><summary>Letter frequency · ${items.length} symbols</summary><div>${items.map(([c,n])=>`<span>${c} <b>${n}</b></span>`).join('')}</div></details>`);}
+    applyIndividualGamePolish(game,a);
   }
 
   function p5El(tag,className,text){
@@ -1038,7 +1039,6 @@
       $$('[data-node]').forEach(el=>{const n=counts[+el.dataset.node]||0;el.dataset.conflicts=String(n);el.classList.toggle('clear-node',n===0);el.classList.toggle('hot-node',n>=Math.max(2,max*.65));});
       const count=$('.crossing-count');if(count){count.textContent='';const top=p5El('div'),num=p5El('strong','',current),label=p5El('span','','crossings'),bar=p5El('div','untangle-progress'),fill=p5El('i'),small=p5El('small','',progress+'% cleared · best '+(a.state.bestCrossings??current));bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','Crossings removed');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(progress));fill.style.width=progress+'%';bar.append(fill);top.append(num,label);count.append(top,bar,small);}
     }
-    applyIndividualGamePolish(game,a);
   }
 
   function installPlayExperience(){
