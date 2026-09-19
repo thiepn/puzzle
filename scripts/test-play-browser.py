@@ -75,7 +75,7 @@ with sync_playwright() as p:
             page.locator('[data-resume-puzzle]').click()
             assert page.locator('.game-stage').get_attribute('inert') is None,gid
             controls+=1
-            if width==1365 and gid in ['sudoku','groups','nonogram','untangle']:
+            if width==1365 and gid in ['sudoku','groups','anagrams','word-grid','cryptogram','nonogram','kakuro','untangle']:
                 page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
             if width==390:
                 page.locator('[data-game-hint]').click()
@@ -83,6 +83,46 @@ with sync_playwright() as p:
                 hints+=1
                 if gid in ['cryptogram','nonogram','sudoku','groups','anagrams','untangle','kakuro','word-grid','network','bridges','five-letters']:
                     page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
+    if not opt.quick:
+        page.set_viewport_size({'width':390,'height':844})
+        # Sudoku: selected-cell context and remaining-count keypad metadata.
+        open_game_check=lambda gid,diff='Easy',seed='phase5-check': (
+            navigate(f'game/{gid}?seed={seed}&difficulty={diff}'),
+            page.wait_for_function('(x)=>document.querySelector(".game-page")?.dataset.playGame===x[0]&&document.querySelector(".game-page")?.dataset.playSeed===x[1]',arg=[gid,seed])
+        )
+        open_game_check('sudoku')
+        assert page.locator('.sudoku-context').is_visible()
+        assert page.locator('[data-num="1"]').get_attribute('data-remaining') is not None
+        # Groups: mission strip and numbered selection state.
+        open_game_check('groups')
+        assert page.locator('.groups-mission').is_visible()
+        page.locator('[data-group-tile]').first.click()
+        assert page.locator('[data-group-tile].selected').get_attribute('data-selection-order')=='1'
+        # Anagrams: rack progress and pick ordering.
+        open_game_check('anagrams')
+        assert page.locator('.anagram-progress').is_visible()
+        page.locator('[data-anagram-tile]').first.click()
+        assert page.locator('[data-anagram-tile].used').get_attribute('data-pick-order')=='1'
+        # Word Grid: dedicated trace overlay exists.
+        open_game_check('word-grid')
+        assert page.locator('.word-grid-path-svg').count()==1
+        # Cryptogram: selected mapping card and combined inspector.
+        open_game_check('cryptogram')
+        assert page.locator('.crypto-selected > strong').is_visible()
+        assert page.locator('.crypto-inspector').is_visible()
+        # Nonogram: clear tool label, and no utility slider should dominate when dense controls appear.
+        open_game_check('nonogram')
+        assert page.locator('.nono-tool-label').is_visible()
+        if page.locator('.nonogram-view-controls').count():
+            assert not page.locator('.nonogram-view-controls label').is_visible()
+        # Kakuro: selected run highlighting and diagonal clue styling.
+        open_game_check('kakuro')
+        assert page.locator('.kakuro-pad-label').is_visible()
+        assert 'linear-gradient' in page.evaluate('getComputedStyle(document.querySelector(".kakuro-clue")).backgroundImage')
+        # Untangle: progress meter and conflict classification.
+        open_game_check('untangle')
+        assert page.locator('.untangle-progress').is_visible()
+        assert page.locator('[data-node][data-conflicts]').count()>0
     print('Route matrix finished; checking interactions',flush=True)
     # Play complete input/undo/resume loops rather than only checking render output.
     def open_game(gid,diff='Easy',seed='interaction-check'):
