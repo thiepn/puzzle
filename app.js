@@ -511,14 +511,50 @@
   }
 
   function gameCard(g) {
-    const fav=state.favorites.includes(g.id);
+    const fav=state.favorites.includes(g.id),active=state.active.find(a=>a.gameId===g.id);
     return `<article class="game-card" data-game="${g.id}" data-category="${g.category}">
-      <button class="game-card__open" data-game-open="${g.id}" aria-label="Open ${esc(g.name)}"></button>
+      <button class="game-card__open" data-game-open="${g.id}" aria-label="${active?'Continue':'Open'} ${esc(g.name)}"></button>
       <button class="game-card__star ${fav?'is-on':''}" data-favorite="${g.id}" aria-label="${fav?'Remove':'Add'} ${esc(g.name)} ${fav?'from':'to'} favorites">${fav?'★':'☆'}</button>
-      <div class="game-card__preview">${cardPreview(g.id)}</div>
+      <div class="game-card__preview"><div class="game-card__preview-inner">${cardPreview(g.id)}</div></div>
+      <div class="game-card__eyebrow"><span>${esc(CATEGORIES[g.category].label)}</span>${active?'<b>In progress</b>':''}</div>
       <div class="game-card__title">${esc(g.name)}</div>
-      <p class="game-card__description">${esc(g.description)}</p><div class="game-card__meta">${CATEGORIES[g.category].label} · ${state.active.some(a=>a.gameId===g.id)?'Continue puzzle':'Play now'}</div>
+      <p class="game-card__description">${esc(g.description)}</p>
+      <div class="game-card__meta">${active?`${esc(active.difficulty)} · ${esc(safeProgressLabel(active))}`:'Start a puzzle'} <span aria-hidden="true">→</span></div>
     </article>`;
+  }
+
+  function homeCategoryPortal(id,available){
+    const games=available.filter(g=>g.category===id),cat=CATEGORIES[id],marks={word:'Aa',number:'123',logic:'◇',spatial:'↗'};
+    const descriptors={word:'Words, language & patterns',number:'Arithmetic & deduction',logic:'Constraints & inference',spatial:'Shape, movement & systems'};
+    return `<button class="category-portal category-portal--${id}" data-discover-category="${id}">
+      <span class="category-portal__mark" aria-hidden="true">${marks[id]}</span>
+      <span class="category-portal__copy"><strong>${esc(cat.label)}</strong><small>${descriptors[id]}</small></span>
+      <span class="category-portal__count">${games.length}</span>
+      <span class="category-portal__arrow" aria-hidden="true">→</span>
+    </button>`;
+  }
+
+  function homeMiniCard(g,kind='recent'){
+    const active=state.active.find(a=>a.gameId===g.id);
+    return `<article class="home-mini-card" data-category="${g.category}">
+      <button class="home-mini-card__open" data-home-open="${g.id}" aria-label="${active?'Continue':'Open'} ${esc(g.name)}"></button>
+      <div class="home-mini-card__preview">${cardPreview(g.id)}</div>
+      <div class="home-mini-card__copy"><small>${esc(CATEGORIES[g.category].label)} · ${kind==='favorite'?'Favorite':active?'In progress':'Played'}</small><strong>${esc(g.name)}</strong><span>${active?esc(safeProgressLabel(active)):esc(g.description)}</span></div>
+      <span class="home-mini-card__arrow" aria-hidden="true">→</span>
+    </article>`;
+  }
+
+  function homeUniqueRecent(available,limit=5){
+    const allowed=new Set(available.map(g=>g.id)),ids=[];
+    for(const a of [...state.active].sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0)))if(allowed.has(a.gameId)&&!ids.includes(a.gameId))ids.push(a.gameId);
+    for(const h of state.history)if(allowed.has(h.gameId)&&!ids.includes(h.gameId))ids.push(h.gameId);
+    return ids.slice(0,limit).map(id=>byId[id]);
+  }
+
+  function homeFeaturedGame(available){
+    if(!available.length)return null;
+    const day=Math.floor(Date.now()/86400000);
+    return available[day%available.length];
   }
 
   function sanitizeSettings(value) {
@@ -575,16 +611,56 @@
   async function renderHome(ticket=routeGeneration){
     stopTimer();state.currentGame=null;state.currentActive=null;updateNav('home');document.title='Puzzle Arcade';
     state.active=sanitizeActiveList(await activeRecords());if(!routeIsCurrent(ticket))return;
-    const available=ALL_GAMES.filter(g=>g.status==='available'),activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4);
+    const available=ALL_GAMES.filter(g=>g.status==='available');
+    const activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,6);
+    const primaryActive=activeSorted[0]||null,featured=homeFeaturedGame(available);
+    const recent=homeUniqueRecent(available,5);
+    const favoriteGames=state.favorites.map(id=>byId[id]).filter(g=>g?.status==='available').slice(0,6);
     const filtered=available.filter(g=>state.category==='all'||(state.category==='favorites'?state.favorites.includes(g.id):g.category===state.category));
-    main.innerHTML=`<div class="page play-library"><section class="hero-row"><div><p class="page-kicker">Your puzzle arcade</p><h1 class="hero-title">Pick a puzzle.<br>Keep going.</h1><p class="hero-copy">36 games. Unlimited puzzles. No accounts, lives, or daily lockouts.</p></div><button class="random-button" data-action="random">↻ Surprise me</button></section>
-      ${activeSorted.length?`<section class="section"><div class="section-head"><div><h2>Pick up where you left off</h2></div></div><div class="continue-row">${activeSorted.map(a=>`<button class="continue-card" data-game="${a.gameId}"><strong>${esc(byId[a.gameId].name)}</strong><span>${esc(a.difficulty)} · ${esc(safeProgressLabel(a))}</span></button>`).join('')}</div></section>`:''}
-      <section class="section"><div class="library-search-row"><h2>Find your next puzzle</h2><label class="library-search"><span class="sr-only">Search games</span><input type="search" data-library-search placeholder="Search games or skills…" value="${esc(state.libraryQuery||'')}" autocomplete="off"></label></div>
-      <div class="filterbar" aria-label="Game categories">${['all','word','number','logic','spatial','favorites'].map(c=>{const count=c==='all'?available.length:c==='favorites'?state.favorites.length:available.filter(g=>g.category===c).length;return `<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}" aria-pressed="${state.category===c}">${c==='all'?'All':c==='favorites'?'Favorites':CATEGORIES[c].label} <span>${count}</span></button>`;}).join('')}</div>
-      <p class="library-count" data-catalog-count aria-live="polite"></p><div class="game-grid" data-catalog-grid>${filtered.map(gameCard).join('')}</div><p class="library-empty" data-library-empty hidden>No games match this search. Try a shorter name or another category.</p></section></div>`;
-    bindCommon();const search=$('[data-library-search]');const filter=()=>{state.libraryQuery=search.value;const q=search.value.trim().toLowerCase();let count=0;$$('[data-catalog-grid] .game-card').forEach(el=>{const g=byId[el.dataset.game],show=!q||`${g.name} ${g.description} ${CATEGORIES[g.category].label}`.toLowerCase().includes(q);el.hidden=!show;if(show)count++;});$('[data-catalog-count]').textContent=`${count} ${count===1?'game':'games'}`;$('[data-library-empty]').hidden=count>0;};search.oninput=filter;filter();
-  }
+    const heroGame=primaryActive?byId[primaryActive.gameId]:featured;
 
+    main.innerHTML=`<div class="page play-library discovery-home">
+      <section class="discovery-hero">
+        <div class="discovery-intro">
+          <p class="page-kicker">36 games · unlimited play</p>
+          <h1 class="hero-title">${primaryActive?'Your next move is waiting.':'What do you feel like solving?'}</h1>
+          <p class="hero-copy">Word, number, logic and spatial puzzles in one quiet arcade. No lives, no lockouts, no account required.</p>
+          <div class="discovery-hero-actions"><button class="random-button" data-action="random-all">↻ Surprise me</button><button class="secondary-button discovery-browse" data-action="browse-all">Browse all 36</button></div>
+        </div>
+        ${heroGame?`<article class="continue-spotlight" data-category="${heroGame.category}">
+          <div class="continue-spotlight__visual">${cardPreview(heroGame.id)}</div>
+          <div class="continue-spotlight__body">
+            <small>${primaryActive?'Continue playing':'Featured puzzle'}</small>
+            <h2>${esc(heroGame.name)}</h2>
+            <p>${primaryActive?esc(safeProgressLabel(primaryActive)):esc(heroGame.description)}</p>
+            ${primaryActive?`<div class="continue-spotlight__meta"><span>${esc(primaryActive.difficulty)}</span><span>${formatTime(activeDuration(primaryActive))}</span></div>`:''}
+            <button class="primary-button continue-spotlight__cta" data-home-open="${heroGame.id}">${primaryActive?'Continue':'Play now'} <span aria-hidden="true">→</span></button>
+          </div>
+        </article>`:''}
+      </section>
+
+      ${activeSorted.length>1?`<section class="home-section home-continue-section"><div class="home-section-head"><div><p class="home-section-kicker">In progress</p><h2>Keep going</h2></div><span>${activeSorted.length} open puzzles</span></div><div class="continue-rail">${activeSorted.slice(primaryActive?1:0).map(a=>`<button class="continue-tile" data-home-open="${a.gameId}" data-category="${byId[a.gameId].category}"><span class="continue-tile__preview">${cardPreview(a.gameId)}</span><span class="continue-tile__copy"><small>${esc(CATEGORIES[byId[a.gameId].category].label)} · ${esc(a.difficulty)}</small><strong>${esc(byId[a.gameId].name)}</strong><span>${esc(safeProgressLabel(a))}</span></span><span class="continue-tile__arrow" aria-hidden="true">→</span></button>`).join('')}</div></section>`:''}
+
+      <section class="home-section category-discovery"><div class="home-section-head"><div><p class="home-section-kicker">Choose a lane</p><h2>Browse by puzzle type</h2></div><span>Every game is always unlocked</span></div><div class="category-portals">${['word','number','logic','spatial'].map(id=>homeCategoryPortal(id,available)).join('')}</div></section>
+
+      ${recent.length?`<section class="home-section"><div class="home-section-head"><div><p class="home-section-kicker">Your rotation</p><h2>Recently played</h2></div></div><div class="home-mini-grid">${recent.map(g=>homeMiniCard(g,'recent')).join('')}</div></section>`:''}
+
+      ${favoriteGames.length?`<section class="home-section"><div class="home-section-head"><div><p class="home-section-kicker">Saved</p><h2>Favorites</h2></div><button class="text-button" data-discover-category="favorites">See all favorites</button></div><div class="home-mini-grid">${favoriteGames.slice(0,5).map(g=>homeMiniCard(g,'favorite')).join('')}</div></section>`:''}
+
+      <section class="section catalog-section" data-catalog-section>
+        <div class="library-search-row"><div><p class="home-section-kicker">Full library</p><h2>All puzzles</h2></div><label class="library-search"><span class="sr-only">Search games</span><input type="search" data-library-search placeholder="Search games or skills…" value="${esc(state.libraryQuery||'')}" autocomplete="off"></label></div>
+        <div class="filterbar" aria-label="Game categories">${['all','word','number','logic','spatial','favorites'].map(c=>{const count=c==='all'?available.length:c==='favorites'?state.favorites.length:available.filter(g=>g.category===c).length;return `<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}" aria-pressed="${state.category===c}">${c==='all'?'All':c==='favorites'?'Favorites':CATEGORIES[c].label} <span>${count}</span></button>`;}).join('')}</div>
+        <p class="library-count" data-catalog-count aria-live="polite"></p>
+        <div class="game-grid catalog-game-grid" data-catalog-grid>${filtered.map(gameCard).join('')}</div>
+        <p class="library-empty" data-library-empty hidden>No games match this search. Try a shorter name or another category.</p>
+      </section>
+    </div>`;
+
+    bindCommon();
+    const search=$('[data-library-search]');
+    const filter=()=>{state.libraryQuery=search.value;const q=search.value.trim().toLowerCase();let count=0;$$('[data-catalog-grid] .game-card').forEach(el=>{const g=byId[el.dataset.game],show=!q||`${g.name} ${g.description} ${CATEGORIES[g.category].label}`.toLowerCase().includes(q);el.hidden=!show;if(show)count++;});$('[data-catalog-count]').textContent=`${count} ${count===1?'game':'games'}`;$('[data-library-empty]').hidden=count>0;};
+    search.oninput=filter;filter();
+  }
   function safeProgressLabel(a){ try { return progressLabel(a); } catch { return 'In progress'; } }
 
   function progressLabel(a){
@@ -739,10 +815,13 @@
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
-    $$('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
-    $$('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
-    $$('.game-card__open,.continue-card').forEach(el => {
-      el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game);
+    $('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
+    $('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
+    $('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
+    $('[data-action="random-all"]').forEach(b=>b.onclick=()=>{state.category='all';randomGame();});
+    $('[data-action="browse-all"]').forEach(b=>b.onclick=()=>{$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'});$('[data-library-search]')?.focus({preventScroll:true});});
+    $('.game-card__open,.continue-card,[data-home-open]').forEach(el => {
+      el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game || el.dataset.homeOpen);
     });
   }
 
