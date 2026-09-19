@@ -26,7 +26,9 @@ with sync_playwright() as p:
         page.set_content(html);page.add_style_tag(content=(ROOT/'styles.css').read_text())
         page.evaluate('''() => { const values=Object.create(null); const api={getItem:k=>values[k]??null,setItem:(k,v)=>values[k]=String(v),removeItem:k=>delete values[k],clear:()=>Object.keys(values).forEach(k=>delete values[k]),key:i=>Object.keys(values)[i]??null}; Object.defineProperty(window,'localStorage',{value:new Proxy(api,{get:(t,k)=>k==='length'?Object.keys(values).length:k in t?t[k]:values[k],ownKeys:()=>Object.keys(values),getOwnPropertyDescriptor:(t,k)=>k in values?{enumerable:true,configurable:true,value:values[k]}:undefined})}); }''')
         for name in ['word-dictionary.js','word-content.js','app.js']:page.evaluate((ROOT/name).read_text())
-    else:page.goto(opt.base_url)
+    else:
+        page.goto(opt.base_url)
+        page.locator('[data-library-search]').wait_for(timeout=30000)
     def navigate(route):
         page.evaluate('(route)=>location.hash="#/"+route',route)
     if not opt.quick:
@@ -314,6 +316,24 @@ with sync_playwright() as p:
     for gid in ['sudoku','cryptogram','five-letters','nonogram','kakuro']:
         open_game(gid,'Hard','small-screen');page.wait_for_timeout(100)
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),f'320px overflow: {gid}'
+    # Phase 9 accessibility/control behavior.
+    page.set_viewport_size({'width':390,'height':844});navigate('home');page.locator('[data-library-search]').wait_for()
+    page.keyboard.type('?');page.locator('.modal[role="dialog"]').wait_for()
+    assert 'Keyboard & touch controls' in page.locator('.modal').inner_text()
+    page.keyboard.press('Escape');assert page.locator('.modal').count()==0
+    navigate('settings');page.locator('[data-motion-choice="reduced"]').wait_for()
+    page.locator('[data-motion-choice="reduced"]').click();assert page.locator('html').get_attribute('data-motion')=='reduced'
+    page.locator('[data-contrast-choice="high"]').click();assert page.locator('html').get_attribute('data-contrast')=='high'
+    page.locator('[data-controls-choice="large"]').click();assert page.locator('html').get_attribute('data-controls')=='large'
+    open_game('word-grid','Easy','phase9-keyboard')
+    first=page.locator('[data-wg]').first;first.focus();page.keyboard.press('Enter');page.wait_for_timeout(50)
+    assert first.get_attribute('aria-pressed')=='true'
+    open_game('sudoku','Easy','phase9-focus')
+    page.locator('[data-game-pause]').click()
+    page.wait_for_function('() => document.activeElement===document.querySelector("[data-resume-puzzle]")')
+    page.locator('[data-resume-puzzle]').click()
+    page.wait_for_function('() => document.activeElement===document.querySelector("[data-game-pause]")')
+
     browser.close()
 result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
 (OUT/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
