@@ -816,10 +816,10 @@
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
     $('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
-    $('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
+    $('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     $('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
     $('[data-action="random-all"]').forEach(b=>b.onclick=()=>{state.category='all';randomGame();});
-    $('[data-action="browse-all"]').forEach(b=>b.onclick=()=>{$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'});$('[data-library-search]')?.focus({preventScroll:true});});
+    $('[data-action="browse-all"]').forEach(b=>b.onclick=async()=>{state.category='all';state.libraryQuery='';await renderHome();requestAnimationFrame(()=>{$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'});$('[data-library-search]')?.focus({preventScroll:true});});});
     $('.game-card__open,.continue-card,[data-home-open]').forEach(el => {
       el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game || el.dataset.homeOpen);
     });
