@@ -215,6 +215,31 @@ with sync_playwright() as p:
     page.locator('.cipher-frequency summary').click()
     assert page.locator('.cipher-frequency b').count()>0
 
+    # Phase 7: finish a real generated Sudoku and verify the rendered reward experience.
+    open_game('sudoku','Easy','result-experience')
+    result_data=page.evaluate("""() => new Promise((resolve,reject)=>{
+      const req=indexedDB.open('puzzle-arcade',1);
+      req.onerror=()=>reject(req.error);
+      req.onsuccess=()=>{
+        const tx=req.result.transaction('active','readonly');
+        const get=tx.objectStore('active').get('sudoku');
+        get.onerror=()=>reject(get.error);
+        get.onsuccess=()=>resolve({solution:get.result.puzzle.solution,givens:get.result.puzzle.givens});
+      };
+    })""")
+    for i,(solution,given) in enumerate(zip(result_data['solution'],result_data['givens'])):
+        if given: continue
+        page.locator(f'[data-cell="{i}"]').click()
+        page.locator(f'[data-num="{solution}"]').click()
+    page.locator('.result-panel--reward').wait_for()
+    assert page.locator('.result-panel--reward').get_attribute('data-result-outcome')=='completed'
+    assert page.locator('.result-badge--clean').is_visible()
+    assert 'First solve' in page.locator('.result-badges').inner_text()
+    assert page.locator('[data-result-challenge]').inner_text().strip()=='Try Medium'
+    assert page.locator('[data-share-puzzle]').inner_text().strip()=='Share result'
+    assert page.locator('[data-result-home]').is_visible()
+    page.screenshot(path=str(OUT/'result-reward-sudoku-390.png'),full_page=True)
+
     # Phase 3 discovery hierarchy and full-library fallback remain usable at a narrow width.
     page.set_viewport_size({'width':320,'height':800});navigate('home');page.locator('[data-library-search]').wait_for()
     assert page.locator('.discovery-hero').is_visible()
