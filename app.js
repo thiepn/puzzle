@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.1.0';
-  const BUILD_PHASE = 'Play Experience';
+  const APP_VERSION = '1.3.0';
+  const BUILD_PHASE = 'Integration, Final Certification & Ship';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -12,6 +12,7 @@
   const main = $('#main');
   const overlayRoot = $('#overlay-root');
   const toastRoot = $('#toast-root');
+  const routeStatus = $('#route-status');
 
   const CATEGORIES = {
     word: { label: 'Word', accent: 'word' },
@@ -386,7 +387,7 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard' },
     favorites: [],
     active: [],
     history: [],
@@ -425,7 +426,9 @@
   function toast(msg) {
     if(state.currentActive&&/^Hint [1-4]\/4 · /.test(String(msg))&&state.currentActive.state._proofHintView){playSession(state.currentActive).feedback='';return;}
     if(state.currentActive)gameFeedback(msg);
-    const el=document.createElement('div'); el.className='toast'; el.textContent=msg; toastRoot.appendChild(el);
+    const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+    if(state.currentActive)el.setAttribute('aria-hidden','true');
+    toastRoot.appendChild(el);
     setTimeout(()=>el.remove(),2200);
   }
 
@@ -444,6 +447,22 @@
     }
   }
   themeMedia.addEventListener?.('change', syncThemeChrome);
+
+  function applyAccessibilitySettings(persist=true) {
+    const motion=['system','reduced'].includes(state.settings.motion)?state.settings.motion:'system';
+    const contrast=['system','high'].includes(state.settings.contrast)?state.settings.contrast:'system';
+    const controls=['standard','large'].includes(state.settings.controls)?state.settings.controls:'standard';
+    state.settings.motion=motion;state.settings.contrast=contrast;state.settings.controls=controls;
+    document.documentElement.dataset.motion=motion;
+    document.documentElement.dataset.contrast=contrast;
+    document.documentElement.dataset.controls=controls;
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function announceRoute(label) {
+    if(!routeStatus)return;
+    routeStatus.textContent='';
+    requestAnimationFrame(()=>{routeStatus.textContent=label;});
+  }
 
   function parseHash() {
     const raw=location.hash.replace(/^#\/?/,'') || 'home';
@@ -467,7 +486,11 @@
   }
 
   function updateNav(route) {
-    $$('.nav-link').forEach(b=>b.classList.toggle('is-active', b.dataset.route===route));
+    $('.nav-link').forEach(b=>{
+      const active=b.dataset.route===route;
+      b.classList.toggle('is-active',active);
+      if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+    });
   }
 
   function cardPreview(id) {
@@ -562,6 +585,9 @@
     return {
       theme:['system','light','dark'].includes(v.theme)?v.theme:'system',
       playMode:['relaxed','challenge'].includes(v.playMode)?v.playMode:'relaxed',
+      motion:['system','reduced'].includes(v.motion)?v.motion:'system',
+      contrast:['system','high'].includes(v.contrast)?v.contrast:'system',
+      controls:['standard','large'].includes(v.controls)?v.controls:'standard',
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -606,6 +632,7 @@
     state.active = sanitizeActiveList(await activeRecords());
     state.history = sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     setTheme(state.settings.theme, false);
+    applyAccessibilitySettings(false);
   }
 
   async function renderHome(ticket=routeGeneration){
@@ -1009,7 +1036,7 @@
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
   function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
   function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
-  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);$('[data-game-pause]')?.focus({preventScroll:true});}
+  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
   async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
   function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
   function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
@@ -1023,7 +1050,7 @@
     $$('button',main).filter(el=>el.textContent.trim()==='Undo'&&!el.hasAttribute('data-play-undo')).forEach(el=>{el.disabled=!canUndoGame(game,a);el.classList.add('legacy-undo');});
     const oldKeys=window.onkeydown;
     window.onkeydown=e=>{if(ui.paused)return;if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.target?.closest?.('input,textarea,select,[contenteditable="true"]')){if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redoGame(game,a):canUndoGame(game,a)&&game.undo(a);return;}if(e.key.toLowerCase()==='y'){e.preventDefault();redoGame(game,a);return;}}oldKeys?.(e);};
-    if(a.completed){$('.result-panel')?.setAttribute('tabindex','-1');if(!ui.announced){ui.announced=true;gameFeedback(a.outcome==='failed'?'Puzzle ended. Review the answer, or start a fresh puzzle.':'Puzzle solved. Your result has been saved.',a);}}
+    if(a.completed){const result=$('.result-panel');result?.setAttribute('tabindex','-1');if(!ui.announced){ui.announced=true;gameFeedback(a.outcome==='failed'?'Puzzle ended. Review the answer, or start a fresh puzzle.':'Puzzle solved. Your result has been saved.',a);requestAnimationFrame(()=>result?.focus({preventScroll:true}));}}
     if(game.id==='five-letters'){$('.wordle-board')?.insertAdjacentHTML('afterend','<div class="feedback-key" aria-label="Tile feedback"><span><i class="correct"></i>Right place</span><span><i class="present"></i>Elsewhere</span><span><i class="absent"></i>Not this copy</span></div>');if(a.outcome==='failed')$('.result-panel h2')?.insertAdjacentHTML('afterend',`<p class="revealed-answer">The answer was <strong>${esc(a.puzzle.answer)}</strong>.</p>`);}
     if(['groups','anagrams','letter-hive'].includes(game.id)&&!a.completed){const selector={groups:'[data-group-tile]',anagrams:'[data-anagram-tile]','letter-hive':'[data-hive-letter]'}[game.id];const nodes=$$(selector);if(nodes.length){const parent=nodes[0].parentElement;if(game.id!=='letter-hive'){if(!ui.order.length)ui.order=nodes.map(n=>n.getAttribute(selector.slice(1,-1)));for(const node of nodes){node.style.order=String(ui.order.indexOf(node.getAttribute(selector.slice(1,-1))));}const shuffleButton=document.createElement('button');shuffleButton.className='small-button play-shuffle';shuffleButton.textContent='Shuffle tiles';shuffleButton.dataset.playShuffle='';shuffleButton.onclick=()=>{ui.order=shuffle(ui.order);game.render(a);$('[data-play-shuffle]')?.focus({preventScroll:true});};parent.insertAdjacentElement('afterend',shuffleButton);}}}
     if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
@@ -1113,7 +1140,7 @@
     return motionSessions.get(a);
   }
   function p6ReducedMotion(){
-    return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    return state.settings.motion==='reduced'||!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   }
   function p6Pulse(el,className,duration=420){
     if(!el||p6ReducedMotion())return;
@@ -1254,21 +1281,21 @@
         <div class="game-heading">
           <small class="game-category-label">${esc(CATEGORIES[g.category].label)} puzzle</small>
           <div class="game-title-line"><h1>${esc(g.name)}</h1><label class="difficulty-chip"><span class="sr-only">Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label></div>
-          <p class="game-objective">${esc(game.rules.objective)}</p>
+          <p class="game-objective" id="game-objective">${esc(game.rules.objective)}</p>
         </div>
         <div class="game-status-cluster">
-          <div class="chrome-stat chrome-stat--time"><span>${ui.paused?'Paused':'Time'}</span><strong data-timer>${formatTime(activeDuration(active))}</strong></div>
+          <div class="chrome-stat chrome-stat--time"><span>${ui.paused?'Paused':'Time'}</span><strong data-timer aria-label="Elapsed time ${formatTime(activeDuration(active))}">${formatTime(activeDuration(active))}</strong></div>
           <div class="chrome-stat chrome-stat--progress"><span>Progress</span><strong>${esc(safeProgressLabel(active))}</strong></div>
-          <button class="game-menu chrome-icon" data-game-menu aria-label="Game options"><span aria-hidden="true">•••</span></button>
+          <button class="game-menu chrome-icon" data-game-menu aria-label="Game options" aria-haspopup="dialog"><span aria-hidden="true">•••</span></button>
         </div>
       </header>
       ${playGuide(game,active)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
       <div class="game-layout">
-        <section class="game-stage ${ui.paused?'is-paused':''}" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
+        <section class="game-stage ${ui.paused?'is-paused':''}" role="region" aria-label="${esc(g.name)} puzzle board" aria-describedby="game-objective" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
         <div class="play-action-dock" role="toolbar" aria-label="Puzzle actions">
-          ${hasHistory?`<div class="play-history"><button data-play-undo aria-label="Undo" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}><span class="action-icon" aria-hidden="true">↶</span><span class="action-label">Undo</span></button><button data-play-redo aria-label="Redo" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}><span class="action-icon" aria-hidden="true">↷</span><span class="action-label">Redo</span></button></div>`:''}
+          ${hasHistory?`<div class="play-history"><button data-play-undo aria-label="Undo" aria-keyshortcuts="Control+Z Meta+Z" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}><span class="action-icon" aria-hidden="true">↶</span><span class="action-label">Undo</span></button><button data-play-redo aria-label="Redo" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}><span class="action-icon" aria-hidden="true">↷</span><span class="action-label">Redo</span></button></div>`:''}
           <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}><span class="action-icon" aria-hidden="true">✦</span><span class="action-label">${ui.busy?'Thinking…':'Hint'}</span></button>
           <button data-game-pause ${active.completed?'disabled':''}><span class="action-icon" aria-hidden="true">${ui.paused?'▶':'Ⅱ'}</span><span class="action-label">${ui.paused?'Resume':'Pause'}</span></button>
         </div>
@@ -3188,6 +3215,7 @@
     $(`[data-${prefix}-submit]`).onclick=()=>game.submit(a);
     window.onkeydown=e=>{
       if(e.key==='Backspace'){e.preventDefault();a.state.path.pop();paint();return;}
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!a.state.path.length)add(a.state.selected);else if(!a.state.path.includes(a.state.selected))add(a.state.selected);paint();return;}
       const delta={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
       if(!delta)return;e.preventDefault();
       const i=a.state.selected,r=clamp(Math.floor(i/n)+delta[0],0,n-1),c=clamp(i%n+delta[1],0,n-1);
@@ -3441,6 +3469,8 @@
     }
     const {parts,params}=parseHash(),route=parts[0]||'home';
     document.body.classList.toggle('in-game',route==='game');
+    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
+    announceRoute(routeLabel);
     if(route==='home'||route==='games')return renderHome(ticket);
     if(route==='stats')return renderStats(ticket);
     if(route==='settings')return renderSettings();
@@ -3451,6 +3481,12 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('.skip-link')){e.preventDefault();main.focus({preventScroll:true});main.scrollIntoView({block:'start'});}
   });
+  document.addEventListener('keydown',e=>{
+    if(e.defaultPrevented)return;
+    if(e.key==='Escape'&&overlayRoot.firstChild){e.preventDefault();closeOverlay();return;}
+    if(overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.key==='?'){e.preventDefault();showControlsHelp();}
+  },true);
   window.addEventListener('hashchange',()=>void renderRoute());
   function suspendCurrentGame(){
     const active=state.currentActive;
