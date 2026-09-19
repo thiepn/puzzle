@@ -21,7 +21,7 @@ for(const game of games){
   assert.deepEqual(plain(a.puzzle),plain(fresh.puzzle),`${game.id} deterministic puzzle`);assertions++;
   const restored=T.repairSavedActive(game,structuredClone(a),fresh);ok(restored,`${game.id} ${difficulty}: save restores`);
   assert.deepEqual(plain(restored.state),plain(a.state),`${game.id} ${difficulty}: progress survives repair`);assertions++;
-  const html=T.baseGameShell(T.byId[game.id],a,'<div>board</div>');ok(html.includes('data-game-pause')&&html.includes('data-play-guide')&&html.includes('data-play-difficulty'),`${game.id}: controls present`);
+  const html=T.baseGameShell(T.byId[game.id],a,'<div>board</div>');ok(html.includes('data-game-pause')&&html.includes('data-game-hint')&&html.includes('data-play-difficulty')&&html.includes('play-action-dock')&&html.includes('game-status-cluster'),`${game.id}: phase 2 chrome present`);
   generated++;if(performance.now()-start>1000)slow.push({game:game.id,difficulty,ms:Math.round(performance.now()-start)});
  }
  const a=await game.create('play-hint-check',game.defaultDifficulty);await game.hint(a);ok(!a.completed,`${game.id}: requesting a hint must not complete the puzzle`);hints++;
