@@ -3,6 +3,8 @@ name: Puzzle Arcade CI + Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -32,6 +34,7 @@ jobs:
       - run: node scripts/release-check.mjs
 
   deploy:
+    if: github.event_name == 'push'
     needs: release-gate
     environment:
       name: github-pages
