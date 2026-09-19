@@ -233,11 +233,15 @@ with sync_playwright() as p:
         page.locator(f'[data-num="{solution}"]').click()
     page.locator('.result-panel--reward').wait_for()
     assert page.locator('.result-panel--reward').get_attribute('data-result-outcome')=='completed'
+    assert page.locator('.game-page').get_attribute('data-play-completed')=='true'
     assert page.locator('.result-badge--clean').is_visible()
     assert 'First solve' in page.locator('.result-badges').inner_text()
     assert page.locator('[data-result-challenge]').inner_text().strip()=='Try Medium'
     assert page.locator('[data-share-puzzle]').inner_text().strip()=='Share result'
     assert page.locator('[data-result-home]').is_visible()
+    assert not page.locator('.play-action-dock').is_visible()
+    assert not page.locator('.number-pad').is_visible()
+    page.wait_for_timeout(750)
     page.screenshot(path=str(OUT/'result-reward-sudoku-390.png'),full_page=True)
 
     # Phase 3 discovery hierarchy and full-library fallback remain usable at a narrow width.
