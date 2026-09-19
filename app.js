@@ -2823,6 +2823,7 @@
     $(`[data-${prefix}-submit]`).onclick=()=>game.submit(a);
     window.onkeydown=e=>{
       if(e.key==='Backspace'){e.preventDefault();a.state.path.pop();paint();return;}
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!a.state.path.length)add(a.state.selected);else if(!a.state.path.includes(a.state.selected))add(a.state.selected);paint();return;}
       const delta={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
       if(!delta)return;e.preventDefault();
       const i=a.state.selected,r=clamp(Math.floor(i/n)+delta[0],0,n-1),c=clamp(i%n+delta[1],0,n-1);
@@ -3076,6 +3077,8 @@
     }
     const {parts,params}=parseHash(),route=parts[0]||'home';
     document.body.classList.toggle('in-game',route==='game');
+    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
+    announceRoute(routeLabel);
     if(route==='home'||route==='games')return renderHome(ticket);
     if(route==='stats')return renderStats(ticket);
     if(route==='settings')return renderSettings();
@@ -3086,6 +3089,10 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('.skip-link')){e.preventDefault();main.focus({preventScroll:true});main.scrollIntoView({block:'start'});}
   });
+  document.addEventListener('keydown',e=>{
+    if(e.defaultPrevented||overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.key==='?'){e.preventDefault();showControlsHelp();}
+  },true);
   window.addEventListener('hashchange',()=>void renderRoute());
   function suspendCurrentGame(){
     const active=state.currentActive;
