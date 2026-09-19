@@ -703,24 +703,88 @@
     return 'In progress';
   }
 
+
+  function statsDayKey(ts){
+    const d=new Date(ts);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+  }
+  function statsHumanDuration(ms=0){
+    const total=Math.max(0,Math.floor(ms/1000)),h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
+    if(h)return h+'h '+m+'m';if(m)return m+'m '+sec+'s';return sec+'s';
+  }
+  function statsRecord(history){
+    const rows=sanitizeHistory(history).sort((a,b)=>b.endedAt-a.endedAt),completed=rows.filter(h=>h.outcome==='completed'),totalTime=completed.reduce((sum,h)=>sum+(h.durationMs||0),0),clean=completed.filter(h=>(h.metrics?.hintsUsed||0)===0);
+    let currentStreak=0;for(const h of rows){if(h.outcome==='completed')currentStreak++;else break;}
+    let bestStreak=0,run=0;for(const h of [...rows].reverse()){if(h.outcome==='completed'){run++;bestStreak=Math.max(bestStreak,run);}else run=0;}
+    const uniqueGames=new Set(completed.map(h=>h.gameId)).size,attempts=rows.length;
+    const categories={};
+    for(const id of Object.keys(CATEGORIES))categories[id]={id,label:CATEGORIES[id].label,solves:0,games:new Set(),time:0,clean:0};
+    for(const h of completed){const cat=byId[h.gameId]?.category;if(!categories[cat])continue;const c=categories[cat];c.solves++;c.games.add(h.gameId);c.time+=h.durationMs||0;if((h.metrics?.hintsUsed||0)===0)c.clean++;}
+    const gameMap=new Map();
+    for(const h of rows){
+      if(!gameMap.has(h.gameId))gameMap.set(h.gameId,{gameId:h.gameId,attempts:0,solves:0,clean:0,time:0,hints:0,lastPlayed:0,bests:{}});
+      const g=gameMap.get(h.gameId);g.attempts++;g.lastPlayed=Math.max(g.lastPlayed,h.endedAt||0);
+      if(h.outcome==='completed'){g.solves++;g.time+=h.durationMs||0;g.hints+=h.metrics?.hintsUsed||0;if((h.metrics?.hintsUsed||0)===0)g.clean++;const d=h.difficulty||'Standard';if(!g.bests[d]||(h.durationMs||Infinity)<g.bests[d].durationMs)g.bests[d]={durationMs:h.durationMs||0,endedAt:h.endedAt};}
+    }
+    const games=[...gameMap.values()].map(g=>({...g,avgTime:g.solves?Math.round(g.time/g.solves):0,avgHints:g.solves?g.hints/g.solves:0,category:byId[g.gameId]?.category||'logic'})).sort((a,b)=>b.solves-a.solves||b.lastPlayed-a.lastPlayed);
+    const days=[];const now=new Date();now.setHours(12,0,0,0);const counts=new Map();
+    for(const h of completed)counts.set(statsDayKey(h.endedAt),(counts.get(statsDayKey(h.endedAt))||0)+1);
+    for(let offset=27;offset>=0;offset--){const d=new Date(now);d.setDate(now.getDate()-offset);const key=statsDayKey(d.getTime());days.push({key,date:d,count:counts.get(key)||0});}
+    return {rows,completed,totalTime,clean,currentStreak,bestStreak,uniqueGames,attempts,categories:Object.values(categories).map(c=>({...c,games:c.games.size})),games,days};
+  }
+  function statsBestChips(record){
+    const game=GAMES[record.gameId],levels=game?.difficulties||Object.keys(record.bests);
+    const chips=levels.filter(d=>record.bests[d]).map(d=>'<span><b>'+esc(d)+'</b> '+formatTime(record.bests[d].durationMs)+'</span>').join('');
+    return chips||'<span class="stats-no-best">No completed difficulty yet</span>';
+  }
+  function statsRecentRow(h){
+    const game=byId[h.gameId],solved=h.outcome==='completed',hints=h.metrics?.hintsUsed||0;
+    return '<button class="stats-history-row" data-stats-game="'+esc(h.gameId)+'" data-outcome="'+esc(h.outcome)+'" data-category="'+esc(game?.category||'logic')+'">'+
+      '<span class="stats-history-mark" aria-hidden="true">'+(solved?'✓':'×')+'</span>'+
+      '<span class="stats-history-main"><strong>'+esc(game?.name||h.gameId)+'</strong><small>'+esc(h.difficulty||'Standard')+' · '+esc(CATEGORIES[game?.category||'logic'].label)+'</small></span>'+
+      '<span class="stats-history-meta"><strong>'+formatTime(h.durationMs||0)+'</strong><small>'+hints+' hint '+(hints===1?'step':'steps')+'</small></span>'+
+      '<span class="stats-history-date">'+new Date(h.endedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</span>'+
+    '</button>';
+  }
+
   async function renderStats(ticket=routeGeneration){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('stats'); document.title='Statistics — Puzzle Arcade';
     state.history=sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     if (!routeIsCurrent(ticket)) return;
-    const completed=state.history.filter(h=>h.outcome==='completed');
-    const totalTime=completed.reduce((s,h)=>s+(h.durationMs||0),0);
-    let streak=0; for(const h of state.history){ if(h.outcome==='completed') streak++; else break; }
-    let best=0,cur=0; [...state.history].reverse().forEach(h=>{ if(h.outcome==='completed'){cur++;best=Math.max(best,cur)} else cur=0; });
-    main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Local statistics</p><h1>Your puzzles</h1><p class="subtle">Everything here stays on this device.</p></div></div>
-      ${state.history.length?`<div class="stats-grid">
-        <div class="stat-block"><strong>${completed.length}</strong><span>Solved</span></div>
-        <div class="stat-block"><strong>${formatTime(totalTime)}</strong><span>Play time</span></div>
-        <div class="stat-block"><strong>${streak}</strong><span>Solve streak</span></div>
-        <div class="stat-block"><strong>${best}</strong><span>Best streak</span></div>
-      </div>
-      <section class="section"><div class="section-head"><div><h2>Recent</h2></div></div><div class="recent-list">${state.history.slice(0,30).map(h=>`<div class="recent-row"><strong>${esc(byId[h.gameId]?.name||h.gameId)}</strong><span>${h.outcome==='completed'?'Solved':'Ended'}</span><span>${formatTime(h.durationMs||0)} · ${new Date(h.endedAt).toLocaleDateString()}</span></div>`).join('')}</div></section>`:`<div class="empty"><h2>No puzzles solved yet.</h2><p>Pick a game and your results will appear here.</p><button class="primary-button" data-action="home">Choose a puzzle</button></div>`}
-    </div>`;
+    const record=statsRecord(state.history);
+    if(!record.rows.length){
+      main.innerHTML='<div class="page stats-page"><div class="page-head"><div><p class="page-kicker">Local record</p><h1>Your puzzle record</h1><p class="subtle">Everything here stays on this device.</p></div></div><div class="empty stats-empty"><div class="stats-empty-mark">◇</div><h2>No puzzle record yet.</h2><p>Finish a puzzle and your solves, times, streaks, and personal bests will appear here.</p><button class="primary-button" data-action="home">Choose a puzzle</button></div></div>';
+      bindCommon();return;
+    }
+    const cleanRate=record.completed.length?Math.round(record.clean.length/record.completed.length*100):0,coverage=Math.round(record.uniqueGames/playableIds.length*100),maxDay=Math.max(1,...record.days.map(d=>d.count));
+    const categoryHtml=record.categories.map(c=>{
+      const total=ALL_GAMES.filter(g=>g.status==='available'&&g.category===c.id).length,cover=total?Math.round(c.games/total*100):0;
+      return '<article class="stats-family-card" data-category="'+c.id+'"><div class="stats-family-head"><span>'+esc(c.label)+'</span><strong>'+c.solves+'</strong></div><p>'+c.games+' of '+total+' games solved</p><div class="stats-family-bar"><i style="width:'+cover+'%"></i></div><div><span>'+statsHumanDuration(c.time)+'</span><span>'+c.clean+' clean</span></div></article>';
+    }).join('');
+    const gameHtml=record.games.filter(g=>g.solves>0).slice(0,12).map(g=>{
+      const meta=byId[g.gameId];return '<article class="stats-game-record" data-category="'+g.category+'"><button data-stats-game="'+esc(g.gameId)+'" aria-label="Play '+esc(meta?.name||g.gameId)+'"></button><div class="stats-game-preview">'+cardPreview(g.gameId)+'</div><div class="stats-game-copy"><small>'+esc(CATEGORIES[g.category].label)+'</small><h3>'+esc(meta?.name||g.gameId)+'</h3><div class="stats-game-numbers"><span><b>'+g.solves+'</b> solves</span><span><b>'+g.clean+'</b> clean</span><span><b>'+statsHumanDuration(g.avgTime)+'</b> avg</span></div><div class="stats-best-chips">'+statsBestChips(g)+'</div></div><span class="stats-game-arrow" aria-hidden="true">→</span></article>';
+    }).join('');
+    const activity=record.days.map(d=>{const level=d.count?Math.max(1,Math.ceil(d.count/maxDay*4)):0;return '<div class="stats-day level-'+level+'" title="'+d.date.toLocaleDateString()+' · '+d.count+' solved" aria-label="'+d.date.toLocaleDateString()+': '+d.count+' solved"><i></i><span>'+d.date.getDate()+'</span></div>';}).join('');
+
+    main.innerHTML='<div class="page stats-page">'+
+      '<section class="stats-hero"><div><p class="page-kicker">Local record</p><h1>Your puzzle record</h1><p>Actual solves, personal bests, and play history from this device. No score inflation or account required.</p></div><div class="stats-hero-streak"><span>Current streak</span><strong>'+record.currentStreak+'</strong><small>Best '+record.bestStreak+'</small></div></section>'+
+      '<section class="stats-overview" aria-label="Puzzle statistics">'+
+        '<div><strong>'+record.completed.length+'</strong><span>Solved</span><small>'+record.attempts+' total attempts</small></div>'+
+        '<div><strong>'+record.uniqueGames+'<em>/'+playableIds.length+'</em></strong><span>Games solved</span><small>'+coverage+'% of the arcade</small></div>'+
+        '<div><strong>'+cleanRate+'<em>%</em></strong><span>Clean solves</span><small>'+record.clean.length+' without hints</small></div>'+
+        '<div><strong>'+statsHumanDuration(record.totalTime)+'</strong><span>Solve time</span><small>Completed puzzles only</small></div>'+
+      '</section>'+
+      '<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Last 28 days</p><h2>Activity</h2></div><span>'+record.days.reduce((n,d)=>n+d.count,0)+' solves</span></div><div class="stats-activity" role="group" aria-label="Puzzle solves during the last 28 days">'+activity+'</div></section>'+
+      '<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Puzzle families</p><h2>Where you play</h2></div><span>'+record.uniqueGames+' games explored</span></div><div class="stats-family-grid">'+categoryHtml+'</div></section>'+
+      (gameHtml?'<section class="stats-section"><div class="stats-section-head"><div><p class="home-section-kicker">Personal records</p><h2>Game records</h2></div><span>Fastest by difficulty</span></div><div class="stats-game-grid">'+gameHtml+'</div></section>':'')+
+      '<section class="stats-section"><div class="stats-section-head stats-history-head"><div><p class="home-section-kicker">Play history</p><h2>Recent attempts</h2></div><div class="stats-history-filters" role="group" aria-label="Filter recent attempts"><button class="is-active" data-stats-filter="all" aria-pressed="true">All</button><button data-stats-filter="completed" aria-pressed="false">Solved</button><button data-stats-filter="ended" aria-pressed="false">Ended</button></div></div><div class="stats-history-list" data-stats-history>'+record.rows.slice(0,40).map(statsRecentRow).join('')+'</div><p class="stats-history-empty" data-stats-history-empty hidden>No attempts match this filter.</p></section>'+
+    '</div>';
     bindCommon();
+    document.querySelectorAll('[data-stats-game]').forEach(el=>el.onclick=()=>openGame(el.dataset.statsGame));
+    document.querySelectorAll('[data-stats-filter]').forEach(button=>button.onclick=()=>{
+      const filter=button.dataset.statsFilter;document.querySelectorAll('[data-stats-filter]').forEach(x=>{const on=x===button;x.classList.toggle('is-active',on);x.setAttribute('aria-pressed',String(on));});
+      let shown=0;document.querySelectorAll('.stats-history-row').forEach(row=>{const visible=filter==='all'||(filter==='completed'&&row.dataset.outcome==='completed')||(filter==='ended'&&row.dataset.outcome!=='completed');row.hidden=!visible;if(visible)shown++;});
+      $('[data-stats-history-empty]').hidden=shown>0;
+    });
   }
 
   async function renderSettings(){
