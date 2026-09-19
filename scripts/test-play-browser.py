@@ -98,12 +98,14 @@ with sync_playwright() as p:
             assert page.locator('.game-stage').get_attribute('inert') is None,gid
             controls+=1
             if width==1365 and gid in ['sudoku','groups','anagrams','word-grid','cryptogram','nonogram','kakuro','untangle']:
+                page.wait_for_timeout(430)
                 page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
             if width==390:
                 page.locator('[data-game-hint]').click()
                 page.wait_for_function('() => !document.querySelector("[data-game-hint]")?.disabled',timeout=15000)
                 hints+=1
                 if gid in ['cryptogram','nonogram','sudoku','groups','anagrams','untangle','kakuro','word-grid','network','bridges','five-letters']:
+                    page.wait_for_timeout(430)
                     page.screenshot(path=str(OUT/f'{gid}-{width}.png'),full_page=True)
     if not opt.quick:
         page.set_viewport_size({'width':390,'height':844})
