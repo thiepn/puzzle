@@ -120,3 +120,8 @@ The Chromium suite injects representative local history covering all four famili
 - desktop overflow
 - mobile overflow
 - desktop and mobile screenshots
+
+
+### Filter regression caught during certification
+
+The first browser pass found that recent-history rows received the HTML `hidden` attribute correctly, but the component's explicit `display: grid` rule could keep them visually rendered. Phase 8 now includes an explicit `.stats-history-row[hidden] { display: none !important; }` rule so All / Solved / Ended filters affect both semantics and actual rendering.
