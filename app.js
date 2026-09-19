@@ -486,7 +486,7 @@
   }
 
   function updateNav(route) {
-    $('.nav-link').forEach(b=>{
+    $$('.nav-link').forEach(b=>{
       const active=b.dataset.route===route;
       b.classList.toggle('is-active',active);
       if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
@@ -690,10 +690,10 @@
       <section class="settings-group"><h2>About this build</h2><p class="subtle">Puzzle Arcade ${APP_VERSION} · ${BUILD_PHASE} · ${playableIds.length}/${ALL_GAMES.length} playable games · local-first PWA.</p></section>
     </div>`;
     $$('[data-theme-choice]').forEach(b=>b.onclick=()=>{setTheme(b.dataset.themeChoice);renderSettings()});
-    $('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
-    $('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
-    $('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
-    $('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
+    $$('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
     bindCommon();
   }
 
@@ -788,8 +788,8 @@
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
-    $('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
-    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
+    $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     $$('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     $$('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
     $$('.game-card__open,.continue-card').forEach(el => {
