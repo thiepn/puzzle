@@ -1,5 +1,13 @@
-# Puzzle Arcade 1.1.0 — Play Experience
+# Puzzle Arcade 1.2.0 — Accessibility, Controls & Device Polish
 
-The existing 36-game catalog is preserved. This release improves the shared play interface and learning flow, fixes accepted-word save recovery, and adds focused game improvements. No accounts, runtime dependencies, paid features, or new games.
+Phase 9 preserves the 36-game catalog and the Play Experience design while hardening input, semantics, focus, and device behavior.
 
-Run `node scripts/release-check.mjs` and `python scripts/test-play-browser.py` against a local HTTP server. CI must pass before deployment. See `docs/PLAY_EXPERIENCE.md` for scope, test coverage, and remaining verification limits.
+- System-aware or explicit reduced motion and high contrast.
+- Optional large non-board controls for touch use.
+- Keyboard and touch controls reference available from the top bar and Settings.
+- Improved screen-reader landmarks, route announcements, active navigation state, and result/pause focus.
+- Stronger non-color state cues, forced-colors support, coarse-pointer targets, dynamic viewport behavior, and narrow/landscape polish.
+- Fixed trace-board Enter/Space activation and the previously undefined `.sr-only` helper.
+- Added dedicated accessibility/control regression checks.
+
+Storage schema remains **1**. Service-worker cache is **v21**.
