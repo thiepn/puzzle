@@ -1184,7 +1184,7 @@
   function baseGameShell(g, active, boardHtml, extraHtml=''){
     const game=GAMES[g.id],ui=playSession(active),difficulties=game.difficulties||['Standard'];
     const hasHistory=typeof game.undo==='function';
-    return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}">
+    return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}" data-play-completed="${active.completed?'true':'false'}">
       <header class="game-chrome">
         <button class="game-back chrome-icon" data-game-back aria-label="Back to puzzles"><span aria-hidden="true">←</span></button>
         <div class="game-heading">
