@@ -1426,7 +1426,17 @@
     return i>=0&&i<levels.length-1?levels[i+1]:null;
   }
   function resultPanel(active, game, metricsHtml=''){
-    return `<div class="result-panel" role="region" aria-label="Puzzle result"><h2>${active.outcome==='failed'||active.state.status==='lost'?'Puzzle ended':'Solved'}</h2><div class="result-metrics"><div><strong>${formatTime(active.durationMs||0)}</strong><span>Time</span></div>${metricsHtml}<div><strong>${active.hintsUsed||0}</strong><span>Hint steps</span></div></div><p class="result-next-copy">${active.outcome==='failed'?'A fresh puzzle is ready when you are.':active.hintsUsed?'Solved with assistance. Try the next puzzle using what you learned.':'Puzzle complete. Keep this difficulty or choose a different challenge.'}</p><div class="result-actions"><button class="primary-button" data-next-puzzle>Next Puzzle</button><button class="secondary-button" data-share-puzzle>Share</button><button class="secondary-button" data-replay-puzzle>Replay</button></div></div>`;
+    const reward=resultRewardSummary(active,game),failed=active.outcome==='failed'||active.state.status==='lost',nextDifficulty=failed?null:nextResultDifficulty(game,active),category=CATEGORIES[byId[game.id]?.category||'logic']?.label||'Puzzle';
+    const badges=reward.badges.length?'<div class="result-badges" aria-label="Solve highlights">'+reward.badges.map(b=>'<div class="result-badge result-badge--'+b.kind+'"><strong>'+esc(b.icon)+'</strong><span>'+esc(b.label)+'</span></div>').join('')+'</div>':'';
+    const comparison=reward.prevBest!=null?'<div class="result-comparison"><span>Previous fastest</span><strong>'+formatTime(reward.prevBest)+'</strong>'+(reward.newBest?'<em>'+formatTime(reward.prevBest-reward.duration)+' faster</em>':'')+'</div>':'';
+    const challenge=nextDifficulty?'<button class="secondary-button result-challenge" data-result-challenge data-result-difficulty="'+esc(nextDifficulty)+'">Try '+esc(nextDifficulty)+'</button>':'<button class="secondary-button result-challenge" data-result-challenge data-result-category="'+esc(byId[game.id]?.category||'all')+'">Browse '+esc(category)+' games</button>';
+    return '<div class="result-panel result-panel--reward" role="region" aria-label="Puzzle result">'+
+      '<div class="result-hero"><div class="result-mark" aria-hidden="true">'+(failed?'×':'✓')+'</div><div><p class="result-eyebrow">'+esc(active.difficulty)+' · '+esc(category)+'</p><h2>'+(failed?'Puzzle ended':'Solved')+'</h2><p class="result-summary">'+esc(reward.message)+'</p></div></div>'+
+      badges+
+      '<div class="result-record"><div class="result-metrics"><div><strong>'+formatTime(active.durationMs||0)+'</strong><span>Time</span></div>'+metricsHtml+'<div><strong>'+reward.hints+'</strong><span>Hint steps</span></div><div><strong>'+reward.streak+'</strong><span>Current streak</span></div></div>'+comparison+'</div>'+
+      '<div class="result-next"><div><span>Next move</span><strong>'+(nextDifficulty?'Step up to '+esc(nextDifficulty):'Keep exploring '+esc(category))+'</strong><p>'+(nextDifficulty?'Same game, one level harder.':'Pick another puzzle from this family or start another board.')+'</p></div><div class="result-next-actions"><button class="primary-button" data-next-puzzle>Next '+esc(game.name)+'</button>'+challenge+'</div></div>'+
+      '<div class="result-actions result-actions--secondary"><button class="secondary-button" data-share-puzzle>Share result</button><button class="secondary-button" data-replay-puzzle>Replay this puzzle</button><button class="text-button" data-result-home>Back to puzzles</button></div>'+
+    '</div>';
   }
   function bindResult(active, game){
     const next=$('[data-next-puzzle]'); if(next) next.onclick=()=>newGame(game.id,active.difficulty);
