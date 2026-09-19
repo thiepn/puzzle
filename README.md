@@ -1,8 +1,14 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Stable release: 1.0.0 · Wave 10 · PWA cache v17**
+**Current release: 1.1.0 · Play Experience · PWA cache v20**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Play Experience 1.1.0
+
+All 36 games now share a board-first workbench, an individual strategy/control guide, visible difficulty selection, persistent hints and feedback, pause/resume, and clearer results. Native undo games gain redo and keyboard shortcuts. The library adds inline search, category counts, favorites filtering, and resume-first random play.
+
+Word progress repair now agrees with the expanded dictionary. Word Ladder uses dictionary-wide par and non-repeating hint routes; Groups rejects duplicate mistakes and explains near misses; Five Letters rejects repeated guesses; Nonogram gains marking and keyboard controls; Cryptogram gains letter frequencies; Sudoku gains matching-digit emphasis. See `docs/PLAY_EXPERIENCE.md` for scope and verification commands.
 
 ## Catalog — 36 / 36 playable
 
@@ -117,7 +123,7 @@ Wave 6 certification: **360/360 target runtime cases**, **108/108 full-catalog c
 
 See `docs/WAVE6_EXCEPTIONAL.md`, `docs/WAVE6_CERTIFICATION.json`, `docs/WAVE6_BROWSER_QA.json`, and `docs/WAVE6_FEATURE_METRICS.json`.
 
-The current PWA cache is **v16**.
+The historical Wave 6 build used PWA cache v16; the current release uses v20.
 
 ## Word content workflow
 

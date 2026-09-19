@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.0.2';
-  const BUILD_PHASE = 'Expanded Lexicon & Hint Fix';
+  const APP_VERSION = '1.1.0';
+  const BUILD_PHASE = 'Play Experience';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -423,6 +423,8 @@
   function esc(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 
   function toast(msg) {
+    if(state.currentActive&&/^Hint [1-4]\/4 · /.test(String(msg))&&state.currentActive.state._proofHintView){playSession(state.currentActive).feedback='';return;}
+    if(state.currentActive)gameFeedback(msg);
     const el=document.createElement('div'); el.className='toast'; el.textContent=msg; toastRoot.appendChild(el);
     setTimeout(()=>el.remove(),2200);
   }
@@ -515,7 +517,7 @@
       <button class="game-card__star ${fav?'is-on':''}" data-favorite="${g.id}" aria-label="${fav?'Remove':'Add'} ${esc(g.name)} ${fav?'from':'to'} favorites">${fav?'★':'☆'}</button>
       <div class="game-card__preview">${cardPreview(g.id)}</div>
       <div class="game-card__title">${esc(g.name)}</div>
-      <div class="game-card__meta">${CATEGORIES[g.category].label} · ${g.status==='available'?'Play now':'Planned'}</div>
+      <p class="game-card__description">${esc(g.description)}</p><div class="game-card__meta">${CATEGORIES[g.category].label} · ${state.active.some(a=>a.gameId===g.id)?'Continue puzzle':'Play now'}</div>
     </article>`;
   }
 
@@ -524,6 +526,7 @@
     return {
       theme:['system','light','dark'].includes(v.theme)?v.theme:'system',
       playMode:['relaxed','challenge'].includes(v.playMode)?v.playMode:'relaxed',
+      difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
   function sanitizeFavorites(value) {
@@ -569,27 +572,17 @@
     setTheme(state.settings.theme, false);
   }
 
-  async function renderHome(ticket=routeGeneration) {
-    stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('home'); document.title='Puzzle Arcade';
-    state.active = sanitizeActiveList(await activeRecords());
-    if (!routeIsCurrent(ticket)) return;
-    const available=ALL_GAMES.filter(g=>g.status==='available');
-    const activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4);
-    const favGames=state.favorites.map(id=>byId[id]).filter(g=>g&&g.status==='available');
-    const filtered=available.filter(g=>state.category==='all'||g.category===state.category);
-    main.innerHTML=`<div class="page">
-      <section class="hero-row">
-        <div><p class="page-kicker">Endless puzzle library</p><h1 class="hero-title">Pick a puzzle.<br>Keep going.</h1><p class="hero-copy">No daily lockout, no lives, no waiting. Solve one puzzle and move straight to the next.</p></div>
-        <button class="random-button" data-action="random">↻ Random Puzzle</button>
-      </section>
-      ${activeSorted.length?`<section class="section"><div class="section-head"><div><h2>Continue</h2><p>Resume exactly where you stopped.</p></div></div><div class="continue-row">${activeSorted.map(a=>{const g=byId[a.gameId];return `<button class="continue-card" data-game="${a.gameId}"><strong>${esc(g?.name||a.gameId)}</strong><span>${esc(a.difficulty||'Standard')} · ${esc(safeProgressLabel(a))}</span></button>`}).join('')}</div></section>`:''}
-      ${favGames.length?`<section class="section"><div class="section-head"><div><h2>Favorites</h2></div></div><div class="game-grid">${favGames.map(gameCard).join('')}</div></section>`:''}
-      <section class="section"><div class="section-head"><div><h2>Available puzzles</h2><p>${available.length} playable · V1 catalog frozen</p></div></div>
-        <div class="filterbar">${['all','word','number','logic','spatial'].map(c=>`<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}">${c==='all'?'All':CATEGORIES[c].label}</button>`).join('')}</div>
-        <div class="game-grid">${filtered.map(gameCard).join('')}</div>
-      </section>
-    </div>`;
-    bindCommon();
+  async function renderHome(ticket=routeGeneration){
+    stopTimer();state.currentGame=null;state.currentActive=null;updateNav('home');document.title='Puzzle Arcade';
+    state.active=sanitizeActiveList(await activeRecords());if(!routeIsCurrent(ticket))return;
+    const available=ALL_GAMES.filter(g=>g.status==='available'),activeSorted=[...state.active].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,4);
+    const filtered=available.filter(g=>state.category==='all'||(state.category==='favorites'?state.favorites.includes(g.id):g.category===state.category));
+    main.innerHTML=`<div class="page play-library"><section class="hero-row"><div><p class="page-kicker">Your puzzle arcade</p><h1 class="hero-title">Pick a puzzle.<br>Keep going.</h1><p class="hero-copy">36 games. Unlimited puzzles. No accounts, lives, or daily lockouts.</p></div><button class="random-button" data-action="random">↻ Surprise me</button></section>
+      ${activeSorted.length?`<section class="section"><div class="section-head"><div><h2>Pick up where you left off</h2></div></div><div class="continue-row">${activeSorted.map(a=>`<button class="continue-card" data-game="${a.gameId}"><strong>${esc(byId[a.gameId].name)}</strong><span>${esc(a.difficulty)} · ${esc(safeProgressLabel(a))}</span></button>`).join('')}</div></section>`:''}
+      <section class="section"><div class="library-search-row"><h2>Find your next puzzle</h2><label class="library-search"><span class="sr-only">Search games</span><input type="search" data-library-search placeholder="Search games or skills…" value="${esc(state.libraryQuery||'')}" autocomplete="off"></label></div>
+      <div class="filterbar" aria-label="Game categories">${['all','word','number','logic','spatial','favorites'].map(c=>{const count=c==='all'?available.length:c==='favorites'?state.favorites.length:available.filter(g=>g.category===c).length;return `<button class="filter ${state.category===c?'is-active':''}" data-category-filter="${c}" aria-pressed="${state.category===c}">${c==='all'?'All':c==='favorites'?'Favorites':CATEGORIES[c].label} <span>${count}</span></button>`;}).join('')}</div>
+      <p class="library-count" data-catalog-count aria-live="polite"></p><div class="game-grid" data-catalog-grid>${filtered.map(gameCard).join('')}</div><p class="library-empty" data-library-empty hidden>No games match this search. Try a shorter name or another category.</p></section></div>`;
+    bindCommon();const search=$('[data-library-search]');const filter=()=>{state.libraryQuery=search.value;const q=search.value.trim().toLowerCase();let count=0;$$('[data-catalog-grid] .game-card').forEach(el=>{const g=byId[el.dataset.game],show=!q||`${g.name} ${g.description} ${CATEGORIES[g.category].label}`.toLowerCase().includes(q);el.hidden=!show;if(show)count++;});$('[data-catalog-count]').textContent=`${count} ${count===1?'game':'games'}`;$('[data-library-empty]').hidden=count>0;};search.oninput=filter;filter();
   }
 
   function safeProgressLabel(a){ try { return progressLabel(a); } catch { return 'In progress'; } }
@@ -754,12 +747,12 @@
   }
 
   async function randomGame(){
-    const avail=ALL_GAMES.filter(g=>g.status==='available');
+    const avail=ALL_GAMES.filter(g=>g.status==='available'&&(state.category==='all'||(state.category==='favorites'?state.favorites.includes(g.id):g.category===state.category)));
     if(!avail.length) return;
     const recent=state.history.slice(0,2).map(h=>h.gameId);
     const options=avail.filter(g=>!recent.includes(g.id));
     const g=pick(options.length?options:avail);
-    openGame(g.id, true);
+    openGame(g.id, false);
   }
 
   function routeToGame(id, seed, difficulty){
@@ -786,7 +779,7 @@
     stopTimer();
     const draw=()=>{ const el=$('[data-timer]'); if(el)el.textContent=formatTime(activeDuration(active)); };
     draw();
-    if (active.completed || document.hidden || retiredActives.has(active)) return;
+    if (active.completed || document.hidden || retiredActives.has(active) || playSession(active).paused) return;
     if (!active.startedAt) active.startedAt=Date.now();
     state.timer=setInterval(draw,500);
   }
@@ -815,7 +808,7 @@
     const durationMs=activeDuration(active);
     active.completed=true; active.outcome=outcome; active.durationMs=durationMs; active.startedAt=null;
     const entry={id:uid('result'),gameId:active.gameId,puzzleIdentity:`${active.gameId}:${active.difficulty}:${active.seed}`,
-      outcome,difficulty:active.difficulty,durationMs,metrics,endedAt:Date.now()};
+      outcome,difficulty:active.difficulty,durationMs,metrics:{...metrics,hintsUsed:active.hintsUsed||0},endedAt:Date.now()};
     active.result=entry;
     if(state.currentActive===active)stopTimer();
     await saveActive(active);
@@ -829,35 +822,111 @@
   function proofHintPanel(active){const h=active.state?._proofHint;if(h?.stateSig&&h.stateSig!==hintStateFingerprint(active)){delete active.state._proofHint;delete active.state._proofHintView;}const v=active.state?._proofHintView;return `<div class="proof-hint" data-proof-hint role="status" aria-live="polite" ${v?'':'hidden'}>${v?proofHintContent(v):''}</div>`;}
   function refreshProofHintPanel(active){const el=$('[data-proof-hint]');if(!el)return;const v=active.state?._proofHintView;el.hidden=!v;el.innerHTML=v?proofHintContent(v):'';}
 
-  function baseGameShell(g, active, boardHtml, extraHtml=''){
-    const favorite=state.favorites.includes(g.id);
-    return `<div class="game-page">
-      <div class="game-top">
-        <button class="game-back" data-game-back aria-label="Back to puzzles">←</button>
-        <div class="game-title"><h1>${esc(g.name)}</h1><small>${esc(active.difficulty||'Standard')} · ${state.settings.playMode==='challenge'?'Challenge':'Relaxed'}</small></div>
-        <button class="game-menu" data-game-menu aria-label="Game menu">•••</button>
-      </div>
-      <div class="game-layout">
-        <section class="game-stage"><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
-        <aside class="game-side">
-          <div class="side-stat"><label>Time</label><div class="timer" data-timer>${formatTime(activeDuration(active))}</div></div>
-          <div class="side-stat"><label>Mode</label><strong>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'}</strong></div>
-          <button class="small-button" data-game-hint>Hint</button>
-          ${proofHintPanel(active)}
-          <button class="small-button" data-game-rules>Rules</button>
-          <button class="small-button" data-game-favorite>${favorite?'★ Favorite':'☆ Favorite'}</button>
-        </aside>
-      </div>
-    </div>`;
+  // Play experience: shared controls with game-specific coaching; no answer peeking.
+  const PLAY_GUIDES = {
+    'five-letters':['Start with five different, common letters. Use the feedback before spending your next guess.','Type letters; Enter submits; Backspace removes a letter.','Repeated letters matter: a muted copy does not rule out a second, marked copy.'],
+    groups:['Look for four words that share one precise connection, not just a loose association.','Select four tiles, then Submit group. Shuffle changes only their display order.','A word may fit several ideas. Check the remaining words before committing.'],
+    'word-ladder':['Compare the current word with the target. Change one position while keeping a real word.','Type the next word and press Enter. Undo takes back your last step.','You may need to move away from the target temporarily. The displayed par uses the accepted dictionary.'],
+    anagrams:['Look for a familiar ending or a consonant pair, then try the remaining letters around it.','Type or tap tiles. Enter submits; Backspace removes the last tile.','Every tile must be used once. Repeated letters need separate tiles; alternate valid anagrams count.'],
+    'letter-hive':['Build a short word around the center letter, then try longer forms using the same letters.','Type or tap letters; Enter submits; Backspace deletes. Letters can be reused.','Every word needs the center letter and at least four letters. A found word counts only once.'],
+    'word-grid':['Scan for short words, then extend their paths through neighboring letters.','Drag to submit, or tap a path and press Submit. Backspace shortens your path.','Diagonals are allowed, but a cell cannot appear twice in the same word.'],
+    'theme-trail':['Use the theme to predict a word, then look for its first letters around the board.','Trace neighboring letters; drag to submit or use Submit after tapping.','Solved words lock their cells. The remaining paths must cover every unused cell.'],
+    'word-pieces':['Read the chunks as beginnings and endings. Try a familiar compound before a long combination.','Tap chunks in order; Remove last revises your choice; Submit checks it.','A tile can be used only once per word, but returns for your next word.'],
+    'mini-crossword':['Solve the clearest clue first, then use those crossing letters in the other direction.','Tap a clue or square; tap a crossing again to switch direction. Type or use the letter keys.','A plausible answer must also fit every crossing. Recheck the clue rather than forcing a letter.'],
+    cryptogram:['Look for one-letter words, repeated letter patterns, and short words that occur often.','Choose a cipher letter, then assign a letter using the keyboard or letter buttons.','A substitution applies everywhere. Two cipher letters cannot share a plaintext letter.'],
+    'word-search':['Scan for the first and last letters of a target, then check the straight line between them.','Select the first and last letter of a word, or drag along its letters.','Words may run backward or diagonally. Each word follows one straight line.'],
+    sudoku:['Start with the row, column, or box with the most givens. Look for a number with one possible square.','Select a square and enter 1–9. N toggles notes; C fills candidates; Delete clears.','Notes are possibilities, not answers. Remove candidates when a peer receives that number.'],
+    'killer-sudoku':['Start with small cages and sums that have only a few distinct digit combinations.','Select a square and enter a digit. Use the cage information together with its row, column, and box.','Digits cannot repeat in a cage even when its squares are in different rows or boxes.'],
+    kakuro:['Look for short runs with extreme sums, then intersect their possible digits with crossing runs.','Select a white square and enter 1–9; arrows move between white squares.','A run sum alone is not enough: every digit in that run must also be different.'],
+    unequal:['Follow a chain of inequalities first. A long increasing chain leaves little room for its endpoints.','Select a square and enter a number; arrows move; Delete clears.','The pointed end of an inequality faces the smaller number. Rows and columns cannot repeat.'],
+    'arithmetic-cages':['Start with single-cell cages and cages with very few arithmetic combinations.','Select a square, enter a value, and inspect its cage operation.','Subtraction and division can be read in either order. Row and column uniqueness still applies.'],
+    'make-24':['Look for useful intermediate pairs such as 6 and 4, or 8 and 3. Fractions may unlock the solution.','Choose a value, an operation, and another value. Undo restores the previous pair.','You must use all four starting numbers exactly once. A dead end is a reason to undo, not restart the puzzle.'],
+    mines:['Your first reveal is safe. Use each number with the covered squares and flags that surround it.','Choose Reveal or Flag; right-click or long-press flags. Tap a satisfied number to chord.','A flag is your assumption, not a confirmed mine. Wrong flags can make a chord unsafe.'],
+    nonogram:['Compare the total clue lengths and required gaps with the line length. Start with overlapping blocks.','Drag to fill or mark. Right-click marks; arrows move; Space paints; X selects marks; F selects fill.','Separate consecutive filled runs with at least one empty square. A crossed square is not a filled square.'],
+    loop:['Start around 0 clues, then inspect 3 clues and corners with very few remaining edge choices.','Tap an edge to cycle line, cross, and empty; drag to paint matching edge states.','Every used vertex has exactly two loop edges. Do not close a small loop before the rest is connected.'],
+    bridges:['Start with islands whose required bridge count nearly uses all their available directions.','Tap a possible connection to cycle zero, one, and two bridges.','Satisfying each number is not enough: all islands must form one connected network.'],
+    'light-up':['Use numbered walls with few available neighbors, then inspect dark cells that have only one light source.','Tap a white cell to change its state; use the lamp and mark controls for explicit placement.','Lamps illuminate entire unobstructed rows and columns, and two lamps must never see each other.'],
+    islands:['An island labeled 1 is already complete. Its orthogonal neighbors must be sea.','Select a square and choose Sea, Island, or Clear.','Each island has exactly one clue; the sea is connected and may never contain a solid 2×2 block.'],
+    hitori:['Find repeated numbers in rows and columns. Use adjacency and connectivity to decide which copy remains.','Select a square and choose its shaded, unshaded, or unknown state.','Shaded cells cannot touch by an edge. Never disconnect the remaining white area.'],
+    binary:['Look for two equal neighboring digits or a pair with one gap between them.','Select a square and enter 0 or 1; clear a square to reconsider it.','Each row and column has equal counts of 0 and 1. Completed rows and columns must be distinct.'],
+    queens:['Start with a region that has very few available squares. Compare it with its rows and columns.','Tap cells to mark or place queens; use the explicit queen and mark controls.','There is one queen in each row, column, and region. Queens must not touch diagonally.'],
+    'number-path':['Plan around corners and narrow passages before extending the current endpoint.','Drag through adjacent cells. Drag backward or use Undo to revise the path.','Every cell must be visited once, with checkpoints in order. Do not isolate an unvisited pocket.'],
+    tents:['Start with zero-count lines and trees that have only one possible tent neighbor.','Select a square and place a tent, mark grass, or clear it.','Tents cannot touch even diagonally. Each tent must pair with a different adjacent tree.'],
+    rectangles:['Start with clues whose factor pairs allow very few rectangles in their part of the board.','Select opposite corners to place a rectangle. Select a placed rectangle to remove it.','A rectangle needs exactly one clue, with area equal to that clue, and cannot overlap another rectangle.'],
+    dominoes:['Use the remaining pair inventory to find number pairs with only one available location.','Select a cell and an orthogonal neighbor to pair them; Clear removes a selected pairing.','A 2–4 domino is the same pair as 4–2. Each unordered pair appears exactly once.'],
+    towers:['A visibility clue of 1 forces the tallest tower at that edge; a clue of N forces an increasing line.','Select a square and enter its height; compare the clues at both ends of the line.','A tall tower hides every shorter tower behind it, not just its immediate neighbor.'],
+    fillomino:['Grow small given regions first. Count how many cells each number still needs.','Select a square and enter a region size. Given numbers cannot change.','Touching equal numbers merge into one region. That merged region must have exactly the indicated size.'],
+    network:['Start along the border: no connector may point outside the board. Then work inward.','Tap a tile to rotate clockwise; right-click rotates counter-clockwise.','Locally matching connectors are not enough. Every tile must belong to the same network.'],
+    'sliding-tiles':['Build the top row and then the left column, leaving room to maneuver the final tiles.','Tap a tile next to the gap, or use the arrow keys. Undo reverses one slide.','A useful move can temporarily displace a correct tile. Avoid moving the same tile back and forth.'],
+    'lights-out':['Treat each press as a cross-shaped toggle. Work systematically rather than chasing isolated lights.','Tap a light to toggle it and its orthogonal neighbors; Undo reverses a press.','Press order does not matter, and pressing a square twice cancels itself.'],
+    untangle:['Move a node involved in several crossings toward open space, then refine its neighbors.','Drag nodes; focus a node and use arrows for small moves, or Shift+arrows for larger moves.','Edges sharing an endpoint may meet there. Only crossings between unrelated edges must disappear.']
+  };
+  const playSessions=new WeakMap();
+  function playSession(a){if(!playSessions.has(a))playSessions.set(a,{guide:false,paused:false,redo:[],restoring:false,busy:false,signature:null,feedback:'',order:[]});return playSessions.get(a);}
+  function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
+  function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
+  function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
+  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);$('[data-game-pause]')?.focus({preventScroll:true});}
+  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
+  function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
+  function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
+  async function requestGameHint(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.busy)return;ui.busy=true;const button=$('[data-game-hint]');if(button){button.disabled=true;button.textContent='Thinking…';}await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));if(state.currentActive!==a||a.completed||ui.paused){ui.busy=false;return;}const old=a.state._proofHintView?JSON.stringify(a.state._proofHintView):'',before=ui.feedback;try{await game.hint(a);if((a.state._proofHintView&&JSON.stringify(a.state._proofHintView)!==old)||ui.feedback!==before){a.hintsUsed=Math.min(100000,(a.hintsUsed||0)+1);await saveActive(a);}}catch(error){gameFeedback('A hint could not be calculated. Try again, or undo your last move.',a);}finally{ui.busy=false;if(state.currentActive===a){game.render(a);$('[data-game-hint]')?.focus({preventScroll:true});}}}
+  function isWordOnGrid(word,grid,n){word=String(word).toUpperCase();if(word.length>grid.length)return false;const used=new Set();function walk(i,k){if(grid[i]!==word[k]||used.has(i))return false;if(k===word.length-1)return true;used.add(i);const r=Math.floor(i/n),c=i%n;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&rr<n&&cc>=0&&cc<n&&walk(rr*n+cc,k+1)){used.delete(i);return true;}}used.delete(i);return false;}return grid.some((_,i)=>walk(i,0));}
+  function rememberDifficulty(game,difficulty){state.settings.difficulties=state.settings.difficulties||{};state.settings.difficulties[game.id]=normalizeDifficulty(game,difficulty);void db.put('kv',state.settings,'settings');}
+  function setupPlayExperience(game,a){
+    const ui=playSession(a),signature=playSignature(a);if(ui.signature!==null&&ui.signature!==signature&&!ui.restoring){ui.redo=[];ui.feedback='';const feedback=$('[data-play-feedback]');if(feedback){feedback.textContent='';feedback.hidden=true;}}ui.signature=signature;
+    if(ui.paused){checkpointTime(a,true);stopTimer();$('.game-stage')?.setAttribute('inert','');}
+    const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.disabled=!canUndoGame(game,a);if(redo)redo.disabled=a.completed||ui.paused||!ui.redo.length;
+    $$('button',main).filter(el=>el.textContent.trim()==='Undo'&&!el.hasAttribute('data-play-undo')).forEach(el=>{el.disabled=!canUndoGame(game,a);el.classList.add('legacy-undo');});
+    const oldKeys=window.onkeydown;
+    window.onkeydown=e=>{if(ui.paused)return;if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.target?.closest?.('input,textarea,select,[contenteditable="true"]')){if(e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redoGame(game,a):canUndoGame(game,a)&&game.undo(a);return;}if(e.key.toLowerCase()==='y'){e.preventDefault();redoGame(game,a);return;}}oldKeys?.(e);};
+    if(a.completed){$('.result-panel')?.setAttribute('tabindex','-1');if(!ui.announced){ui.announced=true;gameFeedback(a.outcome==='failed'?'Puzzle ended. Review the answer, or start a fresh puzzle.':'Puzzle solved. Your result has been saved.',a);}}
+    if(game.id==='five-letters'){$('.wordle-board')?.insertAdjacentHTML('afterend','<div class="feedback-key" aria-label="Tile feedback"><span><i class="correct"></i>Right place</span><span><i class="present"></i>Elsewhere</span><span><i class="absent"></i>Not this copy</span></div>');if(a.outcome==='failed')$('.result-panel h2')?.insertAdjacentHTML('afterend',`<p class="revealed-answer">The answer was <strong>${esc(a.puzzle.answer)}</strong>.</p>`);}
+    if(['groups','anagrams','letter-hive'].includes(game.id)&&!a.completed){const selector={groups:'[data-group-tile]',anagrams:'[data-anagram-tile]','letter-hive':'[data-hive-letter]'}[game.id];const nodes=$$(selector);if(nodes.length){const parent=nodes[0].parentElement;if(game.id!=='letter-hive'){if(!ui.order.length)ui.order=nodes.map(n=>n.getAttribute(selector.slice(1,-1)));for(const node of nodes){node.style.order=String(ui.order.indexOf(node.getAttribute(selector.slice(1,-1))));}const shuffleButton=document.createElement('button');shuffleButton.className='small-button play-shuffle';shuffleButton.textContent='Shuffle tiles';shuffleButton.dataset.playShuffle='';shuffleButton.onclick=()=>{ui.order=shuffle(ui.order);game.render(a);$('[data-play-shuffle]')?.focus({preventScroll:true});};parent.insertAdjacentElement('afterend',shuffleButton);}}}
+    if(game.id==='sudoku'&&!a.completed){const selected=a.state.board[a.state.selected];$$('[data-cell]').forEach(el=>{const i=+el.dataset.cell;el.classList.toggle('same-value',!!selected&&i!==a.state.selected&&a.state.board[i]===selected);});$$('[data-num]').forEach(el=>{const v=+el.dataset.num;if(!v)return;const count=a.state.board.filter(x=>x===v).length;el.setAttribute('aria-label',`${v}, ${Math.max(0,9-count)} remaining`);el.classList.toggle('digit-complete',count===9);});}
+    if(game.id==='cryptogram'){const counts={};for(const c of a.puzzle.cipher)if(/[A-Z]/.test(c))counts[c]=(counts[c]||0)+1;const items=Object.entries(counts).sort((a,b)=>b[1]-a[1]);$('.game-board-wrap')?.insertAdjacentHTML('beforeend',`<details class="cipher-frequency"><summary>Letter frequency · ${items.length} symbols</summary><div>${items.map(([c,n])=>`<span>${c} <b>${n}</b></span>`).join('')}</div></details>`);}
+  }
+  function installPlayExperience(){
+    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
+    const wordleKey=fiveLetters.key;fiveLetters.key=function(a,key){if(key==='ENTER'&&a.state.guesses.some(g=>g.word===a.state.current)){toast('You already tried that word. Use the feedback to try a different guess.');return;}return wordleKey.call(this,a,key);};
+    const groupsSubmit=groupsGame.submit;groupsGame.submit=async function(a){if(a.state.selected.length!==4)return;const key=[...a.state.selected].sort().join('|');a.triedGroups=a.triedGroups||[];if(a.triedGroups.includes(key)){toast('You already tried this combination. No extra mistake counted.');return;}a.triedGroups.push(key);if(a.triedGroups.length>200)a.triedGroups.shift();const picked=a.state.selected.map(id=>a.puzzle.tiles.find(t=>t.id===id)),counts={};for(const t of picked)counts[t.groupId]=(counts[t.groupId]||0)+1;await groupsSubmit.call(this,a);if(Math.max(...Object.values(counts))===3)toast('One away: three of those words share a group.');await saveActive(a);};
+    const ladderCreate=wordLadder.create;wordLadder.create=async function(seed,difficulty){const a=await ladderCreate.call(this,seed,difficulty),path=acceptedLadderPath(a.puzzle.start,a.puzzle.target);if(path)a.puzzle.optimal=path.length-1;return a;};
+    const nonogramBind=nonogramGame.bind;nonogramGame.bind=function(a){nonogramBind.call(this,a);const ui=playSession(a),n=a.puzzle.size;ui.cursor=clamp(ui.cursor||0,0,n*n-1);const paint=async(i,tool)=>{if(a.completed||ui.paused)return;const old=[...a.state.cells];a.state.cells[i]=a.state.cells[i]===tool?0:tool;a.state.history.push(old);if(a.puzzle.solution.every((v,k)=>!!v===(a.state.cells[k]===1)))await finishActive(a,{size:n,image:a.puzzle.name});else await saveActive(a);this.render(a);};$$('[data-nono]').forEach(el=>{el.onfocus=()=>{ui.cursor=+el.dataset.nono;};el.oncontextmenu=e=>{e.preventDefault();ui.cursor=+el.dataset.nono;paint(ui.cursor,2);};});window.onkeydown=e=>{let i=ui.cursor,r=Math.floor(i/n),c=i%n;if(e.key==='ArrowUp')r=Math.max(0,r-1);else if(e.key==='ArrowDown')r=Math.min(n-1,r+1);else if(e.key==='ArrowLeft')c=Math.max(0,c-1);else if(e.key==='ArrowRight')c=Math.min(n-1,c+1);else if(e.key.toLowerCase()==='x'||e.key.toLowerCase()==='f'){e.preventDefault();a.state.tool=e.key.toLowerCase()==='x'?2:1;this.render(a);return;}else if(e.key===' '||e.key==='Enter'){e.preventDefault();paint(i,a.state.tool);return;}else return;e.preventDefault();ui.cursor=r*n+c;$(`[data-nono="${ui.cursor}"]`)?.focus({preventScroll:true});};};
   }
 
-  function bindGameShell(game, active){
-    $('[data-game-back]').onclick=()=>go('home');
-    $('[data-game-menu]').onclick=()=>gameMenu(game,active);
-    $('[data-game-rules]').onclick=()=>showRules(game);
-    $('[data-game-hint]').disabled=!!active.completed;
-    $('[data-game-hint]').onclick=()=>{if(!active.completed)game.hint(active);};
-    $('[data-game-favorite]').onclick=()=>{toggleFavorite(game.id); const b=$('[data-game-favorite]');if(b)b.textContent=state.favorites.includes(game.id)?'★ Favorite':'☆ Favorite';};
+  function baseGameShell(g, active, boardHtml, extraHtml=''){
+    const game=GAMES[g.id],ui=playSession(active),favorite=state.favorites.includes(g.id),difficulties=game.difficulties||['Standard'];
+    return `<div class="game-page" data-play-game="${g.id}" data-play-seed="${esc(active.seed)}" data-play-category="${g.category}">
+      <div class="game-top"><button class="game-back" data-game-back aria-label="Back to puzzles">←</button><div class="game-title"><small>${esc(CATEGORIES[g.category].label)} puzzles</small><h1>${esc(g.name)}</h1></div><button class="game-menu" data-game-menu aria-label="Game menu">•••</button></div>
+      <p class="game-objective">${esc(game.rules.objective)}</p>
+      <div class="play-commandbar" role="group" aria-label="Puzzle controls">
+        <label class="play-difficulty"><span>Difficulty</span><select data-play-difficulty aria-label="Difficulty for a new puzzle" title="Changing difficulty starts a new puzzle">${difficulties.map(d=>`<option ${active.difficulty===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label>
+        ${typeof game.undo==='function'?`<div class="play-history"><button data-play-undo aria-label="Undo" title="Undo (Ctrl/⌘ Z)" ${canUndoGame(game,active)?'':'disabled'}>↶ <span>Undo</span></button><button data-play-redo aria-label="Redo" title="Redo (Ctrl/⌘ Shift Z)" ${!active.completed&&ui.redo.length?'':'disabled'}>↷ <span>Redo</span></button></div>`:''}
+        <button class="play-hint-button" data-game-hint ${active.completed||ui.paused||ui.busy?'disabled':''}>${ui.busy?'Thinking…':'Hint'}</button>
+        <button data-play-guide aria-expanded="${ui.guide}" aria-controls="play-guide">Guide</button>
+        <button data-game-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button>
+      </div>
+      ${playGuide(game,active)}
+      <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
+      <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
+      <div class="game-layout"><section class="game-stage ${ui.paused?'is-paused':''}" ${ui.paused?'inert':''}><div class="game-board-wrap">${boardHtml}</div>${extraHtml}</section>
+        <aside class="game-side"><div class="play-session-summary"><div class="side-stat"><label>${ui.paused?'Paused':'Time'}</label><div class="timer" data-timer>${formatTime(activeDuration(active))}</div></div><div class="side-stat play-progress"><label>Progress</label><strong>${esc(safeProgressLabel(active))}</strong></div></div>
+          <p class="play-start-tip">${esc(PLAY_GUIDES[g.id][0])}</p><button class="small-button" data-game-rules>Full rules</button><button class="small-button" data-game-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button>
+          <p class="play-save-note">${state.settings.playMode==='challenge'?'Challenge mode':'Relaxed mode'} · Autosaved locally</p>
+        </aside>
+        ${ui.paused?'<div class="pause-cover" role="region" aria-label="Puzzle paused"><strong>Take your time.</strong><p>The clock is paused and your progress is saved.</p><button class="primary-button" data-resume-puzzle>Resume puzzle</button></div>':''}
+      </div></div>`;
+  }
+  function bindGameShell(game,active){
+    $('[data-game-back]').onclick=()=>go('home');$('[data-game-menu]').onclick=()=>gameMenu(game,active);
+    $$('[data-game-rules]').forEach(b=>b.onclick=()=>showRules(game));
+    $('[data-game-hint]').onclick=()=>requestGameHint(game,active);
+    $('[data-game-favorite]').onclick=()=>{toggleFavorite(game.id);const b=$('[data-game-favorite]');if(b){const on=state.favorites.includes(game.id);b.textContent=on?'★ Favorite':'☆ Favorite';b.setAttribute('aria-pressed',String(on));}};
+    $('[data-play-difficulty]').onchange=e=>newGame(game.id,e.target.value);
+    $('[data-play-guide]').onclick=()=>{playSession(active).guide=!playSession(active).guide;game.render(active);$('[data-play-guide]')?.focus({preventScroll:true});};
+    $('[data-game-pause]').onclick=()=>pauseGame(game,active);const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
+    const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.onclick=()=>game.undo(active);if(redo)redo.onclick=()=>redoGame(game,active);
+    const dismiss=$('[data-hint-dismiss]');if(dismiss)dismiss.onclick=()=>dismissGameHint(active);
     startTimer(active);
   }
 
@@ -876,7 +945,7 @@
 
   async function newGame(id,difficulty){
     const game=GAMES[id]; if(!game)return;
-    routeToGame(id,seedString(),normalizeDifficulty(game,difficulty));
+    rememberDifficulty(game,difficulty);routeToGame(id,seedString(),normalizeDifficulty(game,difficulty));
   }
 
   function boundedSaveData(value) {
@@ -916,7 +985,7 @@
     const position=v=>v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=1&&v.y>=0&&v.y<=1;
     const fraction=v=>v&&Number.isSafeInteger(v.n)&&Number.isSafeInteger(v.d)&&v.d>0&&typeof v.id==='string'&&/^[A-Za-z0-9-]+$/.test(v.id)&&typeof v.label==='string'&&/^[0-9()+×÷*/. −-]+$/.test(v.label);
     const allowedWords=p.answers||p.words||[];
-    const wordArray=v=>arr(v,null,w=>alpha(w)&&allowedWords.includes(w))&&unique(v);
+    const wordArray=v=>arr(v,null,w=>alpha(w)&&(allowedWords.includes(w)||(game.id==='letter-hive'&&w.length>=4&&isAcceptedWord(w)&&w.includes(p.center)&&wordUsesOnlyLetters(w,p.letters))||(game.id==='word-grid'&&w.length>=3&&isAcceptedWord(w)&&isWordOnGrid(w,p.grid,p.n))))&&unique(v);
     const selectedArray=v=>game.id==='groups'?arr(v,null,x=>p.tiles.some(t=>t.id===x))&&unique(v)&&v.length<=4:
       arr(v,null,i=>index(i,(p.letters||p.pieces||[]).length))&&unique(v);
     const stateChecks={
@@ -934,7 +1003,7 @@
       current:v=>alpha(v)&&v.length<=(game.id==='five-letters'?5:50),input:v=>typeof v==='string'&&/^[A-Za-z]*$/.test(v)&&v.length<=(p.length||20),
       found:wordArray,
       solved:v=>arr(v,null,x=>p.groups.some(g=>g.id===x))&&unique(v),
-      chain:v=>arr(v,null,x=>typeof x==='string'&&/^[a-z]+$/.test(x)&&x.length===p.length)&&v.length>0&&v[0]===p.start&&v.every((x,i)=>i===0||(w6LadderGraph(p.length).get(v[i-1])||[]).includes(x)),
+      chain:v=>arr(v,null,x=>typeof x==='string'&&/^[a-z]+$/.test(x)&&x.length===p.length&&(isAcceptedWord(x)||x===p.start))&&v.length>0&&unique(v)&&v[0]===p.start&&v.every((x,i)=>i===0||oneLetterDiff(v[i-1],x)),
       path:v=>arr(v,null,i=>index(i,n*n))&&unique(v)&&v.length<=n*n&&v.every((i,k)=>k===0||((game.id==='number-path'?Math.abs(Math.floor(i/n)-Math.floor(v[k-1]/n))+Math.abs(i%n-v[k-1]%n):Math.max(Math.abs(Math.floor(i/n)-Math.floor(v[k-1]/n)),Math.abs(i%n-v[k-1]%n)))===1))&&(game.id!=='number-path'||v[0]===p.start),
       rects:v=>arr(v,null,rect)&&v.length<=n*n,
       mapping:v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.entries(v).every(([k,x])=>/^[A-Z]$/.test(k)&&/^[A-Z]$/.test(x))&&unique(Object.values(v)),
@@ -980,6 +1049,8 @@
     if(game.id==='make-24'&&!repaired.values.some(v=>v.id===repaired.first))repaired.first=null;
     if(game.id==='mines'&&!p.mines&&(repaired.revealed.some(Boolean)||raw.completed))return null;
     const out={...fresh,state:repaired,startedAt:null};
+    if(Number.isInteger(raw.hintsUsed)&&raw.hintsUsed>=0&&raw.hintsUsed<=100000)out.hintsUsed=raw.hintsUsed;
+    if(game.id==='groups'&&Array.isArray(raw.triedGroups))out.triedGroups=raw.triedGroups.filter(x=>typeof x==='string'&&x.length<=500).slice(-200);
     for(const key of ['createdAt','updatedAt','elapsedMs','durationMs'])if(Number.isFinite(raw[key])&&raw[key]>=0)out[key]=raw[key];
     if(raw.completed===true&&!progressDamaged){out.completed=true;out.outcome=raw.outcome==='failed'?'failed':'completed';out.durationMs=out.durationMs||out.elapsedMs||0;if(sanitizeHistory([raw.result]).length&&raw.result.gameId===game.id&&raw.result.difficulty===fresh.difficulty&&raw.result.puzzleIdentity===`${game.id}:${fresh.difficulty}:${fresh.seed}`)out.result=raw.result;}
     if(changed)out._recoveredFields=true;
@@ -992,7 +1063,7 @@
   }
   async function getOrCreateActive(game, params, ticket=null){
     const rawSeed=params.get('seed'), rawDiff=params.get('difficulty');
-    const requestedSeed=sanitizeSharedSeed(rawSeed), requestedDiff=normalizeDifficulty(game,rawDiff);
+    const requestedSeed=sanitizeSharedSeed(rawSeed), requestedDiff=normalizeDifficulty(game,rawDiff||state.settings.difficulties?.[game.id]);
     if((rawSeed&&!requestedSeed)||(rawDiff&&requestedDiff!==rawDiff)) setTimeout(()=>{if(routeIsCurrent(ticket))toast('Ignored invalid shared-puzzle parameters.');},0);
     let active=newestActive(await db.get('active',game.id),readCheckpoint(game.id));
     if(!routeIsCurrent(ticket))return null;
@@ -1021,7 +1092,7 @@
   }
 
   function resultPanel(active, game, metricsHtml=''){
-    return `<div class="result-panel" role="region" aria-label="Puzzle result"><h2>${active.outcome==='failed'||active.state.status==='lost'?'Puzzle ended':'Solved'}</h2><div class="result-metrics"><div><strong>${formatTime(active.durationMs||0)}</strong><span>Time</span></div>${metricsHtml}</div><div class="result-actions"><button class="primary-button" data-next-puzzle>Next Puzzle</button><button class="secondary-button" data-share-puzzle>Share</button><button class="secondary-button" data-replay-puzzle>Replay</button></div></div>`;
+    return `<div class="result-panel" role="region" aria-label="Puzzle result"><h2>${active.outcome==='failed'||active.state.status==='lost'?'Puzzle ended':'Solved'}</h2><div class="result-metrics"><div><strong>${formatTime(active.durationMs||0)}</strong><span>Time</span></div>${metricsHtml}<div><strong>${active.hintsUsed||0}</strong><span>Hint steps</span></div></div><p class="result-next-copy">${active.outcome==='failed'?'A fresh puzzle is ready when you are.':active.hintsUsed?'Solved with assistance. Try the next puzzle using what you learned.':'Puzzle complete. Keep this difficulty or choose a different challenge.'}</p><div class="result-actions"><button class="primary-button" data-next-puzzle>Next Puzzle</button><button class="secondary-button" data-share-puzzle>Share</button><button class="secondary-button" data-replay-puzzle>Replay</button></div></div>`;
   }
   function bindResult(active, game){
     const next=$('[data-next-puzzle]'); if(next) next.onclick=()=>newGame(game.id,active.difficulty);
@@ -2431,9 +2502,9 @@
     for(const arr of buckets.values())for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){g.get(arr[i]).push(arr[j]);g.get(arr[j]).push(arr[i]);}
     acceptedLadderGraphCache.set(len,g);return g;
   }
-  function acceptedLadderPath(start,target){
+  function acceptedLadderPath(start,target,blocked=new Set()){
     if(start===target)return[start];const g=acceptedLadderGraph(start.length);if(!g.has(start)||!g.has(target))return null;const q=[start],prev=new Map([[start,null]]);
-    for(let h=0;h<q.length;h++){const w=q[h];for(const nx of g.get(w)||[]){if(prev.has(nx))continue;prev.set(nx,w);if(nx===target){const p=[nx];let x=w;while(x){p.push(x);x=prev.get(x);}return p.reverse();}q.push(nx);}}return null;
+    for(let h=0;h<q.length;h++){const w=q[h];for(const nx of g.get(w)||[]){if(prev.has(nx)||blocked.has(nx))continue;prev.set(nx,w);if(nx===target){const p=[nx];let x=w;while(x){p.push(x);x=prev.get(x);}return p.reverse();}q.push(nx);}}return null;
   }
   function w6LadderPairs(difficulty){
     const cfg={Easy:[3,3,5],Medium:[4,4,7],Hard:[5,4,8]}[difficulty]||[4,4,7],key=cfg.join(':');if(w6LadderPairCache.has(key))return w6LadderPairCache.get(key);
@@ -2454,7 +2525,7 @@
   wordLadder.render=function(a){const len=a.puzzle.length||a.puzzle.start.length,current=a.state.chain.at(-1);const chain=a.state.chain.map((w,i)=>{const prev=i?a.state.chain[i-1]:null,changed=prev?[...w].findIndex((c,k)=>c!==prev[k]):-1;return `<div class="ladder-step"><span>${String(i).padStart(2,'0')}</span><strong>${[...w].map((c,k)=>`<i class="${k===changed?'changed':''}">${c.toUpperCase()}</i>`).join('')}</strong>${prev?`<small>letter ${changed+1}</small>`:''}</div>`}).join('');const board=`<div class="ladder-wrap"><div class="ladder-target"><span>Start</span><strong>${a.puzzle.start.toUpperCase()}</strong><i>→</i><span>Target</span><strong>${a.puzzle.target.toUpperCase()}</strong></div><div class="w6-meta"><span>${len} letters</span><span>Par ${a.puzzle.optimal}</span><span>${a.puzzle.poolSize.toLocaleString()} certified pairs</span></div><div class="ladder-chain">${chain}</div>${!a.completed?`<form class="ladder-entry"><input maxlength="${len}" autocomplete="off" spellcheck="false" aria-label="Next ${len}-letter word" placeholder="Next word" value="${esc(a.state.input||'')}"><button class="primary-button" type="submit">Add</button></form>`:''}</div>`;const moves=a.state.chain.length-1,result=a.completed?resultPanel(a,this,`<div><strong>${moves}</strong><span>Moves</span></div><div><strong>${a.puzzle.optimal}</strong><span>Par</span></div><div><strong>${moves-a.puzzle.optimal>=0?'+'+(moves-a.puzzle.optimal):moves-a.puzzle.optimal}</strong><span>Over par</span></div>`):'';main.innerHTML=baseGameShell(byId[this.id],a,board,`${!a.completed?`<div class="toolbar"><button data-ladder-undo ${a.state.chain.length<=1?'disabled':''}>Undo</button></div>`:''}${result}`);bindGameShell(this,a);this.bind(a);if(a.completed)bindResult(a,this);};
   wordLadder.bind=function(a){const len=a.puzzle.length||a.puzzle.start.length,form=$('.ladder-entry');if(form){const input=$('input',form);input.oninput=()=>a.state.input=input.value.toLowerCase().replace(/[^a-z]/g,'').slice(0,len);form.onsubmit=e=>{e.preventDefault();this.submit(a)};setTimeout(()=>input.focus(),0);}const u=$('[data-ladder-undo]');if(u)u.onclick=()=>this.undo(a);};
   wordLadder.submit=async function(a){const len=a.puzzle.length||a.puzzle.start.length,w=(a.state.input||'').toLowerCase(),cur=a.state.chain.at(-1);if(w.length!==len)return toast(`Enter ${len} letters.`);if(!isAcceptedWord(w))return toast('That word is not in the accepted English dictionary.');if(a.state.chain.includes(w))return toast('That word is already in the ladder.');if(!oneLetterDiff(cur,w))return toast('Change exactly one letter.');a.state.chain.push(w);a.state.input='';if(w===a.puzzle.target)await finishActive(a,{moves:a.state.chain.length-1,optimal:a.puzzle.optimal,overPar:a.state.chain.length-1-a.puzzle.optimal});else await saveActive(a);this.render(a);};
-  wordLadder.hint=function(a){const cur=a.state.chain.at(-1),path=acceptedLadderPath(cur,a.puzzle.target);if(!path||path.length<2)return toast('No hint available.');const nx=path[1],idx=[...cur].findIndex((c,i)=>c!==nx[i]),d={token:`ladder6-${cur}-${a.puzzle.target}`,focus:`A shortest route from ${cur.toUpperCase()} is ${path.length-1} move${path.length===2?'':'s'} long.`,rule:'Each move changes exactly one character and must remain a dictionary word.',deduction:`On one shortest route, the next change is at letter position ${idx+1}.`,reveal:`One valid next word is ${nx.toUpperCase()}.`};deliverProofHint(a,d);};
+  wordLadder.hint=function(a){const cur=a.state.chain.at(-1),path=acceptedLadderPath(cur,a.puzzle.target,new Set(a.state.chain.slice(0,-1)));if(!path||path.length<2)return toast('No route remains without revisiting a word. Undo a step and try another branch.');const nx=path[1],idx=[...cur].findIndex((c,i)=>c!==nx[i]),d={token:`ladder6-${cur}-${a.puzzle.target}`,focus:`A shortest route from ${cur.toUpperCase()} is ${path.length-1} move${path.length===2?'':'s'} long.`,rule:'Each move changes exactly one character and must remain a dictionary word.',deduction:`On one shortest route, the next change is at letter position ${idx+1}.`,reveal:`One valid next word is ${nx.toUpperCase()}.`};deliverProofHint(a,d);};
 
   // ----- Sudoku v6: candidate notes, note mode and technique profile -----
   function w6SudokuSearchStats(givens){const b=[...givens],stats={nodes:0,backtracks:0};function rec(){stats.nodes++;let bi=-1,opts=null;for(let i=0;i<81;i++)if(!b[i]){const o=sudokuCandidates(b,i);if(!o.length){stats.backtracks++;return false;}if(!opts||o.length<opts.length){bi=i;opts=o;if(o.length===1)break;}}if(bi<0)return true;for(const v of opts){b[bi]=v;if(rec())return true;b[bi]=0;}stats.backtracks++;return false;}rec();return stats;}
@@ -2851,7 +2922,7 @@
       for(const name of mutators) {
         const method=game[name]; if(typeof method!=='function')continue;
         game[name]=function(active,...args){
-          if(active?.completed||retiredActives.has(active))return;
+          if(active?.completed||retiredActives.has(active)||playSession(active).paused)return;
           if(name==='enter'&&['sudoku','killer-sudoku','kakuro','unequal','arithmetic-cages','fillomino','towers','binary'].includes(game.id)) {
             const i=active?.state?.selected,board=active?.state?.board;
             if(!Array.isArray(board)||!Number.isInteger(i)||i<0||i>=board.length)return;
@@ -2870,6 +2941,7 @@
         clearGamePointerHandlers();
         render.call(this,active);
         enhanceDenseBoard(game,active);
+        setupPlayExperience(game,active);
         if(active.completed) {
           $$('.game-stage button,.game-stage input,.game-stage select').filter(el=>!el.closest('.result-panel,.dense-board-controls')).forEach(el=>el.disabled=true);
           $$('.game-board-wrap svg').forEach(el=>el.setAttribute('inert','')); 
@@ -2891,6 +2963,7 @@
           $(`[${attr}="${CSS.escape(value)}"]`,main)?.focus({preventScroll:true});
         }
         enhanceBoardAccessibility(game,active);
+        const undoKeys=window.onkeydown;window.onkeydown=e=>{if(!e.defaultPrevented&&!overlayRoot.firstChild&&!active.completed&&!playSession(active).paused&&(e.ctrlKey||e.metaKey)&&!e.altKey&&!e.target?.closest?.('input,textarea,select,[contenteditable="true"]')){const k=e.key.toLowerCase();if(k==='z'||k==='y'){e.preventDefault();if(k==='y'||e.shiftKey)redoGame(game,active);else if(canUndoGame(game,active))game.undo(active);return;}}undoKeys?.(e);};
       };
     }
   }
@@ -2915,6 +2988,7 @@
       else if(!el.textContent.trim())el.setAttribute('aria-label',`${game.name} control ${index+1}`);
     });
   }
+  installPlayExperience();
   installGameLifecycle();
 
   async function renderGame(id,params,ticket=routeGeneration){
@@ -2974,7 +3048,7 @@
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){suspendCurrentGame();return;}
     const active=state.currentActive;
-    if(active&&!active.completed&&!retiredActives.has(active)){active.startedAt=Date.now();startTimer(active);}
+    if(active&&!active.completed&&!retiredActives.has(active)&&!playSession(active).paused){active.startedAt=Date.now();startTimer(active);}
   });
 
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
