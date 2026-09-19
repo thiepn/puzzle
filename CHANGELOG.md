@@ -1,3 +1,7 @@
+# 1.1.0 — Play Experience
+
+Shared controls and individual guides across all 36 games; undo/redo; persistent hints; pause; search and resume improvements; dictionary-compatible progress recovery; Word Ladder, Groups, Five Letters, Sudoku, Nonogram, and Cryptogram improvements. Regression and HTTP browser tests added. Runtime cache v20; storage schema remains 1.
+
 ## 1.0.2 — Expanded Lexicon & Hint Fix
 
 - Added a broad offline ESDB/SCOWL-derived accepted-word dictionary: 132,590 filtered English words, including 7,278 five-letter words.

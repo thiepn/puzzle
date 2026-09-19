@@ -1,12 +1,5 @@
-# Puzzle Arcade 1.0.2
+# Puzzle Arcade 1.1.0 — Play Experience
 
-This maintenance release fixes the shared English-word validation layer and Anagrams hints.
+The existing 36-game catalog is preserved. This release improves the shared play interface and learning flow, fixes accepted-word save recovery, and adds focused game improvements. No accounts, runtime dependencies, paid features, or new games.
 
-- 132,590 accepted English words offline, including 7,278 five-letter words.
-- Curated puzzle targets remain separate from player-input validation.
-- Five Letters, Word Ladder, Anagrams, Letter Hive, and Word Grid now use the broad accepted-word dictionary where their mechanics permit free word entry.
-- Anagrams now progresses from structural help → vowel/consonant pattern → one positional anchor → a three-letter chunk.
-- Adds regression tests for TRACE, CRATE, STARE, ADIEU, LIONS, and LOVES.
-- Service-worker cache bumped to v19.
-
-See `THIRD_PARTY_NOTICES.md` for ESDB/SCOWL attribution.
+Run `node scripts/release-check.mjs` and `python scripts/test-play-browser.py` against a local HTTP server. CI must pass before deployment. See `docs/PLAY_EXPERIENCE.md` for scope, test coverage, and remaining verification limits.

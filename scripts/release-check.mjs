@@ -23,7 +23,8 @@ const allowed={
   '1.0.0-rc.1':{cache:'v16',phase:'Wave 10 RC1'},
   '1.0.0':{cache:'v17',phase:'Wave 10 Stable'},
   '1.0.1':{cache:'v18',phase:'Audited Maintenance Build'},
-  '1.0.2':{cache:'v19',phase:'Expanded Lexicon & Hint Fix'}
+  '1.0.2':{cache:'v19',phase:'Expanded Lexicon & Hint Fix'},
+  '1.1.0':{cache:'v20',phase:'Play Experience'}
 };
 must(!!allowed[version],`unexpected Wave 10 APP_VERSION: ${version || 'missing'}`);
 const expected=allowed[version] || {cache:'__invalid__',phase:'Wave 10'};
@@ -57,4 +58,5 @@ if(playableMatch){const ids=[...playableMatch[1].matchAll(/'([^']+)'/g)].map(m=>
 const badNames=[];function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const fp=path.join(dir,ent.name),rel=path.relative(ROOT,fp);if(ent.isDirectory()){if(['node_modules','__pycache__','.git','test-results','dist'].includes(ent.name))continue;walk(fp);} else if(/(?:^|\/)(?:backup|tmp|debug|harness)(?:[-_.]|$)|\.bak$/i.test(rel))badNames.push(rel);}}walk(ROOT);must(badNames.length===0,`release tree contains debug/backup residue: ${badNames.join(', ')}`);
 const prodFiles=['app.js','styles.css','index.html','sw.js'];for(const f of prodFiles){const t=read(f);const urls=[...t.matchAll(/https?:\/\/[^\s'"<>]+/g)].map(m=>m[0]).filter(u=>!u.includes('www.w3.org/2000/svg'));must(urls.length===0,`${f} contains unexpected external URL: ${urls.join(', ')}`);}
 notes.push(`content errors: ${contentSummary?.errors ?? 'unknown'}`);notes.push('playable games: 36');notes.push(`service worker: ${expected.cache}`);
+const playTest=run('node',['scripts/test-play-experience.mjs']);must(playTest.status===0,`play-experience regression tests failed: ${(playTest.stderr||playTest.stdout).trim()}`);
 const out={phase:expected.phase,appVersion:version,errors,notes,pass:errors.length===0};console.log(JSON.stringify(out,null,2));process.exit(errors.length?1:0);

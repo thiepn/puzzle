@@ -105,7 +105,10 @@ with sync_playwright() as p:
     page.locator('[data-play-shuffle]').click()
     assert page.locator('[data-group-tile].selected').get_attribute('data-group-tile')==selected
     open_game('anagrams')
-    page.locator('[data-anagram-tile]').first.click()
+    tile=page.locator('[data-anagram-tile]').first
+    letter=tile.inner_text().strip()
+    tile.click()
+    page.wait_for_function('(letter)=>document.querySelector(".anagram-answer").textContent.trim()===letter',arg=letter)
     entered=page.locator('.anagram-answer').inner_text()
     page.locator('[data-play-shuffle]').click()
     assert page.locator('.anagram-answer').inner_text()==entered
@@ -127,9 +130,10 @@ with sync_playwright() as p:
     assert page.locator('[data-library-empty]').is_visible()
     page.locator('[data-library-search]').fill('')
     page.locator('[data-category-filter="spatial"]').click()
+    page.wait_for_function('() => document.querySelector("[data-category-filter=spatial]")?.getAttribute("aria-pressed")=="true"')
     assert page.locator('[data-catalog-grid] .game-card:visible').count()==4
     for gid in ['sudoku','cryptogram','five-letters','nonogram','kakuro']:
-        navigate(f'game/{gid}?seed=small-screen&difficulty=Hard');page.locator('[data-game-pause]').wait_for();page.wait_for_timeout(100)
+        open_game(gid,'Hard','small-screen');page.wait_for_timeout(100)
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),f'320px overflow: {gid}'
     browser.close()
 result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}

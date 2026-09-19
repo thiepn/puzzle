@@ -17,10 +17,10 @@ for(const word of required)assert.ok(set.has(word),`required common word missing
 
 const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
 for(const [label,needle] of [
-  ['version',"const APP_VERSION = '1.0.2';"],
+  ['version',"const APP_VERSION = '1.1.0';"],
   ['Five Letters broad validation',"if(!isAcceptedWord(word))"],
   ['Word Ladder broad validation',"if(!isAcceptedWord(w))return toast('That word is not in the accepted English dictionary.')"],
-  ['Word Ladder broad hint graph','acceptedLadderPath(cur,a.puzzle.target)'],
+  ['Word Ladder broad hint graph','acceptedLadderPath(cur,a.puzzle.target,new Set(a.state.chain.slice(0,-1)))'],
   ['Anagrams expanded answers','acceptedAnagrams(a.puzzle.letters.join(\'\'))'],
   ['Letter Hive broad validation',"if(!isAcceptedWord(w)||!wordUsesOnlyLetters(w,a.puzzle.letters))"],
   ['Word Grid broad validation','w.length>=3&&isAcceptedWord(w)'],
