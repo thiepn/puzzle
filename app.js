@@ -3835,9 +3835,9 @@
       default:content=hash(p);shape=hash(Object.keys(p).sort());
     }
     extra=hash([content,shape,theme,p14Profile(active)]);
-    return {version:P14_VERSION,content,shape,theme,profile:p14Profile(active),extra};
+    return {version:P14_VERSION,gameId:id,content,shape,theme,profile:p14Profile(active),extra};
   }
-  function p14ValidFingerprint(f){return !!(f&&f.version===P14_VERSION&&typeof f.content==='string'&&typeof f.shape==='string'&&Array.isArray(f.profile));}
+  function p14ValidFingerprint(f){return !!(f&&f.version===P14_VERSION&&typeof f.gameId==='string'&&typeof f.content==='string'&&typeof f.shape==='string'&&Array.isArray(f.profile));}
   function p14ProfileDistance(a,b){const x=a?.profile||[],y=b?.profile||[],n=Math.max(x.length,y.length);if(!n)return 0;let s=0;for(let i=0;i<n;i++)s+=Math.abs(p13Num(x[i])-p13Num(y[i]));return s/n;}
   function p14Novelty(a,b){
     if(!p14ValidFingerprint(a)||!p14ValidFingerprint(b))return 1;
@@ -3848,7 +3848,13 @@
     score+=Math.min(.32,p14ProfileDistance(a,b)*1.6);
     return clamp(score,0,1);
   }
-  function p14NearDuplicate(a,b){return p14ValidFingerprint(a)&&p14ValidFingerprint(b)&&(a.content===b.content||(a.shape===b.shape&&p14ProfileDistance(a,b)<.045&&(a.theme===b.theme||!a.theme||!b.theme)));}
+  const P14_SHAPE_DOMINANT=new Set(['sudoku','killer-sudoku','kakuro','arithmetic-cages','mines','nonogram','loop','light-up','islands','hitori','binary','queens','number-path','tents','rectangles','dominoes','towers','fillomino','network','lights-out']);
+  function p14NearDuplicate(a,b){
+    if(!p14ValidFingerprint(a)||!p14ValidFingerprint(b)||a.gameId!==b.gameId)return false;
+    if(a.content===b.content)return true;
+    if(!P14_SHAPE_DOMINANT.has(a.gameId))return false;
+    return !!(a.shape&&a.shape===b.shape&&p14ProfileDistance(a,b)<.045&&(a.theme===b.theme||!a.theme||!b.theme));
+  }
   function p14RecentFingerprints(id,difficulty,current=null){
     const refs=[];
     if(current?.gameId===id&&current.difficulty===difficulty)refs.push(p14Fingerprint(current));
@@ -3901,7 +3907,7 @@
   async function p14AuditSequence(id,difficulty='Medium',steps=3){
     const game=GAMES[id],refs=[],selected=[],errors=[];
     for(let step=0;step<steps;step++){
-      const count=P14_HEAVY.has(id)?2:3,seeds=Array.from({length:count},(_,c)=>'p14-cert:'+id+':'+difficulty+':'+step+':'+c);
+      const count=P14_HEAVY.has(id)?2:4,seeds=Array.from({length:count},(_,c)=>'p14-cert:'+id+':'+difficulty+':'+step+':'+c);
       const best=await p14ChooseFromSeeds(game,difficulty,seeds,refs,id==='mines');
       if(!best){errors.push('no viable candidate at step '+step);continue;}
       const near=refs.some(r=>p14NearDuplicate(best.fingerprint,r)),novelty=refs.length?Math.min(...refs.map(r=>p14Novelty(best.fingerprint,r))):1;
