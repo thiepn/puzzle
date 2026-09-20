@@ -12,12 +12,13 @@ const read=f=>fs.readFileSync(path.join(ROOT,f),'utf8');
 const core=['index.html','styles.css','app.js','word-dictionary.js','word-content.js','manifest.webmanifest','sw.js','icon.svg','icon-192.png','icon-512.png'];
 for(const f of core) must(fs.existsSync(path.join(ROOT,f)),`missing core file: ${f}`);
 const run=(cmd,args)=>spawnSync(cmd,args,{cwd:ROOT,encoding:'utf8'});
-for(const f of ['app.js','word-dictionary.js','word-content.js','sw.js','scripts/validate-word-content.js','scripts/test-word-entry.mjs','scripts/test-accessibility-controls.mjs','scripts/test-phase10-integration.mjs']){const r=run('node',['--check',f]);must(r.status===0,`${f}: syntax failed: ${r.stderr.trim()}`);}
+for(const f of ['app.js','word-dictionary.js','word-content.js','sw.js','scripts/validate-word-content.js','scripts/test-word-entry.mjs','scripts/test-accessibility-controls.mjs','scripts/test-phase10-integration.mjs','scripts/test-sensory-feedback.mjs']){const r=run('node',['--check',f]);must(r.status===0,`${f}: syntax failed: ${r.stderr.trim()}`);}
 const content=run('node',['scripts/validate-word-content.js']);must(content.status===0,`word content validation failed: ${(content.stderr||content.stdout).trim()}`);
 const swTest=run('node',['scripts/test-service-worker.mjs']);must(swTest.status===0,`service worker tests failed: ${(swTest.stderr||swTest.stdout).trim()}`);
 const wordTest=run('node',['scripts/test-word-entry.mjs']);must(wordTest.status===0,`word-entry regression tests failed: ${(wordTest.stderr||wordTest.stdout).trim()}`);
 const accessibilityTest=run('node',['scripts/test-accessibility-controls.mjs']);must(accessibilityTest.status===0,`accessibility/control regression tests failed: ${(accessibilityTest.stderr||accessibilityTest.stdout).trim()}`);
 const integrationTest=run('node',['scripts/test-phase10-integration.mjs']);must(integrationTest.status===0,`Phase 10 integration tests failed: ${(integrationTest.stderr||integrationTest.stdout).trim()}`);
+const sensoryTest=run('node',['scripts/test-sensory-feedback.mjs']);must(sensoryTest.status===0,`sensory feedback regression tests failed: ${(sensoryTest.stderr||sensoryTest.stdout).trim()}`);
 let contentSummary=null;try{contentSummary=JSON.parse(content.stdout)}catch{}
 const app=read('app.js'), index=read('index.html'), sw=read('sw.js'), manifest=JSON.parse(read('manifest.webmanifest')), readme=read('README.md');
 const version=app.match(/const APP_VERSION = '([^']+)';/)?.[1] || '';
@@ -28,7 +29,8 @@ const allowed={
   '1.0.2':{cache:'v19',phase:'Expanded Lexicon & Hint Fix'},
   '1.1.0':{cache:'v20',phase:'Play Experience'},
   '1.2.0':{cache:'v21',phase:'Accessibility, Controls & Device Polish'},
-  '1.3.0':{cache:'v22',phase:'Integration, Final Certification & Ship'}
+  '1.3.0':{cache:'v22',phase:'Integration, Final Certification & Ship'},
+  '1.4.0':{cache:'v23',phase:'Audio, Haptics & Sensory Feedback'}
 };
 must(!!allowed[version],`unexpected Wave 10 APP_VERSION: ${version || 'missing'}`);
 const expected=allowed[version] || {cache:'__invalid__',phase:'Wave 10'};
