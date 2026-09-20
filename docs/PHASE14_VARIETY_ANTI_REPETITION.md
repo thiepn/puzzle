@@ -69,6 +69,8 @@ Where rotations/reflections do not meaningfully create a new puzzle structure, s
 
 This prevents the variety system from treating a simple rotation of an old board as genuinely new.
 
+Near-duplicate semantics are family-aware. Content-dominant games such as Anagrams, Groups, and Mini Crossword treat genuinely different target content as new even when high-level length/block profiles match. Structure-dominant board games keep stricter canonical-shape matching, so a relabeled or rotated version of the same logical board still counts as a repeat.
+
 ## History
 
 Completed attempts now store a compact `varietyFingerprint` inside result metrics. It contains hashed content/shape identifiers and normalized profile values, not answer text or external identifiers.
