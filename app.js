@@ -1287,6 +1287,7 @@
   function firstPlayCoach(game){
     const status=learningStatus(game.id),guide=PLAY_GUIDES[game.id];
     if(state.settings.firstPlayCoach!=='on'||status.seen||status.completed||!guide)return '';
+    void markLearningSeen(game.id);
     return `<aside class="first-play-coach" data-first-play-coach aria-label="First-time guide for ${esc(game.name)}">
       <div><span class="coach-kicker">First time here</span><strong>${esc(game.name)} in 20 seconds</strong><p>${esc(guide[0])}</p></div>
       <div class="coach-actions"><button class="primary-button" data-learn-game="${esc(game.id)}">Learn this puzzle</button><button class="secondary-button" data-dismiss-learn-coach="${esc(game.id)}">Skip</button></div>
