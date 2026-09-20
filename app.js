@@ -3757,6 +3757,7 @@
     'untangle':'planar graph + crossing profile'
   };
   function p14Hash(value){return xmur3(typeof value==='string'?value:JSON.stringify(value))().toString(36);}
+  function p14Mean(values){return p13Mean(values);}
   function p14Atom(v){if(v==null)return '_';if(typeof v==='boolean')return v?'1':'0';return String(v);}
   function p14NormalizePattern(values){
     const map=new Map();let next=0;
