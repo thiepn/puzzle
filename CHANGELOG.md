@@ -7,7 +7,7 @@
 - Added seeded diversity checks to detect finite-bank collapse and broken seed selection.
 - Added median, p95, maximum latency, per-family budgets, and long-run timing drift monitoring.
 - Added deterministic post-first-click Mines stress coverage.
-- Added 432 measured generator executions to the standard production browser gate.
+- Added 864 measured generator executions to the standard production browser gate, activating timing-drift checks and a catastrophic heap-growth ceiling.
 - Added a weekly/manual four-shard deep stress workflow with 1,728 measured generations and retained JSON artifacts.
 - Preserved the complete Phase 1–14 regression, interaction, quality, and variety gates.
 - Advanced the PWA cache to v27; IndexedDB schema remains 1.
