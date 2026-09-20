@@ -8,7 +8,7 @@ const app=read('app.js'),css=read('styles.css'),browser=read('scripts/test-play-
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
-assert.match(app,/const APP_VERSION = '\\d+\\.\\d+\\.\\d+';/,'release version missing');checks++;
+assert.match(app,/const APP_VERSION = '\d+\.\d+\.\d+';/,'release version missing');checks++;
 assert.ok(fs.existsSync(new URL('docs/PHASE10_INTEGRATION_CERTIFICATION.md',root)),'Phase 10 certification document missing');checks++;
 
 // Cumulative Phase 1-8 systems must survive integration.
