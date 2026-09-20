@@ -1619,6 +1619,7 @@
         </div>
       </header>
       ${playGuide(game,active)}
+      ${firstPlayCoach(game)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
       <div class="game-layout">
@@ -1644,16 +1645,19 @@
     const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
     const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.onclick=()=>game.undo(active);if(redo)redo.onclick=()=>redoGame(game,active);
     const dismiss=$('[data-hint-dismiss]');if(dismiss)dismiss.onclick=()=>dismissGameHint(active);
+    const learn=$('[data-learn-game]');if(learn)learn.onclick=()=>showLearnTutorial(game);
+    const skipCoach=$('[data-dismiss-learn-coach]');if(skipCoach)skipCoach.onclick=async()=>{await markLearningSeen(game.id);game.render(active);};
     startTimer(active);
   }
 
   function gameMenu(game, active){
     const difficulties=game.difficulties||['Standard'],ui=playSession(active),favorite=state.favorites.includes(game.id);
-    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
+    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-learn>Learn this game</button><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
       {label:'Close',kind:'secondary',action:closeOverlay},
       {label:'New Puzzle',kind:'primary',action:async()=>{ closeOverlay(); await newGame(game.id, active.difficulty); }},
     ]);
     $$('[data-diff]',overlayRoot).forEach(b=>b.onclick=async()=>{const d=b.dataset.diff;closeOverlay();await newGame(game.id,d);});
+    const learn=$('[data-menu-learn]',overlayRoot);if(learn)learn.onclick=()=>showLearnTutorial(game);
     const guide=$('[data-menu-guide]',overlayRoot);if(guide)guide.onclick=()=>{closeOverlay();ui.guide=!ui.guide;game.render(active);requestAnimationFrame(()=>$('[data-game-menu]')?.focus({preventScroll:true}));};
     const rules=$('[data-menu-rules]',overlayRoot);if(rules)rules.onclick=()=>{closeOverlay();showRules(game);};
     const fav=$('[data-menu-favorite]',overlayRoot);if(fav)fav.onclick=()=>{toggleFavorite(game.id);const on=state.favorites.includes(game.id);fav.textContent=on?'★ Favorite':'☆ Favorite';fav.setAttribute('aria-pressed',String(on));};
@@ -3798,9 +3802,10 @@
     }
     const {parts,params}=parseHash(),route=parts[0]||'home';
     document.body.classList.toggle('in-game',route==='game');
-    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
+    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='learn'?'Learn mode loaded':route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
     announceRoute(routeLabel);
     if(route==='home'||route==='games')return renderHome(ticket);
+    if(route==='learn')return renderLearn(ticket);
     if(route==='stats')return renderStats(ticket);
     if(route==='settings')return renderSettings();
     if(route==='game'&&parts[1])return renderGame(parts[1],params,ticket);
