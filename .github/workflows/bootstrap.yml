@@ -45,7 +45,7 @@ jobs:
           python -m http.server 8080 >/tmp/puzzle-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/ --quick
+          python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
 
   deploy:
     if: github.event_name == 'push'
