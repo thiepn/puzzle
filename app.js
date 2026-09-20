@@ -1204,6 +1204,116 @@
     'lights-out':['Treat each press as a cross-shaped toggle. Work systematically rather than chasing isolated lights.','Tap a light to toggle it and its orthogonal neighbors; Undo reverses a press.','Press order does not matter, and pressing a square twice cancels itself.'],
     untangle:['Move a node involved in several crossings toward open space, then refine its neighbors.','Drag nodes; focus a node and use arrows for small moves, or Shift+arrows for larger moves.','Edges sharing an endpoint may meet there. Only crossings between unrelated edges must disappear.']
   };
+  const LEARN_CHECKS = {
+    'five-letters':{question:'After your first guess, what should guide the next one?',options:['Use the color feedback to test new information','Repeat the same guess','Ignore repeated-letter feedback'],answer:0,explain:'Each guess should use the previous feedback to narrow the answer.'},
+    groups:{question:'What makes a valid group?',options:['Any four related words','Four words sharing one precise connection','Four words with similar lengths'],answer:1,explain:'The intended connection must be specific enough to explain all four words together.'},
+    'word-ladder':{question:'What is a legal next step?',options:['Change any number of letters','Change exactly one letter and keep a real word','Rearrange all letters'],answer:1,explain:'Every rung changes one position and must itself be an accepted word.'},
+    anagrams:{question:'What must a submitted anagram do?',options:['Use every tile exactly once','Use only the first half of the tiles','Keep the original letter order'],answer:0,explain:'A valid answer consumes the whole rack, including duplicate-letter tiles separately.'},
+    'letter-hive':{question:'Which requirement applies to every accepted word?',options:['It must use every outer letter','It must include the center letter','It must have exactly five letters'],answer:1,explain:'The center letter is mandatory; other allowed letters may be reused.'},
+    'word-grid':{question:'How can letters connect in one word?',options:['Only horizontally','Through neighboring cells, including diagonals','From any two cells on the board'],answer:1,explain:'Each next letter must neighbor the previous cell, and a cell cannot be reused in that word.'},
+    'theme-trail':{question:'What happens after you solve a themed word?',options:['Its cells become part of the solved trail','The board completely resets','All remaining letters may be ignored'],answer:0,explain:'Solved paths lock in, helping reveal how the remaining themed words cover the board.'},
+    'word-pieces':{question:'How often can one chunk tile be used in a submitted word?',options:['Once','Unlimited times','Only if it is a vowel'],answer:0,explain:'Each physical chunk tile can contribute once to that word, then returns for later words.'},
+    'mini-crossword':{question:'What is the best use of a solved clue?',options:['Ignore its letters','Use its crossing letters to constrain other answers','Immediately erase it'],answer:1,explain:'Crossings turn one confident answer into information for several other clues.'},
+    cryptogram:{question:'When you map one cipher letter, where does that mapping apply?',options:['Only to the selected word','Everywhere that cipher letter appears','Only to the first occurrence'],answer:1,explain:'A substitution is global across the entire quote.'},
+    'word-search':{question:'A hidden word must follow what shape?',options:['One straight line','Any winding path','A rectangle'],answer:0,explain:'Words can be horizontal, vertical, diagonal, forward, or backward, but stay on one line.'},
+    sudoku:{question:'Which three areas must avoid repeating a digit?',options:['Rows, columns, and 3×3 boxes','Only rows','Only the four corners'],answer:0,explain:'Every placement must satisfy its row, column, and box simultaneously.'},
+    'killer-sudoku':{question:'What extra rule do cages add to Sudoku?',options:['Their digits combine to the target without repeating in the cage','They remove row rules','They allow duplicate digits'],answer:0,explain:'Cage arithmetic works together with normal Sudoku uniqueness.'},
+    kakuro:{question:'Inside one Kakuro run, what must be true?',options:['Digits sum to the clue and do not repeat','Digits only need to be even','Repeats are required'],answer:0,explain:'Both the target sum and no-repeat rule constrain each run.'},
+    unequal:{question:'Which side of an inequality symbol is smaller?',options:['The pointed end','The open end','Neither side'],answer:0,explain:'The narrow pointed side faces the smaller value.'},
+    'arithmetic-cages':{question:'Besides satisfying each cage, what still applies?',options:['Row and column uniqueness','No row rules','Only diagonal uniqueness'],answer:0,explain:'Cage arithmetic never replaces the Latin-square row and column rules.'},
+    'make-24':{question:'What must a complete solution use?',options:['All four starting numbers exactly once','Only the largest number','Any extra numbers you want'],answer:0,explain:'Operations may vary, but all four given values must be consumed once.'},
+    mines:{question:'What is safest to remember about a flag?',options:['It is your assumption, not confirmed information','It always proves a mine','It removes the mine'],answer:0,explain:'Flags help reasoning, but an incorrect flag can make later chords dangerous.'},
+    nonogram:{question:'What separates consecutive filled runs in one line?',options:['At least one empty cell','Nothing','Exactly three empty cells'],answer:0,explain:'Clue runs are distinct groups and therefore need separation.'},
+    loop:{question:'How many loop edges meet at a used vertex?',options:['Exactly two','Exactly one','Any number'],answer:0,explain:'Degree two at used vertices is necessary for one continuous non-branching loop.'},
+    bridges:{question:'When every island number is satisfied, what else must be true?',options:['All islands belong to one connected network','Each island stays isolated','Bridges may cross'],answer:0,explain:'Local bridge counts are not enough; the whole puzzle must be connected.'},
+    'light-up':{question:'Can two lamps see each other along an unobstructed row or column?',options:['No','Yes, always','Only on corners'],answer:0,explain:'A valid lamp lights cells but may not directly see another lamp.'},
+    islands:{question:'Which statement about the sea is required?',options:['It is connected and contains no solid 2×2 block','It may split freely','Every sea cell needs a clue'],answer:0,explain:'The connected sea and no-2×2 rule work together with island sizes.'},
+    hitori:{question:'Which cells may not touch orthogonally?',options:['Shaded cells','All equal numbers','Unshaded cells'],answer:0,explain:'Shaded cells cannot share an edge, while the remaining white area must stay connected.'},
+    binary:{question:'What must a completed row contain?',options:['Balanced 0s and 1s and a pattern distinct from other rows','Only 1s','Any number of 0s and 1s'],answer:0,explain:'Balance and uniqueness are core Binary constraints.'},
+    queens:{question:'What coverage is required?',options:['One queen in each row, column, and region','Two queens in every row','Queens only in corners'],answer:0,explain:'Each row, column, and colored region receives exactly one queen.'},
+    'number-path':{question:'What must the finished path do?',options:['Visit every cell once and pass checkpoints in order','Skip difficult cells','Visit cells repeatedly'],answer:0,explain:'The route is a single full-board path constrained by checkpoint order.'},
+    tents:{question:'Which pairing rule is required?',options:['Each tent pairs with a different adjacent tree','One tree can own every tent','Tents may touch diagonally'],answer:0,explain:'Tents form one-to-one orthogonal pairs with trees and cannot touch each other.'},
+    rectangles:{question:'What belongs inside each finished rectangle?',options:['Exactly one clue whose value equals its area','Any number of clues','No clue'],answer:0,explain:'The clue determines that rectangle’s area, and rectangles cannot overlap.'},
+    dominoes:{question:'How is the pair 2–4 related to 4–2?',options:['They are the same unordered domino pair','They are always different','Neither is allowed'],answer:0,explain:'Domino inventory treats the two orientations as the same pair.'},
+    towers:{question:'Why can a shorter tower become invisible from an edge?',options:['A taller tower before it blocks the view','Its number is even','It is in the center'],answer:0,explain:'Visibility counts only towers that exceed every tower seen earlier from that direction.'},
+    fillomino:{question:'What determines a region’s final size?',options:['The number written in its cells','Its color','Its distance from the edge'],answer:0,explain:'Connected equal numbers form one region whose cell count must equal that number.'},
+    network:{question:'What is required beyond matching neighboring connectors?',options:['Every tile must join one connected network','Each row must be isolated','Border connectors must point outward'],answer:0,explain:'Local matches matter, but the entire board must form a single network.'},
+    'sliding-tiles':{question:'Which tile can move directly?',options:['A tile adjacent to the empty gap','Any tile anywhere','Only the largest tile'],answer:0,explain:'Every slide swaps the gap with one orthogonally adjacent tile.'},
+    'lights-out':{question:'What does pressing a square toggle?',options:['Itself and its orthogonal neighbors','Only itself','The entire board'],answer:0,explain:'Each press affects a cross shape, and pressing the same square twice cancels out.'},
+    untangle:{question:'Which intersections must disappear?',options:['Crossings between unrelated edges','Shared endpoints','All lines including connected endpoints'],answer:0,explain:'Edges may meet at their common node; only true crossings between unrelated edges are invalid.'}
+  };
+
+  function firstPlayCoach(game){
+    const status=learningStatus(game.id),guide=PLAY_GUIDES[game.id];
+    if(state.settings.firstPlayCoach!=='on'||status.seen||status.completed||!guide)return '';
+    return `<aside class="first-play-coach" data-first-play-coach aria-label="First-time guide for ${esc(game.name)}">
+      <div><span class="coach-kicker">First time here</span><strong>${esc(game.name)} in 20 seconds</strong><p>${esc(guide[0])}</p></div>
+      <div class="coach-actions"><button class="primary-button" data-learn-game="${esc(game.id)}">Learn this puzzle</button><button class="secondary-button" data-dismiss-learn-coach="${esc(game.id)}">Skip</button></div>
+    </aside>`;
+  }
+  function learnStepCopy(game,step){
+    const guide=PLAY_GUIDES[game.id]||['','',''],check=LEARN_CHECKS[game.id];
+    if(step===0)return {kicker:'1 · Goal',title:'What you are solving',body:game.rules.objective};
+    if(step===1)return {kicker:'2 · First move',title:'How to begin',body:guide[0]};
+    if(step===2)return {kicker:'3 · Controls',title:'How to interact',body:guide[1]};
+    if(step===3)return {kicker:'4 · Strategy',title:'What to watch for',body:guide[2]};
+    return {kicker:'5 · Practice check',title:'Check the idea',body:check?.question||'Which move best follows the rules?'};
+  }
+  function learnProgressLabel(id){
+    const status=learningStatus(id);
+    if(status.completed)return 'Learned';
+    if(status.seen&&status.step>0)return `Resume · step ${status.step+1} of 5`;
+    if(status.seen)return 'Start again';
+    return 'Start lesson';
+  }
+  function tutorialReturnRefresh(game){
+    const route=parseHash().parts[0]||'home';
+    if(route==='learn')void renderLearn();
+    else if(state.currentGame===game&&state.currentActive)game.render(state.currentActive);
+  }
+  async function showLearnTutorial(game,startStep=null){
+    if(!game||!PLAY_GUIDES[game.id]||!LEARN_CHECKS[game.id])return;
+    if(overlayRoot.firstChild)closeOverlay();
+    overlayReturnFocus=document.activeElement;
+    main.inert=true;$('.topbar').inert=true;
+    const status=learningStatus(game.id);
+    let step=clamp(Number.isInteger(startStep)?startStep:status.step,0,4),answered=false;
+    await markLearningSeen(game.id);
+    const render=()=>{
+      const copy=learnStepCopy(game,step),check=LEARN_CHECKS[game.id],percent=((step+1)/5)*100;
+      const practice=step===4?`<div class="learn-practice"><div class="learn-practice-preview" aria-hidden="true">${cardPreview(game.id)}</div><div class="learn-options" role="group" aria-label="Practice answers">${check.options.map((option,i)=>`<button data-learn-answer="${i}">${esc(option)}</button>`).join('')}</div><p class="learn-answer-feedback" data-learn-feedback role="status" aria-live="polite"></p></div>`:'';
+      overlayRoot.innerHTML=`<div class="modal-backdrop learn-backdrop"><section class="modal learn-modal" role="dialog" aria-modal="true" aria-labelledby="learn-title">
+        <div class="modal-head"><div><span class="learn-modal-game">${esc(CATEGORIES[game.category].label)} · ${esc(game.name)}</span><h2 id="learn-title">${esc(copy.title)}</h2></div><button class="modal-close" data-learn-close aria-label="Close lesson">×</button></div>
+        <div class="learn-step-meter" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="${step+1}"><i style="width:${percent}%"></i></div>
+        <div class="learn-step-copy"><span>${esc(copy.kicker)}</span><p>${esc(copy.body)}</p></div>
+        ${practice}
+        <div class="learn-step-actions">
+          <button class="secondary-button" data-learn-back ${step===0?'disabled':''}>Back</button>
+          <span>Step ${step+1} of 5</span>
+          ${step<4?'<button class="primary-button" data-learn-next>Next</button>':'<button class="primary-button" data-learn-finish disabled>Finish lesson</button>'}
+        </div>
+      </section></div>`;
+      $('[data-learn-close]',overlayRoot).onclick=()=>{closeOverlay();tutorialReturnRefresh(game);};
+      const back=$('[data-learn-back]',overlayRoot);if(back)back.onclick=async()=>{step=Math.max(0,step-1);answered=false;await setLearningProgress(game.id,step);render();};
+      const next=$('[data-learn-next]',overlayRoot);if(next)next.onclick=async()=>{step=Math.min(4,step+1);answered=false;await setLearningProgress(game.id,step);render();};
+      $$('[data-learn-answer]',overlayRoot).forEach(button=>button.onclick=()=>{
+        const choice=+button.dataset.learnAnswer,correct=choice===check.answer,feedback=$('[data-learn-feedback]',overlayRoot);
+        $$('[data-learn-answer]',overlayRoot).forEach(x=>{x.classList.remove('is-correct','is-wrong');x.setAttribute('aria-pressed','false');});
+        button.classList.add(correct?'is-correct':'is-wrong');button.setAttribute('aria-pressed','true');
+        if(feedback)feedback.textContent=correct?check.explain:'Not quite. Use the rule from the previous steps and try another answer.';
+        answered=correct;
+        const finish=$('[data-learn-finish]',overlayRoot);if(finish)finish.disabled=!answered;
+        sensoryCue(correct?'progress':'error',game);
+      });
+      const finish=$('[data-learn-finish]',overlayRoot);if(finish)finish.onclick=async()=>{
+        if(!answered)return;await completeLearning(game.id);sensoryCue('complete',game);closeOverlay();toast(`Learned: ${game.name}`);tutorialReturnRefresh(game);
+      };
+      $('.modal-backdrop',overlayRoot).addEventListener('click',e=>{if(e.target===e.currentTarget){closeOverlay();tutorialReturnRefresh(game);}});
+      overlayRoot.onkeydown=trapOverlayFocus;
+      requestAnimationFrame(()=>(step===4?$('[data-learn-answer]',overlayRoot):$('[data-learn-next]',overlayRoot)||$('[data-learn-close]',overlayRoot))?.focus({preventScroll:true}));
+    };
+    await setLearningProgress(game.id,step);render();
+  }
   const playSessions=new WeakMap();
   function playSession(a){if(!playSessions.has(a))playSessions.set(a,{guide:false,paused:false,redo:[],restoring:false,busy:false,signature:null,feedback:'',order:[]});return playSessions.get(a);}
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
