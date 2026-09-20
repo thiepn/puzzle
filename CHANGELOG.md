@@ -1,3 +1,15 @@
+# 1.5.0 — Onboarding, Tutorials & Learn Mode
+
+- Added a dedicated Learn library covering all 36 playable games.
+- Added five-step lessons for every game: goal, first move, controls, strategy, and a safe interactive practice check.
+- Added persistent per-game lesson state with Not started / Resume / Learned progress.
+- Added non-blocking first-play coach cards that appear once and can be disabled globally.
+- Added Learn entry points in primary navigation and each game’s options menu.
+- Added tutorial resume/completion persistence without changing IndexedDB schema or real puzzle state.
+- Added lesson reset controls that do not affect puzzle progress, statistics, favorites, or history.
+- Added Phase 12 static/browser regression coverage while retaining the full cumulative Phase 1–11 matrix.
+- Advanced the PWA cache to v24; IndexedDB schema remains 1.
+
 # 1.4.0 — Audio, Haptics & Sensory Feedback
 
 - Added a lazy, local Web Audio synthesis engine with no packaged audio files or network dependencies.
