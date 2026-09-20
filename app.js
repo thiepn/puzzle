@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.6.0';
-  const BUILD_PHASE = 'Difficulty Calibration & Puzzle Quality';
+  const APP_VERSION = '1.7.0';
+  const BUILD_PHASE = 'Variety, Novelty & Anti-Repetition';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -1133,9 +1133,15 @@
   async function randomGame(){
     const avail=ALL_GAMES.filter(g=>g.status==='available'&&(state.category==='all'||(state.category==='favorites'?state.favorites.includes(g.id):g.category===state.category)));
     if(!avail.length) return;
-    const recent=state.history.slice(0,2).map(h=>h.gameId);
-    const options=avail.filter(g=>!recent.includes(g.id));
-    const g=pick(options.length?options:avail);
+    const recentRows=state.history.slice(0,5),recentIds=new Set(recentRows.map(h=>h.gameId));
+    let options=avail.filter(g=>!recentIds.has(g.id));
+    if(!options.length)options=[...avail];
+    if(state.category==='all'&&options.length>1){
+      const lastCategory=recentRows[0]&&byId[recentRows[0].gameId]?.category;
+      const crossFamily=options.filter(g=>g.category!==lastCategory);
+      if(crossFamily.length)options=crossFamily;
+    }
+    const g=pick(options);
     openGame(g.id, false);
   }
 
@@ -1192,7 +1198,7 @@
     const durationMs=activeDuration(active);
     active.completed=true; active.outcome=outcome; active.durationMs=durationMs; active.startedAt=null;
     const entry={id:uid('result'),gameId:active.gameId,puzzleIdentity:`${active.gameId}:${active.difficulty}:${active.seed}`,
-      outcome,difficulty:active.difficulty,durationMs,metrics:{...metrics,hintsUsed:active.hintsUsed||0},endedAt:Date.now()};
+      outcome,difficulty:active.difficulty,durationMs,metrics:{...metrics,hintsUsed:active.hintsUsed||0,varietyFingerprint:p14Fingerprint(active)},endedAt:Date.now()};
     active.result=entry;
     if(state.currentActive===active)stopTimer();
     await saveActive(active);
@@ -1672,7 +1678,10 @@
 
   async function newGame(id,difficulty){
     const game=GAMES[id]; if(!game)return;
-    rememberDifficulty(game,difficulty);routeToGame(id,seedString(),normalizeDifficulty(game,difficulty));
+    const normalized=normalizeDifficulty(game,difficulty);
+    rememberDifficulty(game,normalized);
+    const seed=await p14SelectSeed(game,normalized,state.currentActive?.gameId===id?state.currentActive:null);
+    routeToGame(id,seed,normalized);
   }
 
   function boundedSaveData(value) {
@@ -3700,6 +3709,225 @@
     return {version:P13_VERSION,games:Object.keys(GAMES).length,samplesPerTier:Math.max(1,samples),pass:errors.length===0,errors,report};
   }
   window.__PA_DIFFICULTY_AUDIT__={version:P13_VERSION,methods:{...P13_METHODS},sample:p13AuditSample,auditCatalog:p13AuditCatalog};
+
+
+
+  // ---------- Phase 14: Variety, novelty & anti-repetition ----------
+  // Phase 13 certifies each puzzle in isolation. Phase 14 prevents a sequence of
+  // individually good puzzles from collapsing into the same content or structure.
+  const P14_VERSION=14;
+  const P14_RECENT_LIMIT=7;
+  const P14_HEAVY=new Set(['killer-sudoku','bridges','light-up','hitori','number-path','rectangles','dominoes','towers']);
+  const P14_SIGNALS={
+    'five-letters':'answer identity + letter pattern',
+    'groups':'category set + category-kind structure',
+    'word-ladder':'endpoint pair + shortest-path profile',
+    'anagrams':'letter multiset + ambiguity profile',
+    'letter-hive':'letter set + answer-length distribution',
+    'word-grid':'board content + answer-length distribution',
+    'theme-trail':'theme/word set + canonical trail partition',
+    'word-pieces':'compound set + chunk-length structure',
+    'mini-crossword':'entry content + canonical block pattern',
+    'cryptogram':'plaintext identity + word-pattern structure',
+    'word-search':'theme/target set + placement directions',
+    'sudoku':'solution identity + canonical given mask',
+    'killer-sudoku':'solution identity + canonical cage partition',
+    'kakuro':'run sums + canonical white-cell topology',
+    'unequal':'solution/givens + relation density',
+    'arithmetic-cages':'cage targets/operators + cage partition',
+    'make-24':'number multiset + solution complexity',
+    'mines':'mine layout + clue-density profile',
+    'nonogram':'image identity + canonical pixel silhouette',
+    'loop':'clue pattern + canonical loop clue topology',
+    'bridges':'island graph + bridge-count profile',
+    'light-up':'wall/clue layout + canonical wall topology',
+    'islands':'island layout + canonical land/sea topology',
+    'hitori':'number grid + canonical solution shade pattern',
+    'binary':'givens/solution + canonical missing-cell mask',
+    'queens':'queen placement + canonical region partition',
+    'number-path':'checkpoint layout + canonical route family',
+    'tents':'tree/tent layout + canonical tent pattern',
+    'rectangles':'clue layout + canonical partition',
+    'dominoes':'number grid + domino-set arrangement',
+    'towers':'visibility clues + Latin-square structure',
+    'fillomino':'given layout + canonical region solution',
+    'network':'connector topology + degree/scramble profile',
+    'sliding-tiles':'tile permutation + distance profile',
+    'lights-out':'initial pattern + canonical light silhouette',
+    'untangle':'planar graph + crossing profile'
+  };
+  function p14Hash(value){return xmur3(typeof value==='string'?value:JSON.stringify(value))().toString(36);}
+  function p14Mean(values){return p13Mean(values);}
+  function p14Atom(v){if(v==null)return '_';if(typeof v==='boolean')return v?'1':'0';return String(v);}
+  function p14NormalizePattern(values){
+    const map=new Map();let next=0;
+    return (values||[]).map(v=>{const k=p14Atom(v);if(k==='_')return '_';if(!map.has(k))map.set(k,next++);return map.get(k);});
+  }
+  function p14CanonSquare(values,n,pattern=false){
+    if(!Array.isArray(values)||!Number.isInteger(n)||n<1||values.length!==n*n)return '';
+    const variants=[];
+    for(let t=0;t<8;t++){
+      const out=Array(values.length);for(let i=0;i<values.length;i++)out[transformGridIndex(i,n,t)]=values[i];
+      const q=pattern?p14NormalizePattern(out):out.map(p14Atom);variants.push(q.join(','));
+    }
+    variants.sort();return p14Hash(variants[0]);
+  }
+  function p14PathShape(path,n){
+    if(!Array.isArray(path)||path.length<2||!n)return '';
+    const dirs=[];for(let k=1;k<path.length;k++){const a=path[k-1],b=path[k];dirs.push([Math.floor(b/n)-Math.floor(a/n),b%n-a%n].join(':'));}
+    const f=dirs.join(','),r=[...dirs].reverse().map(x=>x.split(':').map(Number).map(v=>-v).join(':')).join(',');
+    return p14Hash(f<r?f:r);
+  }
+  function p14Partition(cells,n){
+    if(!Array.isArray(cells)||cells.length!==n*n)return '';
+    return p14CanonSquare(cells,n,true);
+  }
+  function p14Profile(active){
+    const q=active?.puzzle?.qualityCertification||{},p=active?.puzzle||{};
+    const size=p.size||p.n||p.rows||0;
+    return [
+      clamp(p13Num(q.rawDifficultyEvidence,.5),0,1),
+      clamp(p13Num(q.secondaryReasoningSignal,.5),0,1),
+      clamp(p13Num(q.difficultyScore,p.difficultyScore||50)/100,0,1),
+      clamp(size/15,0,1)
+    ].map(x=>+x.toFixed(3));
+  }
+  function p14Fingerprint(active){
+    const id=active?.gameId,p=active?.puzzle||{};let content='',shape='',theme='',extra='';
+    const hash=x=>p14Hash(x),sorted=a=>[...(a||[])].map(String).sort();
+    switch(id){
+      case 'five-letters':content=String(p.answer||'');shape=hash([...String(p.answer||'')].sort());break;
+      case 'groups':content=hash(sorted((p.groups||[]).map(g=>g.contentId||g.label)));shape=hash((p.groups||[]).map(g=>[g.kind||'',g.difficulty||0]).sort());break;
+      case 'word-ladder':content=hash(sorted([p.start,p.target]));shape='l'+String(p.start||'').length+'-p'+p.optimal;break;
+      case 'anagrams':content=hash(sorted(p.letters));shape=hash([p.letters?.length||0,(p.validAnswers||[]).length,sorted(p.validAnswers?.map(w=>String(w).length))]);break;
+      case 'letter-hive':content=hash([p.center,sorted(p.letters)]);shape=hash(sorted((p.answers||[]).map(w=>String(w).length)));break;
+      case 'word-grid':content=hash(p.grid||[]);shape=hash(sorted((p.answers||[]).map(w=>String(w).length)));break;
+      case 'theme-trail':{theme=String(p.theme||'');content=hash([theme,sorted(p.words)]);const owner=Array((p.n||5)**2).fill(-1);(p.paths||[]).forEach((path,j)=>path.forEach(i=>owner[i]=j));shape=p14Partition(owner,p.n||5);break;}
+      case 'word-pieces':content=hash(sorted(p.answers));shape=hash([sorted((p.pieces||[]).map(x=>String(x).length)),sorted((p.answers||[]).map(x=>String(x).length))]);break;
+      case 'mini-crossword':content=hash((p.solution||p.grid||[]).join(''));shape=p14CanonSquare((p.grid||[]).map(x=>x==='#'?1:0),5);break;
+      case 'cryptogram':{const text=String(p.plain||'');content=hash(text);shape=hash(text.split(/\s+/).map(w=>String(w).replace(/[^A-Z]/g,'').length));break;}
+      case 'word-search':{theme=String(p.theme||'');content=hash([theme,sorted(p.words)]);const n=p.size||0,dirs=Object.values(p.paths||{}).map(path=>{if(!path?.length)return '';const a=path[0],z=path.at(-1);return [Math.sign(Math.floor(z/n)-Math.floor(a/n)),Math.sign(z%n-a%n)].join(':');});shape=hash(dirs.sort());break;}
+      case 'sudoku':content=p14CanonSquare(p.solution||[],9,true);shape=p14CanonSquare((p.givens||[]).map(Boolean),9);break;
+      case 'killer-sudoku':{content=p14CanonSquare(p.solution||[],9,true);const owner=Array(81).fill(-1);(p.cages||[]).forEach((g,j)=>(g.cells||[]).forEach(i=>owner[i]=j));shape=p14Partition(owner,9);break;}
+      case 'kakuro':{content=hash([(p.runs||[]).map(r=>r.sum),p.solution||[]]);const sig=(p.white||[]).map((w,i)=>w?'W':p.clues?.[i]?`C${p.clues[i].down||0}:${p.clues[i].across||0}`:'B');shape=p14CanonSquare(sig,p.rows||Math.round(Math.sqrt(sig.length)));break;}
+      case 'unequal':content=hash([p.solution||[],p.givens||[]]);shape=hash([(p.givens||[]).map(v=>v==null?0:1),(p.relations||[]).length]);break;
+      case 'arithmetic-cages':{content=hash((p.cages||[]).map(g=>[g.op,g.target,sorted(g.cells)]));const owner=Array((p.n||0)**2).fill(-1);(p.cages||[]).forEach((g,j)=>(g.cells||[]).forEach(i=>owner[i]=j));shape=p14Partition(owner,p.n||0);break;}
+      case 'make-24':content=hash([...(p.nums||[])].sort((a,b)=>a-b));shape=hash([p.difficultyMetrics?.minComplexity||0,p.difficultyMetrics?.solutionCount||p.solutionFamilyCount||0,!!p.difficultyMetrics?.requiresFraction]);break;
+      case 'mines':{content=p.mines?p14CanonSquare(p.mines,p.rows===p.cols?p.rows:0):hash([p.rows,p.cols,p.count]);shape=p.nums&&p.rows===p.cols?p14CanonSquare(p.nums,p.rows,true):hash([p.rows,p.cols,p.count]);break;}
+      case 'nonogram':theme=String(p.name||'');content=hash([theme,p.solution||[]]);shape=p14CanonSquare(p.solution||[],p.size||0);break;
+      case 'loop':content=hash([p.clues||[],p.horiz||[],p.vert||[]]);shape=p14CanonSquare(p.clues||[],p.rows||0);break;
+      case 'bridges':content=hash([(p.nodes||[]).map(x=>[x.r,x.c]),p.clues||[],p.solution||[]]);shape=hash([(p.nodes||[]).length,(p.edges||[]).length,sorted(p.clues)]);break;
+      case 'light-up':{const n=p.n||0,wall=Array(n*n).fill(0);(p.walls||[]).forEach(i=>wall[i]=1);content=hash([wall,p.clues||{}]);shape=p14CanonSquare(wall,n);break;}
+      case 'islands':{content=hash([p.solution||[],p.clues||{}]);const sig=(p.solution||[]).map((v,i)=>`${v?1:0}:${p.clues?.[i]??0}`);shape=p14CanonSquare(sig,p.n||0);break;}
+      case 'hitori':content=hash(p.grid||[]);shape=p14CanonSquare(p.solutionBlack||[],p.n||0);break;
+      case 'binary':content=hash([p.solution||[],p.givens||[]]);shape=p14CanonSquare((p.givens||[]).map(v=>v==null?0:1),p.size||0);break;
+      case 'queens':{content=hash(p.solution||[]);shape=p14Partition(p.regions||[],p.size||0);break;}
+      case 'number-path':content=hash([p.checkpoints||{},p.start,p.end]);shape=p14PathShape(p.solution||[],p.size||0);break;
+      case 'tents':{const n=p.n||0,t=Array(n*n).fill(0);(p.solution||[]).forEach(i=>t[i]=1);content=hash([sorted(p.trees),sorted(p.solution)]);shape=p14CanonSquare(t,n);break;}
+      case 'rectangles':{content=hash([(p.clues||[]).map(x=>[x.cell,x.area]),p.solution||[]]);const n=p.n||0,owner=Array(n*n).fill(-1);(p.solution||[]).forEach((q,j)=>{for(let r=q.r;r<q.r+q.h;r++)for(let c=q.c;c<q.c+q.w;c++)owner[r*n+c]=j;});shape=p14Partition(owner,n);break;}
+      case 'dominoes':content=hash(p.grid||[]);shape=hash([p.rows,p.cols,p.max,sorted((p.solution||[]).map(pair=>pair.slice().sort((a,b)=>a-b).join('-')))]);break;
+      case 'towers':content=hash([p.solution||[],p.clues||{}]);shape=hash(['top','bottom','left','right'].map(k=>(p.clues?.[k]||[]).map(Boolean)));break;
+      case 'fillomino':content=hash([p.solution||[],p.givens||[]]);shape=p14CanonSquare(p.solution||[],p.n||0);break;
+      case 'network':{const degree=(p.solutionMasks||[]).map(m=>[1,2,4,8].filter(b=>m&b).length);content=hash(p.solutionMasks||[]);shape=p14CanonSquare(degree,p.n||0);break;}
+      case 'sliding-tiles':content=hash(p.initial||[]);shape=hash([p.n,p.difficultyMetrics?.distanceEstimate||p.difficultyScore||0,(p.initial||[]).filter((v,i)=>v&&v!==i+1).length]);break;
+      case 'lights-out':content=hash(p.initial||[]);shape=p14CanonSquare(p.initial||[],p.n||0);break;
+      case 'untangle':content=hash(sorted((p.edges||[]).map(e=>e.slice().sort((a,b)=>a-b).join('-'))));shape=hash([p.n,(p.edges||[]).length,untangleCrossings(p.edges||[],p.initial||[])]);break;
+      default:content=hash(p);shape=hash(Object.keys(p).sort());
+    }
+    extra=hash([content,shape,theme,p14Profile(active)]);
+    return {version:P14_VERSION,gameId:id,content,shape,theme,profile:p14Profile(active),extra};
+  }
+  function p14ValidFingerprint(f){return !!(f&&f.version===P14_VERSION&&typeof f.gameId==='string'&&typeof f.content==='string'&&typeof f.shape==='string'&&Array.isArray(f.profile));}
+  function p14ProfileDistance(a,b){const x=a?.profile||[],y=b?.profile||[],n=Math.max(x.length,y.length);if(!n)return 0;let s=0;for(let i=0;i<n;i++)s+=Math.abs(p13Num(x[i])-p13Num(y[i]));return s/n;}
+  function p14Novelty(a,b){
+    if(!p14ValidFingerprint(a)||!p14ValidFingerprint(b))return 1;
+    if(a.content&&a.content===b.content)return 0;
+    let score=.64;
+    if(a.shape&&a.shape===b.shape)score-=.34;
+    if(a.theme&&b.theme&&a.theme===b.theme)score-=.12;
+    score+=Math.min(.32,p14ProfileDistance(a,b)*1.6);
+    return clamp(score,0,1);
+  }
+  const P14_SHAPE_DOMINANT=new Set(['sudoku','killer-sudoku','kakuro','arithmetic-cages','mines','nonogram','loop','light-up','islands','hitori','binary','queens','number-path','tents','rectangles','dominoes','towers','fillomino','network','lights-out']);
+  function p14NearDuplicate(a,b){
+    if(!p14ValidFingerprint(a)||!p14ValidFingerprint(b)||a.gameId!==b.gameId)return false;
+    if(a.content===b.content)return true;
+    if(!P14_SHAPE_DOMINANT.has(a.gameId))return false;
+    return !!(a.shape&&a.shape===b.shape&&p14ProfileDistance(a,b)<.045&&(a.theme===b.theme||!a.theme||!b.theme));
+  }
+  function p14RecentFingerprints(id,difficulty,current=null){
+    const refs=[];
+    if(current?.gameId===id&&current.difficulty===difficulty)refs.push(p14Fingerprint(current));
+    for(const h of state.history){
+      if(h.gameId!==id||h.difficulty!==difficulty)continue;
+      const f=h.metrics?.varietyFingerprint;if(p14ValidFingerprint(f))refs.push(f);
+      if(refs.length>=P14_RECENT_LIMIT)break;
+    }
+    return refs;
+  }
+  async function p14Candidate(game,difficulty,seed,simulateMines=false){
+    const active=await game.create(seed,difficulty);
+    if(simulateMines&&game.id==='mines'&&!active.puzzle.mines){
+      const first=Math.floor(active.puzzle.rows/2)*active.puzzle.cols+Math.floor(active.puzzle.cols/2);
+      game.build(active,first);
+    }
+    const fingerprint=p14Fingerprint(active);
+    return {seed,active,fingerprint};
+  }
+  function p14CandidateCount(id,referenceCount){if(!referenceCount)return 1;return P14_HEAVY.has(id)?2:4;}
+  async function p14ChooseFromSeeds(game,difficulty,seeds,references=[],simulateMines=false){
+    let best=null;
+    for(const seed of seeds){
+      try{
+        const c=await p14Candidate(game,difficulty,seed,simulateMines);
+        const distances=references.map(r=>p14Novelty(c.fingerprint,r)),min=distances.length?Math.min(...distances):1,near=references.filter(r=>p14NearDuplicate(c.fingerprint,r)).length;
+        const score=min-near*.75;
+        if(!best||score>best.score)best={...c,score,minNovelty:min,nearDuplicates:near};
+        if(near===0&&min>=.58)break;
+      }catch{}
+    }
+    return best;
+  }
+  async function p14SelectSeed(game,difficulty,current=null){
+    const refs=p14RecentFingerprints(game.id,difficulty,current),count=p14CandidateCount(game.id,refs.length);
+    if(count===1)return seedString();
+    const seeds=Array.from({length:count},()=>seedString()),best=await p14ChooseFromSeeds(game,difficulty,seeds,refs,game.id==='mines');
+    return best?.seed||seeds[0];
+  }
+  function p14InstallFingerprint(game){
+    const create=game.create.bind(game);
+    game.create=async function(seed,difficulty=game.defaultDifficulty||'Medium'){
+      const active=await create(seed,difficulty);active.puzzle.varietyFingerprint=p14Fingerprint(active);active.puzzle.varietyVersion=P14_VERSION;return active;
+    };
+  }
+  Object.values(GAMES).forEach(p14InstallFingerprint);
+  const p14MineBuild=mines.build.bind(mines);
+  mines.build=function(active,first){const out=p14MineBuild(active,first);active.puzzle.varietyFingerprint=p14Fingerprint(active);active.puzzle.varietyVersion=P14_VERSION;return out;};
+
+  async function p14AuditSequence(id,difficulty='Medium',steps=3){
+    const game=GAMES[id],refs=[],selected=[],errors=[];
+    for(let step=0;step<steps;step++){
+      const count=P14_HEAVY.has(id)?2:4,seeds=Array.from({length:count},(_,c)=>'p14-cert:'+id+':'+difficulty+':'+step+':'+c);
+      const best=await p14ChooseFromSeeds(game,difficulty,seeds,refs,id==='mines');
+      if(!best){errors.push('no viable candidate at step '+step);continue;}
+      const near=refs.some(r=>p14NearDuplicate(best.fingerprint,r)),novelty=refs.length?Math.min(...refs.map(r=>p14Novelty(best.fingerprint,r))):1;
+      selected.push({seed:best.seed,content:best.fingerprint.content,shape:best.fingerprint.shape,theme:best.fingerprint.theme,novelty:+novelty.toFixed(3),nearDuplicate:near});
+      refs.unshift(best.fingerprint);if(refs.length>P14_RECENT_LIMIT)refs.pop();
+    }
+    const uniqueContent=new Set(selected.map(x=>x.content)).size,nearRepeats=selected.filter((x,i)=>i>0&&x.nearDuplicate).length,avgNovelty=selected.length>1?p14Mean(selected.slice(1).map(x=>x.novelty)):1;
+    const pass=errors.length===0&&selected.length===steps&&uniqueContent>=Math.min(steps,3)&&nearRepeats===0&&avgNovelty>=.22;
+    return {id,difficulty,steps,pass,uniqueContent,nearRepeats,averageNovelty:+avgNovelty.toFixed(3),selected,errors};
+  }
+  async function p14AuditCatalog(steps=3){
+    const report={},errors=[];
+    for(const id of Object.keys(GAMES)){
+      const difficulty=GAMES[id].defaultDifficulty||'Medium';
+      try{const r=await p14AuditSequence(id,difficulty,steps);report[id]=r;if(!r.pass)errors.push(id+': variety certification failed');}
+      catch(error){errors.push(id+': '+String(error?.message||error));report[id]={id,difficulty,pass:false,errors:[String(error?.message||error)]};}
+    }
+    return {version:P14_VERSION,games:Object.keys(GAMES).length,steps,pass:errors.length===0,errors,report};
+  }
+  window.__PA_VARIETY_AUDIT__={version:P14_VERSION,signals:{...P14_SIGNALS},fingerprint:p14Fingerprint,novelty:p14Novelty,nearDuplicate:p14NearDuplicate,auditSequence:p14AuditSequence,auditCatalog:p14AuditCatalog};
 
 
   // Input lifetimes are tied to a render, including pointer cancellation.

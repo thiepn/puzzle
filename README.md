@@ -1,8 +1,18 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.6.0 · Difficulty Calibration & Puzzle Quality · PWA cache v25**
+**Current release: 1.7.0 · Variety, Novelty & Anti-Repetition · PWA cache v26**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Variety, Novelty & Anti-Repetition 1.7.0
+
+Phase 14 adds sequence-level puzzle quality. New Puzzle no longer assumes that a different seed automatically means a genuinely different experience. Each game now fingerprints meaningful content and structure, compares bounded candidates against recent same-game puzzles, and selects the most novel viable result.
+
+Canonical board matching detects simple rotations/reflections and normalized region relabeling, while word/content games track themes, target sets, clue structures, or other family-specific identities. Heavy generators keep smaller candidate pools so anti-repetition does not turn into long generation stalls.
+
+Surprise Me also avoids the five most recently played game IDs when alternatives exist and prefers a different puzzle family from the latest result.
+
+See `docs/PHASE14_VARIETY_ANTI_REPETITION.md` for the complete fingerprint and certification contract.
 
 ## Difficulty Calibration & Puzzle Quality 1.6.0
 
