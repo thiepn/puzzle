@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.3.0: integrated v1.2 roadmap release shell. */
-const APP_VERSION = '1.3.0';
-const CACHE_VERSION = 'v22';
+/* Puzzle Arcade 1.4.0: sensory-feedback release shell. */
+const APP_VERSION = '1.4.0';
+const CACHE_VERSION = 'v23';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
