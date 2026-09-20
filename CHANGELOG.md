@@ -1,3 +1,17 @@
+# 1.8.0 — Generator Robustness, Stress Testing & Long-Run Reliability
+
+- Added catalog-wide generator stress certification across all 36 games and all three difficulty tiers.
+- Added reverse-order deterministic replay to catch cross-seed state contamination.
+- Added stable puzzle/state digests and initial-state reference-isolation checks.
+- Added Phase 13 quality rejection and fallback-pressure monitoring under repeated generation.
+- Added seeded diversity checks to detect finite-bank collapse and broken seed selection.
+- Added median, p95, maximum latency, per-family budgets, and long-run timing drift monitoring.
+- Added deterministic post-first-click Mines stress coverage.
+- Added 432 measured generator executions to the standard production browser gate.
+- Added a weekly/manual four-shard deep stress workflow with 1,728 measured generations and retained JSON artifacts.
+- Preserved the complete Phase 1–14 regression, interaction, quality, and variety gates.
+- Advanced the PWA cache to v27; IndexedDB schema remains 1.
+
 # 1.7.0 — Variety, Novelty & Anti-Repetition
 
 - Added per-game content and structural fingerprints across all 36 puzzle families.
