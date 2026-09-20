@@ -1,13 +1,15 @@
-# Puzzle Arcade 1.4.0 — Audio, Haptics & Sensory Feedback
+# Puzzle Arcade 1.5.0 — Onboarding, Tutorials & Learn Mode
 
-Phase 11 adds an optional sensory feedback layer to the complete 36-game Puzzle Arcade.
+Phase 12 makes the 36-game catalog understandable without external instructions while keeping experienced-player friction near zero.
 
-- Short sounds are synthesized locally with Web Audio; there are no audio files, downloads, streams, or external runtime dependencies.
-- Word, Number, Logic, and Spatial puzzles use slightly different tonal centers while sharing one restrained sound language.
-- Completion, failure, meaningful progress, hints, undo/redo, and pause/resume receive cues; ordinary moves remain silent.
-- A persistent top-bar mute button, sound volume, sound on/off, haptics on/off, and feedback preview are available.
-- Haptics are feature-detected and automatically unavailable when the browser does not expose vibration.
-- Reduced motion remains independent from sound/haptics so each accessibility preference can be configured separately.
-- Phase 11 adds static and real-browser regression coverage while retaining the full Phase 1–10 certification matrix.
+- Each game gets a one-time, non-blocking first-play coach.
+- Learn mode provides a replayable five-step lesson for every puzzle.
+- Lessons cover the objective, a strong first move, controls, strategy, and one interactive knowledge check.
+- Practice checks are sandboxed: they never mutate the player’s real puzzle.
+- Lesson progress resumes from the last completed step and persists locally.
+- Completed lessons are tracked in the Learn library with family filters and an overall completion meter.
+- First-play coaching can be disabled globally; Learn mode remains available.
+- Lesson progress can be reset independently from puzzle progress/statistics.
+- Phase 12 adds static and real-browser regression coverage while retaining the cumulative Phase 1–11 release matrix.
 
-Storage schema remains **1**. Service-worker cache is **v23**.
+Storage schema remains **1**. Service-worker cache is **v24**.

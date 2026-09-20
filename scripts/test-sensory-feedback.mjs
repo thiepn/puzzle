@@ -8,8 +8,8 @@ const app=read('app.js'),css=read('styles.css'),index=read('index.html');
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
-has(app,"const APP_VERSION = '1.4.0';",'Phase 11 release version missing');
-has(app,"const BUILD_PHASE = 'Audio, Haptics & Sensory Feedback';",'Phase 11 build identity missing');
+assert.match(app,/const APP_VERSION = '\d+\.\d+\.\d+';/,'release version missing');checks++;
+assert.ok(fs.existsSync(new URL('docs/PHASE11_SENSORY_FEEDBACK.md',root)),'Phase 11 sensory document missing');checks++;
 has(index,'data-action="sound-toggle"','persistent sound toggle missing');
 has(index,'aria-pressed="true"','sound toggle pressed semantics missing');
 

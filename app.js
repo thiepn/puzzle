@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.4.0';
-  const BUILD_PHASE = 'Audio, Haptics & Sensory Feedback';
+  const APP_VERSION = '1.5.0';
+  const BUILD_PHASE = 'Onboarding, Tutorials & Learn Mode';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -387,11 +387,12 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on', firstPlayCoach:'on', learning:{seen:[],completed:[],progress:{}} },
     favorites: [],
     active: [],
     history: [],
     category:'all',
+    learnCategory:'all',
     currentGame:null,
     currentActive:null,
     timer:null,
@@ -674,6 +675,43 @@
     return available[day%available.length];
   }
 
+  function sanitizeLearning(value) {
+    const v=value&&typeof value==='object'?value:{},allowed=new Set(ALL_GAMES.map(g=>g.id));
+    const cleanList=list=>[...new Set(Array.isArray(list)?list.filter(id=>typeof id==='string'&&allowed.has(id)):[])];
+    const progress={};
+    if(v.progress&&typeof v.progress==='object'){
+      for(const [id,step] of Object.entries(v.progress)){
+        if(allowed.has(id)&&Number.isInteger(step)&&step>=0&&step<=4)progress[id]=step;
+      }
+    }
+    return {seen:cleanList(v.seen),completed:cleanList(v.completed),progress};
+  }
+  function learningState(){
+    state.settings.learning=sanitizeLearning(state.settings.learning);
+    return state.settings.learning;
+  }
+  function learningStatus(id){
+    const l=learningState(),completed=l.completed.includes(id),seen=l.seen.includes(id),step=l.progress[id]||0;
+    return {completed,seen,step};
+  }
+  async function saveLearning(){
+    state.settings.learning=sanitizeLearning(state.settings.learning);
+    await db.put('kv',state.settings,'settings');
+  }
+  async function markLearningSeen(id){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);await saveLearning();
+  }
+  async function setLearningProgress(id,step){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);l.progress[id]=clamp(step,0,4);await saveLearning();
+  }
+  async function completeLearning(id){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);if(!l.completed.includes(id))l.completed.push(id);l.progress[id]=4;await saveLearning();
+  }
+  async function resetLearning(){
+    state.settings.learning={seen:[],completed:[],progress:{}};
+    await saveLearning();
+  }
+
   function sanitizeSettings(value) {
     const v=value&&typeof value==='object'?value:{};
     return {
@@ -685,6 +723,8 @@
       sound:['on','off'].includes(v.sound)?v.sound:'on',
       soundVolume:Number.isFinite(v.soundVolume)?clamp(v.soundVolume,0,1):0.35,
       haptics:['on','off'].includes(v.haptics)?v.haptics:'on',
+      firstPlayCoach:['on','off'].includes(v.firstPlayCoach)?v.firstPlayCoach:'on',
+      learning:sanitizeLearning(v.learning),
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -912,6 +952,40 @@
     });
   }
 
+  async function renderLearn(ticket=routeGeneration){
+    stopTimer();state.currentGame=null;state.currentActive=null;updateNav('learn');document.title='Learn — Puzzle Arcade';
+    const available=ALL_GAMES.filter(g=>g.status==='available');
+    const completed=available.filter(g=>learningStatus(g.id).completed).length;
+    const filtered=available.filter(g=>state.learnCategory==='all'||g.category===state.learnCategory);
+    const cards=filtered.map(game=>{
+      const status=learningStatus(game.id),stateClass=status.completed?'is-complete':status.seen?'is-started':'';
+      const badge=status.completed?'Learned':status.seen&&status.step>0?'Step '+(status.step+1)+'/5':'New';
+      return '<button class="learn-card '+stateClass+'" data-learn-open="'+esc(game.id)+'" data-category="'+esc(game.category)+'">'+
+        '<span class="learn-card-preview" aria-hidden="true">'+cardPreview(game.id)+'</span>'+
+        '<span class="learn-card-copy"><small>'+esc(CATEGORIES[game.category].label)+' · '+esc(badge)+'</small><strong>'+esc(game.name)+'</strong><span>'+esc(game.description)+'</span><em>'+esc(learnProgressLabel(game.id))+' →</em></span>'+
+      '</button>';
+    }).join('');
+    const filters=['all','word','number','logic','spatial'].map(id=>{
+      const label=id==='all'?'All':CATEGORIES[id].label,on=state.learnCategory===id;
+      return '<button data-learn-filter="'+id+'" class="'+(on?'is-active':'')+'" aria-pressed="'+on+'">'+label+'</button>';
+    }).join('');
+    main.innerHTML='<div class="page learn-page">'+
+      '<section class="learn-hero"><div><p class="page-kicker">Learn mode</p><h1>Learn every puzzle.</h1><p>Short lessons teach the goal, first move, controls, strategy, and one safe practice check. Lessons never modify your real puzzle.</p></div>'+
+      '<div class="learn-overall"><strong>'+completed+'<span>/'+available.length+'</span></strong><small>lessons completed</small><div role="progressbar" aria-label="Learn mode completion" aria-valuemin="0" aria-valuemax="'+available.length+'" aria-valuenow="'+completed+'"><i style="width:'+(available.length?completed/available.length*100:0)+'%"></i></div></div></section>'+
+      '<section class="learn-toolbar" aria-label="Learn mode filters"><div class="segmented" role="group" aria-label="Puzzle family">'+filters+'</div><span>'+filtered.length+' lessons</span></section>'+
+      '<div class="learn-grid">'+cards+'</div></div>';
+    bindCommon();
+    $$('[data-learn-filter]').forEach(button=>button.onclick=()=>{state.learnCategory=button.dataset.learnFilter;void renderLearn(ticket);});
+    $$('[data-learn-open]').forEach(button=>button.onclick=()=>showLearnTutorial(GAMES[button.dataset.learnOpen]));
+  }
+
+  function learningSettingsHtml(){
+    const first=['on','off'].map(t=>'<button data-first-play-choice="'+t+'" class="'+(state.settings.firstPlayCoach===t?'is-active':'')+'" aria-pressed="'+(state.settings.firstPlayCoach===t)+'">'+(t==='on'?'On':'Off')+'</button>').join('');
+    return '<section class="settings-group learning-settings"><h2>Learning & onboarding</h2><p class="subtle">First-play coaching stays lightweight. Full lessons are always replayable from Learn mode.</p>'+
+      '<div class="setting-row"><div><h3>First-play coach</h3><p class="subtle">Show a small, non-blocking starter card the first time you open a game.</p></div><div class="segmented" role="group" aria-label="First-play coach">'+first+'</div></div>'+
+      '<div class="learning-settings-actions"><button class="primary-button" data-action="learn-library">Open Learn mode</button><button class="secondary-button" data-action="reset-learning">Reset lesson progress</button></div></section>';
+  }
+
   async function renderSettings(){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('settings'); document.title='Settings — Puzzle Arcade';
     main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Preferences</p><h1>Settings</h1></div></div>
@@ -923,6 +997,7 @@
         <div class="setting-row"><div><h3>Control size</h3><p class="subtle">Large controls increase non-board touch targets without shrinking puzzle space.</p></div><div class="segmented" role="group" aria-label="Control size">${['standard','large'].map(t=>`<button data-controls-choice="${t}" class="${state.settings.controls===t?'is-active':''}" aria-pressed="${state.settings.controls===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
         <button class="secondary-button" data-action="controls">Keyboard & touch controls</button>
       </section>
+      ${learningSettingsHtml()}
       <section class="settings-group sensory-settings"><h2>Sound & haptics</h2><p class="subtle">Short locally generated cues reinforce important puzzle events. No audio files, network requests, or background music are used.</p>
         <div class="setting-row"><div><h3>Puzzle sounds</h3><p class="subtle">Success, mistakes, hints, undo/redo and pause/resume use restrained synthesized cues.</p></div><div class="segmented" role="group" aria-label="Puzzle sounds">${['on','off'].map(t=>`<button data-sound-choice="${t}" class="${state.settings.sound===t?'is-active':''}" aria-pressed="${state.settings.sound===t}">${t==='on'?'On':'Muted'}</button>`).join('')}</div></div>
         <div class="setting-row sensory-volume-row"><div><h3>Sound level</h3><p class="subtle">Controls only Puzzle Arcade cues, not device volume.</p></div><label class="sensory-volume"><span class="sr-only">Puzzle sound volume</span><input data-sound-volume type="range" min="0" max="100" step="5" value="${Math.round(state.settings.soundVolume*100)}" ${state.settings.sound==='off'?'disabled':''}><output data-sound-volume-output>${Math.round(state.settings.soundVolume*100)}%</output></label></div>
@@ -941,6 +1016,7 @@
     $$('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
     const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100,false);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>{setSoundVolume(+volume.value/100,true);sensoryCue('preview');};}
     $$('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
+    $$('[data-first-play-choice]').forEach(b=>b.onclick=async()=>{state.settings.firstPlayCoach=b.dataset.firstPlayChoice;await db.put('kv',state.settings,'settings');renderSettings();});
     bindCommon();
   }
 
@@ -991,7 +1067,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on',firstPlayCoach:'on',learning:{seen:[],completed:[],progress:{}}};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
@@ -1039,6 +1115,11 @@
     $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     $$('[data-action="sound-toggle"]').forEach(b=>b.onclick=()=>{const next=state.settings.sound==='on'?'off':'on';setSound(next);if(next==='on')sensoryCue('preview');});
     $$('[data-action="sensory-test"]').forEach(b=>b.onclick=()=>sensoryCue('preview'));
+    $$('[data-action="learn-library"]').forEach(b=>b.onclick=()=>go('learn'));
+    $$('[data-action="reset-learning"]').forEach(b=>b.onclick=()=>showModal('Reset lesson progress','<p>This clears tutorial completion and first-play coach history without changing puzzle progress or statistics.</p>',[
+      {label:'Cancel',kind:'secondary',action:closeOverlay},
+      {label:'Reset lessons',kind:'danger',action:async()=>{await resetLearning();closeOverlay();renderSettings();toast('Lesson progress reset');}}
+    ]));
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
@@ -1164,6 +1245,117 @@
     'lights-out':['Treat each press as a cross-shaped toggle. Work systematically rather than chasing isolated lights.','Tap a light to toggle it and its orthogonal neighbors; Undo reverses a press.','Press order does not matter, and pressing a square twice cancels itself.'],
     untangle:['Move a node involved in several crossings toward open space, then refine its neighbors.','Drag nodes; focus a node and use arrows for small moves, or Shift+arrows for larger moves.','Edges sharing an endpoint may meet there. Only crossings between unrelated edges must disappear.']
   };
+  const LEARN_CHECKS = {
+    'five-letters':{question:'After your first guess, what should guide the next one?',options:['Use the color feedback to test new information','Repeat the same guess','Ignore repeated-letter feedback'],answer:0,explain:'Each guess should use the previous feedback to narrow the answer.'},
+    groups:{question:'What makes a valid group?',options:['Any four related words','Four words sharing one precise connection','Four words with similar lengths'],answer:1,explain:'The intended connection must be specific enough to explain all four words together.'},
+    'word-ladder':{question:'What is a legal next step?',options:['Change any number of letters','Change exactly one letter and keep a real word','Rearrange all letters'],answer:1,explain:'Every rung changes one position and must itself be an accepted word.'},
+    anagrams:{question:'What must a submitted anagram do?',options:['Use every tile exactly once','Use only the first half of the tiles','Keep the original letter order'],answer:0,explain:'A valid answer consumes the whole rack, including duplicate-letter tiles separately.'},
+    'letter-hive':{question:'Which requirement applies to every accepted word?',options:['It must use every outer letter','It must include the center letter','It must have exactly five letters'],answer:1,explain:'The center letter is mandatory; other allowed letters may be reused.'},
+    'word-grid':{question:'How can letters connect in one word?',options:['Only horizontally','Through neighboring cells, including diagonals','From any two cells on the board'],answer:1,explain:'Each next letter must neighbor the previous cell, and a cell cannot be reused in that word.'},
+    'theme-trail':{question:'What happens after you solve a themed word?',options:['Its cells become part of the solved trail','The board completely resets','All remaining letters may be ignored'],answer:0,explain:'Solved paths lock in, helping reveal how the remaining themed words cover the board.'},
+    'word-pieces':{question:'How often can one chunk tile be used in a submitted word?',options:['Once','Unlimited times','Only if it is a vowel'],answer:0,explain:'Each physical chunk tile can contribute once to that word, then returns for later words.'},
+    'mini-crossword':{question:'What is the best use of a solved clue?',options:['Ignore its letters','Use its crossing letters to constrain other answers','Immediately erase it'],answer:1,explain:'Crossings turn one confident answer into information for several other clues.'},
+    cryptogram:{question:'When you map one cipher letter, where does that mapping apply?',options:['Only to the selected word','Everywhere that cipher letter appears','Only to the first occurrence'],answer:1,explain:'A substitution is global across the entire quote.'},
+    'word-search':{question:'A hidden word must follow what shape?',options:['One straight line','Any winding path','A rectangle'],answer:0,explain:'Words can be horizontal, vertical, diagonal, forward, or backward, but stay on one line.'},
+    sudoku:{question:'Which three areas must avoid repeating a digit?',options:['Rows, columns, and 3×3 boxes','Only rows','Only the four corners'],answer:0,explain:'Every placement must satisfy its row, column, and box simultaneously.'},
+    'killer-sudoku':{question:'What extra rule do cages add to Sudoku?',options:['Their digits combine to the target without repeating in the cage','They remove row rules','They allow duplicate digits'],answer:0,explain:'Cage arithmetic works together with normal Sudoku uniqueness.'},
+    kakuro:{question:'Inside one Kakuro run, what must be true?',options:['Digits sum to the clue and do not repeat','Digits only need to be even','Repeats are required'],answer:0,explain:'Both the target sum and no-repeat rule constrain each run.'},
+    unequal:{question:'Which side of an inequality symbol is smaller?',options:['The pointed end','The open end','Neither side'],answer:0,explain:'The narrow pointed side faces the smaller value.'},
+    'arithmetic-cages':{question:'Besides satisfying each cage, what still applies?',options:['Row and column uniqueness','No row rules','Only diagonal uniqueness'],answer:0,explain:'Cage arithmetic never replaces the Latin-square row and column rules.'},
+    'make-24':{question:'What must a complete solution use?',options:['All four starting numbers exactly once','Only the largest number','Any extra numbers you want'],answer:0,explain:'Operations may vary, but all four given values must be consumed once.'},
+    mines:{question:'What is safest to remember about a flag?',options:['It is your assumption, not confirmed information','It always proves a mine','It removes the mine'],answer:0,explain:'Flags help reasoning, but an incorrect flag can make later chords dangerous.'},
+    nonogram:{question:'What separates consecutive filled runs in one line?',options:['At least one empty cell','Nothing','Exactly three empty cells'],answer:0,explain:'Clue runs are distinct groups and therefore need separation.'},
+    loop:{question:'How many loop edges meet at a used vertex?',options:['Exactly two','Exactly one','Any number'],answer:0,explain:'Degree two at used vertices is necessary for one continuous non-branching loop.'},
+    bridges:{question:'When every island number is satisfied, what else must be true?',options:['All islands belong to one connected network','Each island stays isolated','Bridges may cross'],answer:0,explain:'Local bridge counts are not enough; the whole puzzle must be connected.'},
+    'light-up':{question:'Can two lamps see each other along an unobstructed row or column?',options:['No','Yes, always','Only on corners'],answer:0,explain:'A valid lamp lights cells but may not directly see another lamp.'},
+    islands:{question:'Which statement about the sea is required?',options:['It is connected and contains no solid 2×2 block','It may split freely','Every sea cell needs a clue'],answer:0,explain:'The connected sea and no-2×2 rule work together with island sizes.'},
+    hitori:{question:'Which cells may not touch orthogonally?',options:['Shaded cells','All equal numbers','Unshaded cells'],answer:0,explain:'Shaded cells cannot share an edge, while the remaining white area must stay connected.'},
+    binary:{question:'What must a completed row contain?',options:['Balanced 0s and 1s and a pattern distinct from other rows','Only 1s','Any number of 0s and 1s'],answer:0,explain:'Balance and uniqueness are core Binary constraints.'},
+    queens:{question:'What coverage is required?',options:['One queen in each row, column, and region','Two queens in every row','Queens only in corners'],answer:0,explain:'Each row, column, and colored region receives exactly one queen.'},
+    'number-path':{question:'What must the finished path do?',options:['Visit every cell once and pass checkpoints in order','Skip difficult cells','Visit cells repeatedly'],answer:0,explain:'The route is a single full-board path constrained by checkpoint order.'},
+    tents:{question:'Which pairing rule is required?',options:['Each tent pairs with a different adjacent tree','One tree can own every tent','Tents may touch diagonally'],answer:0,explain:'Tents form one-to-one orthogonal pairs with trees and cannot touch each other.'},
+    rectangles:{question:'What belongs inside each finished rectangle?',options:['Exactly one clue whose value equals its area','Any number of clues','No clue'],answer:0,explain:'The clue determines that rectangle’s area, and rectangles cannot overlap.'},
+    dominoes:{question:'How is the pair 2–4 related to 4–2?',options:['They are the same unordered domino pair','They are always different','Neither is allowed'],answer:0,explain:'Domino inventory treats the two orientations as the same pair.'},
+    towers:{question:'Why can a shorter tower become invisible from an edge?',options:['A taller tower before it blocks the view','Its number is even','It is in the center'],answer:0,explain:'Visibility counts only towers that exceed every tower seen earlier from that direction.'},
+    fillomino:{question:'What determines a region’s final size?',options:['The number written in its cells','Its color','Its distance from the edge'],answer:0,explain:'Connected equal numbers form one region whose cell count must equal that number.'},
+    network:{question:'What is required beyond matching neighboring connectors?',options:['Every tile must join one connected network','Each row must be isolated','Border connectors must point outward'],answer:0,explain:'Local matches matter, but the entire board must form a single network.'},
+    'sliding-tiles':{question:'Which tile can move directly?',options:['A tile adjacent to the empty gap','Any tile anywhere','Only the largest tile'],answer:0,explain:'Every slide swaps the gap with one orthogonally adjacent tile.'},
+    'lights-out':{question:'What does pressing a square toggle?',options:['Itself and its orthogonal neighbors','Only itself','The entire board'],answer:0,explain:'Each press affects a cross shape, and pressing the same square twice cancels out.'},
+    untangle:{question:'Which intersections must disappear?',options:['Crossings between unrelated edges','Shared endpoints','All lines including connected endpoints'],answer:0,explain:'Edges may meet at their common node; only true crossings between unrelated edges are invalid.'}
+  };
+
+  function firstPlayCoach(game){
+    const status=learningStatus(game.id),guide=PLAY_GUIDES[game.id];
+    if(state.settings.firstPlayCoach!=='on'||status.seen||status.completed||!guide)return '';
+    void markLearningSeen(game.id);
+    return `<aside class="first-play-coach" data-first-play-coach aria-label="First-time guide for ${esc(game.name)}">
+      <div><span class="coach-kicker">First time here</span><strong>${esc(game.name)} in 20 seconds</strong><p>${esc(guide[0])}</p></div>
+      <div class="coach-actions"><button class="primary-button" data-learn-game="${esc(game.id)}">Learn this puzzle</button><button class="secondary-button" data-dismiss-learn-coach="${esc(game.id)}">Skip</button></div>
+    </aside>`;
+  }
+  function learnStepCopy(game,step){
+    const guide=PLAY_GUIDES[game.id]||['','',''],check=LEARN_CHECKS[game.id];
+    if(step===0)return {kicker:'1 · Goal',title:'What you are solving',body:game.rules.objective};
+    if(step===1)return {kicker:'2 · First move',title:'How to begin',body:guide[0]};
+    if(step===2)return {kicker:'3 · Controls',title:'How to interact',body:guide[1]};
+    if(step===3)return {kicker:'4 · Strategy',title:'What to watch for',body:guide[2]};
+    return {kicker:'5 · Practice check',title:'Check the idea',body:check?.question||'Which move best follows the rules?'};
+  }
+  function learnProgressLabel(id){
+    const status=learningStatus(id);
+    if(status.completed)return 'Learned';
+    if(status.seen&&status.step>0)return `Resume · step ${status.step+1} of 5`;
+    if(status.seen)return 'Start again';
+    return 'Start lesson';
+  }
+  function tutorialReturnRefresh(game){
+    const route=parseHash().parts[0]||'home';
+    if(route==='learn')void renderLearn();
+    else if(state.currentGame===game&&state.currentActive)game.render(state.currentActive);
+  }
+  async function showLearnTutorial(game,startStep=null){
+    if(!game||!PLAY_GUIDES[game.id]||!LEARN_CHECKS[game.id])return;
+    if(overlayRoot.firstChild)closeOverlay();
+    overlayReturnFocus=document.activeElement;
+    main.inert=true;$('.topbar').inert=true;
+    const status=learningStatus(game.id);
+    let step=clamp(Number.isInteger(startStep)?startStep:status.step,0,4),answered=false;
+    await markLearningSeen(game.id);
+    const render=()=>{
+      const copy=learnStepCopy(game,step),check=LEARN_CHECKS[game.id],percent=((step+1)/5)*100;
+      const practice=step===4?`<div class="learn-practice"><div class="learn-practice-preview" aria-hidden="true">${cardPreview(game.id)}</div><div class="learn-options" role="group" aria-label="Practice answers">${check.options.map((option,i)=>`<button data-learn-answer="${i}">${esc(option)}</button>`).join('')}</div><p class="learn-answer-feedback" data-learn-feedback role="status" aria-live="polite"></p></div>`:'';
+      overlayRoot.innerHTML=`<div class="modal-backdrop learn-backdrop"><section class="modal learn-modal" role="dialog" aria-modal="true" aria-labelledby="learn-title">
+        <div class="modal-head"><div><span class="learn-modal-game">${esc(CATEGORIES[byId[game.id]?.category||'logic'].label)} · ${esc(game.name)}</span><h2 id="learn-title">${esc(copy.title)}</h2></div><button class="modal-close" data-learn-close aria-label="Close lesson">×</button></div>
+        <div class="learn-step-meter" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="${step+1}"><i style="width:${percent}%"></i></div>
+        <div class="learn-step-copy"><span>${esc(copy.kicker)}</span><p>${esc(copy.body)}</p></div>
+        ${practice}
+        <div class="learn-step-actions">
+          <button class="secondary-button" data-learn-back ${step===0?'disabled':''}>Back</button>
+          <span>Step ${step+1} of 5</span>
+          ${step<4?'<button class="primary-button" data-learn-next>Next</button>':'<button class="primary-button" data-learn-finish disabled>Finish lesson</button>'}
+        </div>
+      </section></div>`;
+      $('[data-learn-close]',overlayRoot).onclick=()=>{closeOverlay();tutorialReturnRefresh(game);};
+      const back=$('[data-learn-back]',overlayRoot);if(back)back.onclick=async()=>{step=Math.max(0,step-1);answered=false;await setLearningProgress(game.id,step);render();};
+      const next=$('[data-learn-next]',overlayRoot);if(next)next.onclick=async()=>{step=Math.min(4,step+1);answered=false;await setLearningProgress(game.id,step);render();};
+      $$('[data-learn-answer]',overlayRoot).forEach(button=>button.onclick=()=>{
+        const choice=+button.dataset.learnAnswer,correct=choice===check.answer,feedback=$('[data-learn-feedback]',overlayRoot);
+        $$('[data-learn-answer]',overlayRoot).forEach(x=>{x.classList.remove('is-correct','is-wrong');x.setAttribute('aria-pressed','false');});
+        button.classList.add(correct?'is-correct':'is-wrong');button.setAttribute('aria-pressed','true');
+        if(feedback)feedback.textContent=correct?check.explain:'Not quite. Use the rule from the previous steps and try another answer.';
+        answered=correct;
+        const finish=$('[data-learn-finish]',overlayRoot);if(finish)finish.disabled=!answered;
+        sensoryCue(correct?'progress':'error',game);
+      });
+      const finish=$('[data-learn-finish]',overlayRoot);if(finish)finish.onclick=async()=>{
+        if(!answered)return;await completeLearning(game.id);sensoryCue('complete',game);closeOverlay();toast(`Learned: ${game.name}`);tutorialReturnRefresh(game);
+      };
+      $('.modal-backdrop',overlayRoot).addEventListener('click',e=>{if(e.target===e.currentTarget){closeOverlay();tutorialReturnRefresh(game);}});
+      overlayRoot.onkeydown=trapOverlayFocus;
+      requestAnimationFrame(()=>(step===4?$('[data-learn-answer]',overlayRoot):$('[data-learn-next]',overlayRoot)||$('[data-learn-close]',overlayRoot))?.focus({preventScroll:true}));
+    };
+    await setLearningProgress(game.id,step);render();
+  }
   const playSessions=new WeakMap();
   function playSession(a){if(!playSessions.has(a))playSessions.set(a,{guide:false,paused:false,redo:[],restoring:false,busy:false,signature:null,feedback:'',order:[]});return playSessions.get(a);}
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
@@ -1428,6 +1620,7 @@
         </div>
       </header>
       ${playGuide(game,active)}
+      ${firstPlayCoach(game)}
       <div class="play-feedback" data-play-feedback role="status" aria-live="polite" ${ui.feedback?'':'hidden'}>${esc(ui.feedback)}</div>
       <div class="play-hint-zone">${proofHintPanel(active)}${active.state._proofHintView?'<button class="hint-dismiss" data-hint-dismiss aria-label="Hide hint">Hide hint</button>':''}</div>
       <div class="game-layout">
@@ -1453,16 +1646,19 @@
     const resume=$('[data-resume-puzzle]');if(resume)resume.onclick=()=>pauseGame(game,active);
     const undo=$('[data-play-undo]'),redo=$('[data-play-redo]');if(undo)undo.onclick=()=>game.undo(active);if(redo)redo.onclick=()=>redoGame(game,active);
     const dismiss=$('[data-hint-dismiss]');if(dismiss)dismiss.onclick=()=>dismissGameHint(active);
+    const learn=$('[data-learn-game]');if(learn)learn.onclick=()=>showLearnTutorial(game);
+    const skipCoach=$('[data-dismiss-learn-coach]');if(skipCoach)skipCoach.onclick=async()=>{await markLearningSeen(game.id);game.render(active);};
     startTimer(active);
   }
 
   function gameMenu(game, active){
     const difficulties=game.difficulties||['Standard'],ui=playSession(active),favorite=state.favorites.includes(game.id);
-    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
+    showModal(`${game.name} — Options`, `<div class="game-menu-sheet"><p class="game-menu-description">${esc(game.description)}</p><div class="game-menu-section"><span class="game-menu-label">Difficulty</span><div class="segmented">${difficulties.map(d=>`<button data-diff="${esc(d)}" class="${active.difficulty===d?'is-active':''}">${esc(d)}</button>`).join('')}</div></div><div class="game-menu-actions"><button class="secondary-button" data-menu-learn>Learn this game</button><button class="secondary-button" data-menu-guide>${ui.guide?'Hide guide':'Show guide'}</button><button class="secondary-button" data-menu-rules>Rules</button><button class="secondary-button" data-menu-favorite aria-pressed="${favorite}">${favorite?'★ Favorite':'☆ Favorite'}</button><button class="secondary-button" data-menu-pause ${active.completed?'disabled':''}>${ui.paused?'Resume':'Pause'}</button></div><div class="game-menu-meta"><span>${ui.paused?'Paused':formatTime(activeDuration(active))}</span><span>${esc(safeProgressLabel(active))}</span><span>${state.settings.playMode==='challenge'?'Challenge':'Relaxed'} mode</span></div></div>`, [
       {label:'Close',kind:'secondary',action:closeOverlay},
       {label:'New Puzzle',kind:'primary',action:async()=>{ closeOverlay(); await newGame(game.id, active.difficulty); }},
     ]);
     $$('[data-diff]',overlayRoot).forEach(b=>b.onclick=async()=>{const d=b.dataset.diff;closeOverlay();await newGame(game.id,d);});
+    const learn=$('[data-menu-learn]',overlayRoot);if(learn)learn.onclick=()=>showLearnTutorial(game);
     const guide=$('[data-menu-guide]',overlayRoot);if(guide)guide.onclick=()=>{closeOverlay();ui.guide=!ui.guide;game.render(active);requestAnimationFrame(()=>$('[data-game-menu]')?.focus({preventScroll:true}));};
     const rules=$('[data-menu-rules]',overlayRoot);if(rules)rules.onclick=()=>{closeOverlay();showRules(game);};
     const fav=$('[data-menu-favorite]',overlayRoot);if(fav)fav.onclick=()=>{toggleFavorite(game.id);const on=state.favorites.includes(game.id);fav.textContent=on?'★ Favorite':'☆ Favorite';fav.setAttribute('aria-pressed',String(on));};
@@ -3607,9 +3803,10 @@
     }
     const {parts,params}=parseHash(),route=parts[0]||'home';
     document.body.classList.toggle('in-game',route==='game');
-    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
+    const routeLabel=route==='game'&&parts[1]?`${byId[parts[1]]?.name||'Puzzle'} loaded`:route==='learn'?'Learn mode loaded':route==='stats'?'Statistics loaded':route==='settings'?'Settings loaded':'Puzzle library loaded';
     announceRoute(routeLabel);
     if(route==='home'||route==='games')return renderHome(ticket);
+    if(route==='learn')return renderLearn(ticket);
     if(route==='stats')return renderStats(ticket);
     if(route==='settings')return renderSettings();
     if(route==='game'&&parts[1])return renderGame(parts[1],params,ticket);

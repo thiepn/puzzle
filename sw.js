@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.4.0: sensory-feedback release shell. */
-const APP_VERSION = '1.4.0';
-const CACHE_VERSION = 'v23';
+/* Puzzle Arcade 1.5.0: onboarding and Learn mode release shell. */
+const APP_VERSION = '1.5.0';
+const CACHE_VERSION = 'v24';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;

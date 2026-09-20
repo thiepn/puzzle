@@ -17,7 +17,7 @@ for(const word of required)assert.ok(set.has(word),`required common word missing
 
 const app=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
 for(const [label,needle] of [
-  ['version',"const APP_VERSION = '1.4.0';"],
+  ['version',"const APP_VERSION = '1.5.0';"],
   ['Five Letters broad validation',"if(!isAcceptedWord(word))"],
   ['Word Ladder broad validation',"if(!isAcceptedWord(w))return toast('That word is not in the accepted English dictionary.')"],
   ['Word Ladder broad hint graph','acceptedLadderPath(cur,a.puzzle.target,new Set(a.state.chain.slice(0,-1)))'],
