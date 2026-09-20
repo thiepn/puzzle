@@ -486,7 +486,7 @@
   }
 
   function updateNav(route) {
-    $('.nav-link').forEach(b=>{
+    $$('.nav-link').forEach(b=>{
       const active=b.dataset.route===route;
       b.classList.toggle('is-active',active);
       if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
@@ -928,8 +928,8 @@
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
-    $('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
-    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
+    $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
+    $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
