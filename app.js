@@ -477,7 +477,7 @@
     const button=$('[data-action="sound-toggle"]');
     if(!button)return;
     const on=state.settings.sound==='on';
-    button.textContent=on?'♪':'×';
+    button.textContent='♪';
     button.setAttribute('aria-pressed',String(on));
     button.setAttribute('aria-label',on?'Mute puzzle sounds':'Enable puzzle sounds');
     button.title=on?'Mute puzzle sounds':'Enable puzzle sounds';
@@ -989,7 +989,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
@@ -1347,12 +1347,12 @@
         root.dataset.motionEvent='focus';
         p6Pulse(p6SelectedElement(game,a),'motion-focus-in',260);
       }
-      if(m.wrong!==null&&wrong>m.wrong){
+      if(m.wrong!==null&&wrong>m.wrong&&!a.completed){
         root.dataset.motionEvent='error';
         document.querySelectorAll('.game-board-wrap .wrong').forEach(el=>p6Pulse(el,'motion-error',380));
         sensoryCue('error',game);
       }
-      if(game.id==='groups'&&m.solved!==null&&solved>m.solved){
+      if(game.id==='groups'&&m.solved!==null&&solved>m.solved&&!a.completed){
         root.dataset.motionEvent='group-solved';
         const cards=document.querySelectorAll('.group-solved');p6Pulse(cards[cards.length-1],'motion-group-solved',560);
         sensoryCue('progress',game);
@@ -1372,12 +1372,12 @@
         root.dataset.motionEvent='mark';
         p6Pulse(p6SelectedElement(game,a),'motion-cell-mark',300);
       }
-      if(game.id==='word-grid'&&m.found!==null&&found>m.found){
+      if(game.id==='word-grid'&&m.found!==null&&found>m.found&&!a.completed){
         root.dataset.motionEvent='word-found';
         const words=document.querySelectorAll('.found-words span');p6Pulse(words[words.length-1],'motion-word-found',460);
         sensoryCue('progress',game);
       }
-      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings){
+      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings&&!a.completed){
         root.dataset.motionEvent='crossing-cleared';
         p6Pulse(document.querySelector('.crossing-count'),'motion-progress-good',420);
         p6Pulse(p6SelectedElement(game,a),'motion-node-good',360);
@@ -1387,7 +1387,7 @@
 
     if(a.completed&&!m.completed){
       root.dataset.motionEvent='complete';
-      sensoryCue('complete',game);
+      sensoryCue(a.outcome==='failed'?'error':'complete',game);
       if(!reduced){
         p6Pulse(stage,'motion-complete',760);
         const panel=document.querySelector('.result-panel');p6Pulse(panel,'motion-result-in',720);p6SolveBurst(panel);
