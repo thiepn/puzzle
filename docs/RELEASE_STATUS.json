@@ -10,8 +10,8 @@
   "varietyMethods": 36,
   "varietyRecentWindow": 7,
   "generatorStressMethods": 36,
-  "releaseStressSamplesPerTier": 2,
-  "releaseStressMeasuredGenerations": 432,
+  "releaseStressSamplesPerTier": 4,
+  "releaseStressMeasuredGenerations": 864,
   "deepStressDefaultSamplesPerTier": 8,
   "deepStressMeasuredGenerations": 1728,
   "deepStressShards": 4,
@@ -37,5 +37,6 @@
     "source": "ESDB/SCOWL size <= 70",
     "filteredWords": 132590,
     "fiveLetterWords": 7278
-  }
-}
+  },
+  "releaseStressHeapLimitBytes": 134217728
+}\n
