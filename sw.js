@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.7.0: variety and anti-repetition release shell. */
-const APP_VERSION = '1.7.0';
-const CACHE_VERSION = 'v26';
+/* Puzzle Arcade 1.8.0: generator robustness and long-run reliability release shell. */
+const APP_VERSION = '1.8.0';
+const CACHE_VERSION = 'v27';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
