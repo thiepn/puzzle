@@ -997,6 +997,7 @@
         <div class="setting-row"><div><h3>Control size</h3><p class="subtle">Large controls increase non-board touch targets without shrinking puzzle space.</p></div><div class="segmented" role="group" aria-label="Control size">${['standard','large'].map(t=>`<button data-controls-choice="${t}" class="${state.settings.controls===t?'is-active':''}" aria-pressed="${state.settings.controls===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
         <button class="secondary-button" data-action="controls">Keyboard & touch controls</button>
       </section>
+      ${learningSettingsHtml()}
       <section class="settings-group sensory-settings"><h2>Sound & haptics</h2><p class="subtle">Short locally generated cues reinforce important puzzle events. No audio files, network requests, or background music are used.</p>
         <div class="setting-row"><div><h3>Puzzle sounds</h3><p class="subtle">Success, mistakes, hints, undo/redo and pause/resume use restrained synthesized cues.</p></div><div class="segmented" role="group" aria-label="Puzzle sounds">${['on','off'].map(t=>`<button data-sound-choice="${t}" class="${state.settings.sound===t?'is-active':''}" aria-pressed="${state.settings.sound===t}">${t==='on'?'On':'Muted'}</button>`).join('')}</div></div>
         <div class="setting-row sensory-volume-row"><div><h3>Sound level</h3><p class="subtle">Controls only Puzzle Arcade cues, not device volume.</p></div><label class="sensory-volume"><span class="sr-only">Puzzle sound volume</span><input data-sound-volume type="range" min="0" max="100" step="5" value="${Math.round(state.settings.soundVolume*100)}" ${state.settings.sound==='off'?'disabled':''}><output data-sound-volume-output>${Math.round(state.settings.soundVolume*100)}%</output></label></div>
@@ -1015,6 +1016,7 @@
     $$('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
     const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100,false);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>{setSoundVolume(+volume.value/100,true);sensoryCue('preview');};}
     $$('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
+    $$('[data-first-play-choice]').forEach(b=>b.onclick=async()=>{state.settings.firstPlayCoach=b.dataset.firstPlayChoice;await db.put('kv',state.settings,'settings');renderSettings();});
     bindCommon();
   }
 
@@ -1113,6 +1115,11 @@
     $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
     $$('[data-action="sound-toggle"]').forEach(b=>b.onclick=()=>{const next=state.settings.sound==='on'?'off':'on';setSound(next);if(next==='on')sensoryCue('preview');});
     $$('[data-action="sensory-test"]').forEach(b=>b.onclick=()=>sensoryCue('preview'));
+    $$('[data-action="learn-library"]').forEach(b=>b.onclick=()=>go('learn'));
+    $$('[data-action="reset-learning"]').forEach(b=>b.onclick=()=>showModal('Reset lesson progress','<p>This clears tutorial completion and first-play coach history without changing puzzle progress or statistics.</p>',[
+      {label:'Cancel',kind:'secondary',action:closeOverlay},
+      {label:'Reset lessons',kind:'danger',action:async()=>{await resetLearning();closeOverlay();renderSettings();toast('Lesson progress reset');}}
+    ]));
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
