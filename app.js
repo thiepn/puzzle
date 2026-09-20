@@ -3582,7 +3582,7 @@
     active.startedAt=active.completed||document.hidden?null:Date.now();
     state.currentGame=game;state.currentActive=active;
     updateNav('');document.title=`${game.name} — Puzzle Arcade`;
-    try { game.render(active); }
+    try { game.render(active); bindCommon(); }
     catch(error){
       if(!routeIsCurrent(ticket))return;
       stopTimer();window.onkeydown=null;clearGamePointerHandlers();
