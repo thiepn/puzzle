@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.3.0';
-  const BUILD_PHASE = 'Integration, Final Certification & Ship';
+  const APP_VERSION = '1.4.0';
+  const BUILD_PHASE = 'Audio, Haptics & Sensory Feedback';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -387,7 +387,7 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on' },
     favorites: [],
     active: [],
     history: [],
@@ -463,6 +463,98 @@
     routeStatus.textContent='';
     requestAnimationFrame(()=>{routeStatus.textContent=label;});
   }
+
+  const SENSORY_CATEGORY_BASE={word:392,number:330,logic:294,spatial:349};
+  let sensoryAudioContext=null;
+  let sensoryUnlocked=false;
+  function sensorySupport(){
+    return {
+      audio:!!(window.AudioContext||window.webkitAudioContext),
+      haptics:typeof navigator.vibrate==='function',
+    };
+  }
+  function syncSensoryChrome(){
+    const button=$('[data-action="sound-toggle"]');
+    if(!button)return;
+    const on=state.settings.sound==='on';
+    button.textContent=on?'♪':'×';
+    button.setAttribute('aria-pressed',String(on));
+    button.setAttribute('aria-label',on?'Mute puzzle sounds':'Enable puzzle sounds');
+    button.title=on?'Mute puzzle sounds':'Enable puzzle sounds';
+    button.dataset.soundState=on?'on':'off';
+  }
+  function ensureSensoryAudio(){
+    if(state.settings.sound!=='on')return null;
+    const AudioCtor=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtor)return null;
+    try{
+      sensoryAudioContext=sensoryAudioContext||new AudioCtor();
+      if(sensoryAudioContext.state==='suspended')void sensoryAudioContext.resume();
+      sensoryUnlocked=true;
+      return sensoryAudioContext;
+    }catch{return null;}
+  }
+  function unlockSensoryAudio(){
+    if(sensoryUnlocked||state.settings.sound!=='on')return;
+    ensureSensoryAudio();
+  }
+  function sensoryTone(freq,duration=0.06,gain=0.12,type='sine',delay=0){
+    const ctx=ensureSensoryAudio();if(!ctx||ctx.state==='closed')return;
+    const start=ctx.currentTime+Math.max(0,delay),end=start+Math.max(0.02,duration);
+    const osc=ctx.createOscillator(),amp=ctx.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(freq,start);
+    const level=Math.max(0.0001,gain*state.settings.soundVolume);
+    amp.gain.setValueAtTime(0.0001,start);
+    amp.gain.exponentialRampToValueAtTime(level,start+Math.min(.015,duration/3));
+    amp.gain.exponentialRampToValueAtTime(0.0001,end);
+    osc.connect(amp);amp.connect(ctx.destination);osc.start(start);osc.stop(end+.015);
+  }
+  function sensoryHaptic(pattern){
+    if(state.settings.haptics!=='on'||document.hidden||typeof navigator.vibrate!=='function')return;
+    try{navigator.vibrate(pattern);}catch{}
+  }
+  function sensoryCue(kind,game=state.currentGame){
+    const category=game?.category||'logic',base=SENSORY_CATEGORY_BASE[category]||330;
+    if(kind==='error'){
+      sensoryTone(base*.55,.085,.16,'triangle');sensoryHaptic([28,24,38]);return;
+    }
+    if(kind==='complete'){
+      sensoryTone(base,.08,.13,'sine');
+      sensoryTone(base*1.25,.10,.12,'sine',.075);
+      sensoryTone(base*1.5,.14,.11,'sine',.16);
+      sensoryHaptic([18,30,28]);return;
+    }
+    if(kind==='progress'){
+      sensoryTone(base*1.12,.07,.09,'sine');sensoryTone(base*1.33,.08,.075,'sine',.055);sensoryHaptic(14);return;
+    }
+    if(kind==='hint'){
+      sensoryTone(base*.9,.06,.075,'sine');sensoryTone(base*1.2,.08,.07,'sine',.07);sensoryHaptic(10);return;
+    }
+    if(kind==='undo'){sensoryTone(base*.72,.045,.055,'triangle');sensoryHaptic(7);return;}
+    if(kind==='redo'){sensoryTone(base*.9,.045,.055,'triangle');sensoryHaptic(7);return;}
+    if(kind==='pause'){sensoryTone(base*.62,.055,.05,'sine');sensoryHaptic(6);return;}
+    if(kind==='resume'){sensoryTone(base*.82,.055,.05,'sine');sensoryHaptic(6);return;}
+    if(kind==='preview'){
+      sensoryTone(base,.07,.11,'sine');sensoryTone(base*1.25,.09,.09,'sine',.075);sensoryHaptic(14);
+    }
+  }
+  function setSound(value,persist=true){
+    state.settings.sound=value==='off'?'off':'on';
+    syncSensoryChrome();
+    if(state.settings.sound==='on')ensureSensoryAudio();
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function setSoundVolume(value,persist=true){
+    const numeric=Number(value);
+    state.settings.soundVolume=Number.isFinite(numeric)?clamp(numeric,0,1):0.35;
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function setHaptics(value,persist=true){
+    state.settings.haptics=value==='off'?'off':'on';
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  document.addEventListener('pointerdown',unlockSensoryAudio,{passive:true});
+  document.addEventListener('keydown',unlockSensoryAudio,{capture:true});
 
   function parseHash() {
     const raw=location.hash.replace(/^#\/?/,'') || 'home';
@@ -588,6 +680,9 @@
       motion:['system','reduced'].includes(v.motion)?v.motion:'system',
       contrast:['system','high'].includes(v.contrast)?v.contrast:'system',
       controls:['standard','large'].includes(v.controls)?v.controls:'standard',
+      sound:['on','off'].includes(v.sound)?v.sound:'on',
+      soundVolume:Number.isFinite(v.soundVolume)?clamp(v.soundVolume,0,1):0.35,
+      haptics:['on','off'].includes(v.haptics)?v.haptics:'on',
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -633,6 +728,7 @@
     state.history = sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     setTheme(state.settings.theme, false);
     applyAccessibilitySettings(false);
+    syncSensoryChrome();
   }
 
   async function renderHome(ticket=routeGeneration){
@@ -884,7 +980,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
