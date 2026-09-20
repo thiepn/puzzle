@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.2.0 · Accessibility, Controls & Device Polish · PWA cache v21**
+**Current release: 1.3.0 · Integration, Final Certification & Ship · PWA cache v22**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Integration, Final Certification & Ship 1.3.0
+
+Phase 10 unifies the cumulative v1.2 improvement line (Phases 1–8) with the Phase 9 accessibility/device line and certifies the resulting build as one production release. The integrated build contains the redesigned visual foundation, game chrome, home/discovery flow, puzzle-family systems, individual game polish, motion/game-feel layer, completion/reward experience, local records/stats, and Phase 9 accessibility/controls/device hardening simultaneously.
+
+The release gate now explicitly verifies that none of those phase systems were lost during branch reconciliation, then runs the existing content, service-worker, word-entry, play-experience, accessibility, and real Chromium interaction suites before deployment.
+
+See `docs/PHASE10_INTEGRATION_CERTIFICATION.md` for the integration and certification contract.
 
 ## Accessibility, Controls & Device Polish 1.2.0
 
