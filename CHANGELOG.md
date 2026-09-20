@@ -1,3 +1,15 @@
+# 1.6.0 — Difficulty Calibration & Puzzle Quality
+
+- Added a catalog-wide difficulty and generation-quality certification layer for all 36 games.
+- Added family-specific difficulty evidence using solver effort, clue scarcity, ambiguity, deduction depth, path/crossing pressure, lexical complexity, and related puzzle properties.
+- Added explicit non-size reasoning evidence so Hard cannot certify on dimensions alone.
+- Added structural/triviality rejection and uniqueness-certificate enforcement for solver-backed families.
+- Preserved normal deterministic seeds by evaluating the original generation first and using deterministic fallback seeds only after a certification failure.
+- Added post-first-click quality certification for Mines.
+- Added per-puzzle quality metadata with calibrated difficulty, raw evidence, non-size evidence, measured signals, source seed, and gate status.
+- Added static Phase 13 regression coverage and real Chromium Easy/Medium/Hard certification across the 36-game catalog.
+- Advanced the PWA cache to v25; IndexedDB schema remains 1.
+
 # 1.5.0 — Onboarding, Tutorials & Learn Mode
 
 - Added a dedicated Learn library covering all 36 playable games.
