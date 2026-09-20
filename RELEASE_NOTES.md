@@ -11,7 +11,7 @@ Phase 15 stress-tests the complete generator stack rather than only checking iso
 - Median, p95, maximum latency, absolute generation budgets, and early-vs-late timing drift are recorded.
 - Phase 13 fallback pressure is measured so generators cannot silently depend on repeated retry rescue.
 - Mines is stress-tested after a deterministic center first click so its actual mine layout is included.
-- The normal release browser gate now adds 432 measured generator executions.
+- The normal release browser gate now adds 864 measured generator executions and enforces timing-drift plus catastrophic heap-growth limits.
 - A weekly/manual deep stress workflow runs 1,728 measured generations across four parallel shards and uploads JSON reports.
 
 Storage schema remains **1**. Service-worker cache is **v27**.
