@@ -334,7 +334,39 @@ with sync_playwright() as p:
     page.locator('[data-resume-puzzle]').click()
     page.wait_for_function('() => document.activeElement===document.querySelector("[data-game-pause]")')
 
+    # Phase 11 audio/haptic controls remain optional, local, and device-safe.
+    navigate('home');page.locator('[data-action="sound-toggle"]').wait_for()
+    sound_toggle=page.locator('[data-action="sound-toggle"]')
+    assert sound_toggle.get_attribute('aria-pressed')=='true'
+    sound_toggle.click();page.wait_for_timeout(60)
+    assert sound_toggle.get_attribute('aria-pressed')=='false'
+    assert sound_toggle.get_attribute('data-sound-state')=='off'
+    navigate('settings');page.locator('[data-sound-choice="off"]').wait_for()
+    assert 'is-active' in (page.locator('[data-sound-choice="off"]').get_attribute('class') or '')
+    page.locator('[data-sound-choice="on"]').click();page.wait_for_timeout(80)
+    volume=page.locator('[data-sound-volume]')
+    assert volume.is_enabled()
+    volume.fill('20');page.wait_for_timeout(40)
+    assert page.locator('[data-sound-volume-output]').inner_text().strip()=='20%'
+    page.locator('[data-action="sensory-test"]').click();page.wait_for_timeout(80)
+    haptic_on=page.locator('[data-haptics-choice="on"]')
+    haptic_off=page.locator('[data-haptics-choice="off"]')
+    if haptic_on.is_enabled():
+        haptic_off.click();page.wait_for_timeout(50)
+        assert 'is-active' in (page.locator('[data-haptics-choice="off"]').get_attribute('class') or '')
+        haptic_on.click();page.wait_for_timeout(50)
+    else:
+        assert haptic_off.is_disabled()
+    navigate('home');page.locator('[data-action="sound-toggle"]').wait_for()
+    assert page.locator('[data-action="sound-toggle"]').get_attribute('aria-pressed')=='true'
+    assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'Phase 11 mobile topbar overflow'
+    if not opt.isolated_dom:
+        page.locator('[data-action="sound-toggle"]').click();page.wait_for_timeout(100)
+        page.reload();page.locator('[data-library-search]').wait_for()
+        assert page.locator('[data-action="sound-toggle"]').get_attribute('aria-pressed')=='false'
+        page.locator('[data-action="sound-toggle"]').click()
+
     browser.close()
-result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
+result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency','Phase 11 sensory settings and persistence'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
 (OUT/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
 raise SystemExit(1 if errors else 0)
