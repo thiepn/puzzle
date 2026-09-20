@@ -1167,8 +1167,8 @@
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
   function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
   function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
-  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
-  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
+  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();sensoryCue(ui.paused?'pause':'resume',game);void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
+  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());sensoryCue('redo',game);await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
   function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
   function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
   async function requestGameHint(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.busy)return;ui.busy=true;const button=$('[data-game-hint]');if(button){button.disabled=true;button.textContent='Thinking…';}await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));if(state.currentActive!==a||a.completed||ui.paused){ui.busy=false;return;}const old=a.state._proofHintView?JSON.stringify(a.state._proofHintView):'',before=ui.feedback;try{await game.hint(a);if((a.state._proofHintView&&JSON.stringify(a.state._proofHintView)!==old)||ui.feedback!==before){a.hintsUsed=Math.min(100000,(a.hintsUsed||0)+1);await saveActive(a);}}catch(error){gameFeedback('A hint could not be calculated. Try again, or undo your last move.',a);}finally{ui.busy=false;if(state.currentActive===a){game.render(a);$('[data-game-hint]')?.focus({preventScroll:true});}}}
@@ -1350,10 +1350,12 @@
       if(m.wrong!==null&&wrong>m.wrong){
         root.dataset.motionEvent='error';
         document.querySelectorAll('.game-board-wrap .wrong').forEach(el=>p6Pulse(el,'motion-error',380));
+        sensoryCue('error',game);
       }
       if(game.id==='groups'&&m.solved!==null&&solved>m.solved){
         root.dataset.motionEvent='group-solved';
         const cards=document.querySelectorAll('.group-solved');p6Pulse(cards[cards.length-1],'motion-group-solved',560);
+        sensoryCue('progress',game);
       }
       if(game.id==='anagrams'&&m.picked!==null&&picked>m.picked){
         root.dataset.motionEvent='tile-picked';
@@ -1373,22 +1375,25 @@
       if(game.id==='word-grid'&&m.found!==null&&found>m.found){
         root.dataset.motionEvent='word-found';
         const words=document.querySelectorAll('.found-words span');p6Pulse(words[words.length-1],'motion-word-found',460);
+        sensoryCue('progress',game);
       }
       if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings){
         root.dataset.motionEvent='crossing-cleared';
         p6Pulse(document.querySelector('.crossing-count'),'motion-progress-good',420);
         p6Pulse(p6SelectedElement(game,a),'motion-node-good',360);
+        sensoryCue('progress',game);
       }
     }
 
     if(a.completed&&!m.completed){
       root.dataset.motionEvent='complete';
+      sensoryCue('complete',game);
       if(!reduced){
         p6Pulse(stage,'motion-complete',760);
         const panel=document.querySelector('.result-panel');p6Pulse(panel,'motion-result-in',720);p6SolveBurst(panel);
       }
     }
-    if(hintLevel!==null&&hintLevel!==m.hintLevel)p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);
+    if(hintLevel!==null&&hintLevel!==m.hintLevel){p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);sensoryCue('hint',game);}
     if(feedback&&feedback!==m.feedback)p6Pulse(document.querySelector('.play-feedback'),'motion-feedback-in',320);
     if(paused!==m.paused&&paused)p6Pulse(document.querySelector('.pause-cover'),'motion-pause-in',420);
 
@@ -1396,7 +1401,7 @@
   }
 
   function installPlayExperience(){
-    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
+    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();sensoryCue('undo',game);}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
     const wordleKey=fiveLetters.key;fiveLetters.key=function(a,key){if(key==='ENTER'&&a.state.guesses.some(g=>g.word===a.state.current)){toast('You already tried that word. Use the feedback to try a different guess.');return;}return wordleKey.call(this,a,key);};
     const groupsSubmit=groupsGame.submit;groupsGame.submit=async function(a){if(a.state.selected.length!==4)return;const key=[...a.state.selected].sort().join('|');a.triedGroups=a.triedGroups||[];if(a.triedGroups.includes(key)){toast('You already tried this combination. No extra mistake counted.');return;}a.triedGroups.push(key);if(a.triedGroups.length>200)a.triedGroups.shift();const picked=a.state.selected.map(id=>a.puzzle.tiles.find(t=>t.id===id)),counts={};for(const t of picked)counts[t.groupId]=(counts[t.groupId]||0)+1;await groupsSubmit.call(this,a);if(Math.max(...Object.values(counts))===3)toast('One away: three of those words share a group.');await saveActive(a);};
     const ladderCreate=wordLadder.create;wordLadder.create=async function(seed,difficulty){const a=await ladderCreate.call(this,seed,difficulty),path=acceptedLadderPath(a.puzzle.start,a.puzzle.target);if(path)a.puzzle.optimal=path.length-1;return a;};
