@@ -20,6 +20,7 @@ has(app,'const SENSORY_CATEGORY_BASE=','category sound identity missing');
 has(app,'window.AudioContext||window.webkitAudioContext','Web Audio feature detection missing');
 has(app,"typeof navigator.vibrate==='function'",'haptic feature detection missing');
 has(app,"state.settings.sound!=='on'",'sound mute guard missing');
+has(app,'if(state.settings.soundVolume<=0)return;','zero volume must be silent');
 has(app,"state.settings.haptics!=='on'",'haptic disable guard missing');
 has(app,'function sensoryTone(','local synthesis engine missing');
 has(app,'function sensoryCue(','central sensory cue router missing');
