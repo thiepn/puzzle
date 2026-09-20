@@ -1,15 +1,18 @@
-# Puzzle Arcade 1.5.0 — Onboarding, Tutorials & Learn Mode
+# Puzzle Arcade 1.6.0 — Difficulty Calibration & Puzzle Quality
 
-Phase 12 makes the 36-game catalog understandable without external instructions while keeping experienced-player friction near zero.
+Phase 13 moves the quality bar from presentation to the puzzles themselves.
 
-- Each game gets a one-time, non-blocking first-play coach.
-- Learn mode provides a replayable five-step lesson for every puzzle.
-- Lessons cover the objective, a strong first move, controls, strategy, and one interactive knowledge check.
-- Practice checks are sandboxed: they never mutate the player’s real puzzle.
-- Lesson progress resumes from the last completed step and persists locally.
-- Completed lessons are tracked in the Learn library with family filters and an overall completion meter.
-- First-play coaching can be disabled globally; Learn mode remains available.
-- Lesson progress can be reset independently from puzzle progress/statistics.
-- Phase 12 adds static and real-browser regression coverage while retaining the cumulative Phase 1–11 release matrix.
+- All 36 games now participate in one runtime difficulty/quality certification layer.
+- Every family has explicit property-based difficulty evidence instead of relying on a generic board-size label.
+- Hard certification requires a non-size reasoning signal such as search depth, clue scarcity, ambiguity, deductions, crossings, or equivalent family-specific pressure.
+- Malformed, already-solved, empty, and obviously trivial generations are rejected before play.
+- Families that promise exact uniqueness must retain their uniqueness certificate.
+- The original requested seed is evaluated first; deterministic fallback seeds are used only when that generation fails quality certification.
+- Mines is certified after the first click, when its no-guess layout actually exists.
+- Generated puzzles record quality score, calibrated difficulty score, raw evidence, non-size reasoning evidence, source seed, and acceptance state.
+- A Chromium certification pass generates Easy / Medium / Hard across all 36 games and blocks release on rejected samples or overlapping calibrated bands.
+- Existing Phase 1–12 regression and browser gates remain required.
 
-Storage schema remains **1**. Service-worker cache is **v24**.
+Storage schema remains **1**. Service-worker cache is **v25**.
+
+See `docs/PHASE13_DIFFICULTY_QUALITY.md` for the complete metric and acceptance contract.

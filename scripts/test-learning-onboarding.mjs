@@ -24,7 +24,7 @@ for(const id of ids){
 ok(ids.length===36,'expected 36 catalog games');
 
 ok(index.includes('data-route="learn"'),'Learn primary navigation missing');
-ok(app.includes("const BUILD_PHASE = 'Onboarding, Tutorials & Learn Mode';"),'Phase 12 build identity missing');
+ok(/const BUILD_PHASE = '[^']+';/.test(app),'release build identity missing');
 ok(app.includes("firstPlayCoach:'on'"),'first-play coach default missing');
 ok(app.includes('function sanitizeLearning('),'learning state sanitation missing');
 ok(app.includes('function learningStatus('),'learning status helper missing');

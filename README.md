@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.5.0 · Onboarding, Tutorials & Learn Mode · PWA cache v24**
+**Current release: 1.6.0 · Difficulty Calibration & Puzzle Quality · PWA cache v25**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Difficulty Calibration & Puzzle Quality 1.6.0
+
+Phase 13 audits the generated puzzle itself. All 36 games now feed a shared certification layer that measures family-specific difficulty evidence, rejects malformed/trivial output, retains exact uniqueness requirements where applicable, and records a quality certificate with every new puzzle.
+
+Easy / Medium / Hard are now release-tested in Chromium across the full catalog. Hard also needs a non-size reasoning signal—solver work, ambiguity, clue scarcity, deductions, crossings, lexical pressure, or the equivalent for that puzzle family—so increasing the board dimensions alone is not enough.
+
+See `docs/PHASE13_DIFFICULTY_QUALITY.md` for the complete metric table and certification contract.
 
 ## Onboarding, Tutorials & Learn Mode 1.5.0
 
@@ -210,7 +218,7 @@ See `docs/WAVE7_GLOBAL_SPLUS.md`, `docs/WAVE7_CERTIFICATION.json`, `docs/WAVE7_S
 
 ## Development direction
 
-The 36-game catalog and the per-game S+ feature waves are frozen. No additional games should be added before release. Remaining work should be global release certification: deeper endurance/fuzz coverage, full manual accessibility/screen-reader and device matrices, PWA update/migration tests, production cleanup, and release-candidate hardening.
+The 36-game catalog remains frozen. Phase 13 adds a permanent generation-quality gate on top of the earlier solver/content work; future puzzle changes should extend the measured evidence and certification contracts rather than weakening them. Remaining release work should preserve the cumulative regression matrix and focus on endurance, accessibility/device verification, PWA update behavior, and production hardening.
 
 
 ## Wave 8 — final certification

@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.5.0: onboarding and Learn mode release shell. */
-const APP_VERSION = '1.5.0';
-const CACHE_VERSION = 'v24';
+/* Puzzle Arcade 1.6.0: difficulty calibration and puzzle-quality release shell. */
+const APP_VERSION = '1.6.0';
+const CACHE_VERSION = 'v25';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
