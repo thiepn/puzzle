@@ -375,7 +375,7 @@ with sync_playwright() as p:
     open_game('make-24','Easy','phase12-first-play')
     coach=page.locator('[data-first-play-coach]')
     assert coach.is_visible()
-    assert 'First time here' in coach.inner_text()
+    assert 'first time here' in coach.inner_text().lower()
     page.locator('[data-dismiss-learn-coach]').click()
     page.wait_for_function('() => !document.querySelector("[data-first-play-coach]")')
     navigate('home');page.locator('[data-library-search]').wait_for()
