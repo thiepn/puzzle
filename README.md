@@ -1,8 +1,18 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.7.0 · Variety, Novelty & Anti-Repetition · PWA cache v26**
+**Current release: 1.8.0 · Generator Robustness, Stress Testing & Long-Run Reliability · PWA cache v27**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Generator Robustness, Stress Testing & Long-Run Reliability 1.8.0
+
+Phase 15 repeatedly exercises the final generator stack instead of trusting a few representative seeds. Every game and difficulty is tested for generator exceptions, deterministic replay, state isolation, Phase 13 quality acceptance, seed diversity, latency outliers, timing drift, and excessive fallback pressure.
+
+The normal CI release gate now performs **432 measured generator executions** on top of the existing interaction, difficulty, and variety suites. A separate weekly/manual deep workflow runs **1,728 measured generations** across four parallel shards and stores JSON reports for inspection.
+
+Mines receives special post-first-click stress coverage so the generated mine layout—not only the deferred pre-click shell—is certified.
+
+See `docs/PHASE15_GENERATOR_ROBUSTNESS.md` for the complete reliability contract.
 
 ## Variety, Novelty & Anti-Repetition 1.7.0
 
