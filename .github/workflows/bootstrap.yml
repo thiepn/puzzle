@@ -48,7 +48,7 @@ jobs:
           python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
           python scripts/test-difficulty-browser.py --base-url http://127.0.0.1:8080/ --samples 1
           python scripts/test-variety-browser.py --base-url http://127.0.0.1:8080/ --steps 3
-          python scripts/test-generator-stress-browser.py --base-url http://127.0.0.1:8080/ --samples 2
+          python scripts/test-generator-stress-browser.py --base-url http://127.0.0.1:8080/ --samples 4
 
   deploy:
     if: github.event_name == 'push'
