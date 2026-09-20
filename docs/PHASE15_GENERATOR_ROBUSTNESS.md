@@ -130,16 +130,16 @@ Mines cannot be fully certified before the first click. The stress system theref
 
 ### Pull request / release gate
 
-`python scripts/test-generator-stress-browser.py --samples 2`
+`python scripts/test-generator-stress-browser.py --samples 4`
 
 This covers:
 
 - 36 games
 - 3 difficulties
-- 2 requested seeds per tier
+- 4 requested seeds per tier
 - first pass + deterministic replay pass
 
-That is **432 measured generator executions** in addition to the existing interaction, difficulty, and variety suites.
+That is **864 measured generator executions** in addition to the existing interaction, difficulty, and variety suites.
 
 ### Deep long-run workflow
 
@@ -152,6 +152,8 @@ That is **432 measured generator executions** in addition to the existing intera
 - first pass + reverse deterministic replay
 
 A complete deep run executes **1,728 measured puzzle generations** across all 36 games and stores a JSON report artifact for every shard.
+
+The release run also captures Chromium JS heap usage before and after the full catalog pass. A catastrophic growth of more than 128 MiB fails certification; smaller growth is reported because intentional generator-analysis caches warm during the run.
 
 The deep workflow is intentionally separate from the normal deployment gate so release feedback remains bounded while long-run testing can be substantially heavier.
 
