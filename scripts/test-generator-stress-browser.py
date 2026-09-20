@@ -14,6 +14,7 @@ def compact_tier(row):
         "qualityRejects":row.get("qualityRejects"),
         "determinismErrors":len(row.get("determinismErrors",[])),
         "stateSharingErrors":len(row.get("stateSharingErrors",[])),
+        "errors":row.get("errors",[]),
         "uniqueDigests":row.get("uniqueDigests"),
         "uniqueContent":row.get("uniqueContent"),
         "requiredUnique":row.get("requiredUnique"),
