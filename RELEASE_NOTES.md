@@ -1,18 +1,20 @@
-# Puzzle Arcade 1.6.0 — Difficulty Calibration & Puzzle Quality
+# Puzzle Arcade 1.7.0 — Variety, Novelty & Anti-Repetition
 
-Phase 13 moves the quality bar from presentation to the puzzles themselves.
+Phase 14 prevents a run of individually valid puzzles from feeling like repetitions of the same board.
 
-- All 36 games now participate in one runtime difficulty/quality certification layer.
-- Every family has explicit property-based difficulty evidence instead of relying on a generic board-size label.
-- Hard certification requires a non-size reasoning signal such as search depth, clue scarcity, ambiguity, deductions, crossings, or equivalent family-specific pressure.
-- Malformed, already-solved, empty, and obviously trivial generations are rejected before play.
-- Families that promise exact uniqueness must retain their uniqueness certificate.
-- The original requested seed is evaluated first; deterministic fallback seeds are used only when that generation fails quality certification.
-- Mines is certified after the first click, when its no-guess layout actually exists.
-- Generated puzzles record quality score, calibrated difficulty score, raw evidence, non-size reasoning evidence, source seed, and acceptance state.
-- A Chromium certification pass generates Easy / Medium / Hard across all 36 games and blocks release on rejected samples or overlapping calibrated bands.
-- Existing Phase 1–12 regression and browser gates remain required.
+- All 36 games now have explicit content/structure variety fingerprints.
+- New Puzzle compares bounded candidate generations against recent same-game history and the current board.
+- Exact content reuse, repeated canonical shapes, repeated themes, and near-identical difficulty profiles reduce a candidate's novelty score.
+- Square-board fingerprints canonicalize rotations/reflections where those transformations do not represent meaningful structural novelty.
+- Region partitions normalize region IDs, so simple relabeling does not fake variety.
+- Heavy solver-backed games use smaller candidate sets to keep latency bounded.
+- Games without recent comparable history generate normally without extra work.
+- Completed results persist compact Phase 14 fingerprints for future novelty decisions.
+- Mines fingerprints its generated post-first-click layout and uses a simulated center-first-click only for candidate selection/certification.
+- Surprise Me avoids the five most recent game IDs when alternatives exist and prefers a different family from the latest result.
+- Shared explicit seeds remain deterministic and bypass local novelty selection.
+- Chromium certification runs deterministic multi-puzzle sequences across all 36 games and rejects immediate near-duplicates.
 
-Storage schema remains **1**. Service-worker cache is **v25**.
+Storage schema remains **1**. Service-worker cache is **v26**.
 
-See `docs/PHASE13_DIFFICULTY_QUALITY.md` for the complete metric and acceptance contract.
+See `docs/PHASE14_VARIETY_ANTI_REPETITION.md` for the full fingerprint and certification contract.
