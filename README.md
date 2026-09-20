@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.4.0 · Audio, Haptics & Sensory Feedback · PWA cache v23**
+**Current release: 1.5.0 · Onboarding, Tutorials & Learn Mode · PWA cache v24**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Onboarding, Tutorials & Learn Mode 1.5.0
+
+Phase 12 adds a complete learning layer for all 36 puzzles. Every game now has a lightweight first-play coach plus a replayable five-step lesson covering the goal, first move, controls, strategy, and one safe practice check. Lessons never alter the real puzzle being played.
+
+A dedicated Learn library tracks lesson progress locally, supports family filtering, resumes partially completed lessons, and marks completed lessons. Experienced players can disable first-play coaching entirely while keeping Learn mode available at any time.
+
+See `docs/PHASE12_LEARN_MODE.md` for the onboarding and lesson architecture.
 
 ## Audio, Haptics & Sensory Feedback 1.4.0
 
@@ -60,6 +68,7 @@ There are no placeholder games in the locked V1 catalog.
 - light / dark / system appearance
 - mouse, touch and keyboard input
 - optional synthesized puzzle sounds and feature-detected haptics
+- first-play coaching and replayable Learn mode for all 36 games
 - offline service worker / installable PWA
 - no accounts, lives, daily lockouts or required remote API
 
