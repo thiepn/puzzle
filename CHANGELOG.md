@@ -1,3 +1,16 @@
+# 1.7.0 — Variety, Novelty & Anti-Repetition
+
+- Added per-game content and structural fingerprints across all 36 puzzle families.
+- Added bounded novelty-aware candidate selection for New Puzzle.
+- Added recent same-game comparison using completed history plus the current board.
+- Added canonical rotation/reflection matching for square-board structures and normalized region-partition comparison.
+- Added exact-content and near-duplicate penalties without breaking deterministic shared seeds.
+- Added compact variety fingerprints to completed result metrics.
+- Added a five-game cooldown and cross-family preference to Surprise Me.
+- Added static Phase 14 regression coverage and Chromium multi-puzzle variety certification.
+- Preserved the complete Phase 1–13 quality/difficulty and interaction gates.
+- Advanced the PWA cache to v26; IndexedDB schema remains 1.
+
 # 1.6.0 — Difficulty Calibration & Puzzle Quality
 
 - Added a catalog-wide difficulty and generation-quality certification layer for all 36 games.
