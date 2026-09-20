@@ -366,7 +366,71 @@ with sync_playwright() as p:
         assert page.locator('[data-action="sound-toggle"]').get_attribute('aria-pressed')=='false'
         page.locator('[data-action="sound-toggle"]').click()
 
+    # Phase 12 onboarding, tutorials and Learn mode.
+    page.set_viewport_size({'width':390,'height':844})
+    open_game('make-24','Easy','phase12-first-play')
+    coach=page.locator('[data-first-play-coach]')
+    assert coach.is_visible()
+    assert 'First time here' in coach.inner_text()
+    page.locator('[data-dismiss-learn-coach]').click()
+    page.wait_for_function('() => !document.querySelector("[data-first-play-coach]")')
+    navigate('home');page.locator('[data-library-search]').wait_for()
+    open_game('make-24','Easy','phase12-first-play')
+    assert page.locator('[data-first-play-coach]').count()==0
+
+    navigate('learn');page.locator('.learn-page').wait_for()
+    assert page.locator('.learn-card').count()==36
+    assert page.locator('[data-route="learn"]').get_attribute('aria-current')=='page'
+    assert not page.evaluate('document.documentElement.scrollWidth>innerWidth+2'),'Phase 12 Learn mobile overflow'
+    page.locator('[data-learn-filter="word"]').click()
+    page.wait_for_function('() => document.querySelectorAll(".learn-card").length===11')
+    page.locator('[data-learn-filter="all"]').click()
+    page.wait_for_function('() => document.querySelectorAll(".learn-card").length===36')
+
+    # Partial lesson progress resumes at the same step.
+    page.locator('[data-learn-open="bridges"]').click()
+    page.locator('.learn-modal').wait_for()
+    assert page.locator('.learn-step-meter').get_attribute('aria-valuenow')=='1'
+    page.locator('[data-learn-next]').click()
+    page.wait_for_function('() => document.querySelector(".learn-step-meter")?.getAttribute("aria-valuenow")==="2"')
+    page.locator('[data-learn-next]').click()
+    page.wait_for_function('() => document.querySelector(".learn-step-meter")?.getAttribute("aria-valuenow")==="3"')
+    page.locator('[data-learn-close]').click()
+    page.wait_for_function('() => !document.querySelector(".learn-modal")')
+    page.locator('[data-learn-open="bridges"]').click()
+    page.wait_for_function('() => document.querySelector(".learn-step-meter")?.getAttribute("aria-valuenow")==="3"')
+    page.locator('[data-learn-close]').click()
+
+    # Complete a five-step Sudoku lesson and verify the practice gate.
+    page.locator('[data-learn-open="sudoku"]').click()
+    page.locator('.learn-modal').wait_for()
+    for expected in ['2','3','4','5']:
+        page.locator('[data-learn-next]').click()
+        page.wait_for_function('(n)=>document.querySelector(".learn-step-meter")?.getAttribute("aria-valuenow")===n',arg=expected)
+    assert page.locator('[data-learn-finish]').is_disabled()
+    page.locator('[data-learn-answer="1"]').click()
+    assert page.locator('[data-learn-finish]').is_disabled()
+    assert 'Not quite' in page.locator('[data-learn-feedback]').inner_text()
+    page.locator('[data-learn-answer="0"]').click()
+    assert page.locator('[data-learn-finish]').is_enabled()
+    page.locator('[data-learn-finish]').click()
+    page.wait_for_function('() => !document.querySelector(".learn-modal")')
+    sudoku_learn=page.locator('[data-learn-open="sudoku"]')
+    assert 'is-complete' in (sudoku_learn.get_attribute('class') or '')
+    assert 'Learned' in sudoku_learn.inner_text()
+
+    if not opt.isolated_dom:
+        page.reload();page.locator('.learn-page').wait_for()
+        sudoku_learn=page.locator('[data-learn-open="sudoku"]')
+        assert 'is-complete' in (sudoku_learn.get_attribute('class') or '')
+
+    # Experienced users can disable automatic first-play coaching.
+    navigate('settings');page.locator('[data-first-play-choice="off"]').wait_for()
+    page.locator('[data-first-play-choice="off"]').click()
+    open_game('hitori','Easy','phase12-coach-off')
+    assert page.locator('[data-first-play-coach]').count()==0
+
     browser.close()
-result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency','Phase 11 sensory settings and persistence'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
+result={'pass':not errors,'routes':routes,'gameControlChecks':controls,'browserHintChecks':hints,'interactionScenarios':['undo/redo','undo/redo shortcuts','redo invalidation','pause clock','navigate/restore','Nonogram right-click and keyboard','tile shuffle preserves input','progressive hints and dismissal','cipher frequency','Phase 11 sensory settings and persistence','Phase 12 onboarding, tutorial resume and Learn completion'],'errors':errors,'environment':'isolated DOM with mocked storage' if opt.isolated_dom else 'HTTP origin with real browser storage'}
 (OUT/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
 raise SystemExit(1 if errors else 0)
