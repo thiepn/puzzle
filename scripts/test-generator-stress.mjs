@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+
+const root=new URL('../',import.meta.url);
+const app=fs.readFileSync(new URL('app.js',root),'utf8');
+const ids=["five-letters","groups","word-ladder","anagrams","letter-hive","word-grid","theme-trail","word-pieces","mini-crossword","cryptogram","word-search","sudoku","killer-sudoku","kakuro","unequal","arithmetic-cages","make-24","mines","nonogram","loop","bridges","light-up","islands","hitori","binary","queens","number-path","tents","rectangles","dominoes","towers","fillomino","network","sliding-tiles","lights-out","untangle"];
+let checks=0;
+const ok=(v,m)=>{assert.ok(v,m);checks++;};
+ok(ids.length===36,'expected 36 games');
+ok(app.includes('const P15_VERSION=15;'),'Phase 15 version missing');
+ok(app.includes('function p15Digest('),'stable generator digest missing');
+ok(app.includes('function p15SharesStateObjects('),'state reference isolation check missing');
+ok(app.includes('function p15CreateMeasured('),'measured generation wrapper missing');
+ok(app.includes('function p15StressTier('),'tier stress audit missing');
+ok(app.includes('function p15StressGame('),'game stress audit missing');
+ok(app.includes('function p15StressCatalog('),'catalog stress audit missing');
+ok(app.includes('determinismErrors'),'deterministic replay check missing');
+ok(app.includes('qualityRejects'),'quality-gate stress check missing');
+ok(app.includes('diversityPass'),'finite-bank diversity check missing');
+ok(app.includes('driftRatio'),'long-run timing drift check missing');
+ok(app.includes('fallbackRate'),'quality fallback pressure check missing');
+ok(app.includes('P15_DEFAULT_BUDGET_MS'),'generation latency budget missing');
+ok(app.includes('P15_HEAVY_BUDGET_MS'),'heavy-generator latency budget missing');
+ok(app.includes("'z'.repeat(MAX_SHARED_SEED_LENGTH)"),'max-length seed corpus missing');
+ok(app.includes("if(k===1)return '0';"),'minimal seed corpus missing');
+ok(app.includes('window.__PA_GENERATOR_STRESS__'),'browser stress audit API missing');
+ok(app.includes('auditCatalog:p15StressCatalog'),'catalog stress export missing');
+ok(app.includes("id==='mines'&&!active.puzzle.mines"),'Mines post-first-click stress path missing');
+console.log(JSON.stringify({pass:true,checks,games:ids.length,phase:15},null,2));

@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.7.0';
-  const BUILD_PHASE = 'Variety, Novelty & Anti-Repetition';
+  const APP_VERSION = '1.8.0';
+  const BUILD_PHASE = 'Generator Robustness, Stress Testing & Long-Run Reliability';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -2192,11 +2192,27 @@
   }
   const MAKE24_TIER_NUMS={"Easy":[[1,1,3,8],[1,1,4,6],[1,2,6,8],[4,6,7,7],[2,2,4,6],[1,2,3,4],[3,4,4,8],[2,2,3,8],[2,4,6,8],[1,2,2,6],[4,6,8,8],[1,7,8,9],[3,5,5,8],[3,6,6,8],[3,3,4,6],[3,7,7,8],[3,8,9,9],[4,5,5,6],[4,6,9,9],[1,2,4,8],[1,6,8,9],[2,5,8,9],[3,6,7,8],[4,5,7,8],[2,3,4,9],[2,3,6,9],[3,4,8,9],[1,2,6,6],[2,3,4,6],[2,6,7,9],[4,6,6,8],[2,3,6,6],[1,6,9,9],[2,3,4,4],[2,6,8,9],[4,6,6,6],[3,8,8,8],[3,3,6,9],[3,3,3,8],[4,4,4,6],[2,4,4,8],[1,3,8,9],[1,2,3,6],[1,2,3,9],[3,4,5,7],[1,3,4,9],[3,5,7,9],[1,3,6,6],[5,6,6,7],[1,2,5,8],[1,2,4,4],[1,2,6,9],[3,6,6,9],[1,3,3,4],[1,3,5,9],[3,4,5,8],[1,1,4,8],[2,5,6,8],[4,5,6,9],[1,2,5,7],[1,3,4,4],[2,2,6,8],[2,4,8,8],[1,3,6,7],[1,1,3,6],[1,1,3,7],[1,1,3,9],[1,3,3,5],[1,4,4,7],[3,3,5,6],[4,4,7,9],[4,4,8,8],[1,3,6,8],[4,4,6,9],[1,4,7,8],[2,8,9,9],[1,1,4,5],[1,2,3,8],[1,2,8,8],[2,2,4,8],[1,7,9,9],[1,8,8,9],[1,1,2,8],[1,3,3,7],[1,4,4,5],[2,4,6,7],[1,4,6,8],[2,3,5,6],[2,4,5,8],[2,4,6,6],[3,5,6,9],[2,2,4,5],[2,4,5,6],[2,5,6,7],[2,6,8,8],[3,5,8,8],[1,2,6,7],[3,4,4,6],[1,3,4,5],[1,4,4,8],[2,3,5,7],[2,4,4,6],[2,7,7,8],[3,3,9,9],[1,3,3,9],[2,3,3,8],[1,1,4,7],[1,4,8,8],[2,3,7,8],[1,2,7,8],[1,5,9,9],[1,7,7,9],[1,7,8,8],[2,3,3,6],[2,3,3,9],[2,3,9,9],[2,4,9,9],[5,5,6,8],[5,5,7,7],[1,1,5,6],[1,5,8,8],[2,4,6,9],[3,4,7,7],[3,5,6,8],[4,6,8,9],[1,2,3,5],[1,2,3,7],[1,2,5,6],[1,2,7,9],[1,3,5,8],[1,8,8,8],[3,3,4,9],[3,4,5,5],[1,5,6,9],[3,6,7,9],[4,4,5,8],[4,6,7,8]],"Medium":[[1,2,4,9],[1,2,5,9],[1,3,4,8],[2,2,2,3],[2,2,2,8],[2,2,3,9],[2,4,7,9],[3,4,4,5],[1,2,8,9],[3,4,6,8],[3,6,8,9],[1,3,4,7],[1,4,8,9],[1,5,6,6],[2,3,5,9],[2,6,6,8],[3,3,4,8],[3,4,7,9],[3,4,9,9],[4,5,7,9],[4,6,6,7],[4,7,8,9],[5,6,7,8],[1,2,4,7],[2,2,4,7],[2,3,4,5],[2,3,4,7],[2,4,4,4],[3,4,6,6],[1,1,5,5],[1,2,4,6],[1,4,4,9],[2,3,5,5],[3,3,5,9],[3,5,6,7],[3,5,7,8],[3,7,8,8],[3,9,9,9],[5,6,8,9],[6,6,6,9],[2,2,2,4],[2,2,3,6],[2,2,6,6],[2,2,7,8],[2,6,6,6],[1,3,6,9],[2,2,8,8],[2,3,3,7],[2,3,4,8],[2,3,8,8],[3,6,6,6],[3,8,8,9],[4,4,5,6],[4,5,6,6],[6,7,9,9],[1,3,8,8],[2,3,6,8],[2,3,7,9],[3,3,6,7],[3,4,4,9],[5,5,6,7],[5,5,7,8],[1,1,2,6],[1,1,5,7],[1,3,3,6],[2,2,3,3],[2,3,5,8],[2,5,5,9],[3,3,3,6],[3,7,7,7],[3,3,7,9],[1,4,5,5],[1,5,8,9],[2,3,6,7],[2,4,5,7],[2,4,5,9],[3,6,9,9],[4,5,5,9],[5,5,8,9],[5,7,8,8],[5,7,8,9],[1,2,2,5],[1,3,5,6],[2,2,4,9],[5,5,5,9],[3,5,9,9],[1,2,4,5],[1,4,5,7],[1,5,6,7],[1,5,7,8],[2,3,8,9],[2,4,7,8],[2,7,8,8],[3,3,6,8],[3,4,6,9],[3,5,6,6],[3,5,8,9],[3,6,6,7],[3,6,8,8],[4,4,6,8],[4,4,7,8],[4,5,5,5],[4,5,6,7],[4,5,8,9],[4,7,8,8],[5,5,5,6],[6,6,7,9],[6,8,8,9],[1,1,3,4],[1,1,6,6],[1,2,2,4],[1,2,3,3],[2,2,3,7],[2,2,5,6],[2,3,7,7],[3,3,7,8],[6,6,6,6],[1,2,5,5],[1,4,6,7],[1,6,8,8],[2,2,8,9],[2,4,4,7],[2,6,7,8],[3,3,4,5],[3,3,4,7],[3,4,4,7],[3,4,5,9],[5,6,8,8],[1,2,2,7],[1,5,6,8],[1,6,6,9],[2,2,5,9],[2,8,8,8],[2,8,8,9],[3,3,8,9],[3,4,5,6],[3,7,8,9],[4,4,4,8],[4,4,5,5],[4,4,5,7],[4,5,6,8],[4,6,6,9],[4,8,8,9],[5,5,6,6],[6,6,6,8],[6,6,8,9]],"Hard":[[6,8,9,9],[1,2,2,9],[1,3,3,3],[1,4,4,4],[2,2,3,4],[2,2,5,5],[2,3,3,3],[2,5,5,7],[2,5,7,7],[4,4,4,4],[1,2,2,8],[1,3,5,7],[1,3,7,8],[1,4,5,8],[1,5,5,6],[2,4,4,5],[2,6,6,9],[2,6,9,9],[3,6,7,7],[3,7,9,9],[4,5,7,7],[4,7,7,8],[5,8,8,9],[4,8,8,8],[1,1,2,7],[1,1,3,5],[1,1,4,4],[2,2,4,4],[2,2,5,7],[2,2,6,7],[2,3,3,5],[3,3,3,4],[3,3,3,5],[3,3,4,4],[1,3,3,8],[1,4,4,6],[1,4,5,9],[1,4,6,6],[1,4,6,9],[2,2,7,7],[2,4,8,9],[2,5,6,6],[2,5,7,9],[3,3,3,7],[3,5,5,7],[4,4,4,7],[4,4,8,9],[5,6,9,9],[5,8,8,8],[1,1,4,9],[1,3,7,7],[1,4,7,9],[1,5,7,9],[1,3,7,9],[4,6,7,9],[2,6,6,7],[1,1,2,9],[1,1,5,8],[1,4,7,7],[1,5,5,9],[1,6,7,9],[2,2,6,9],[2,5,8,8],[3,4,7,8],[3,5,5,6],[4,4,4,9],[5,6,6,8],[5,6,7,9],[5,7,7,9],[6,8,8,8],[7,8,8,9],[1,1,6,8],[2,5,6,9],[1,1,1,8],[1,1,6,9],[1,1,8,8],[2,2,2,5],[2,2,2,9],[2,4,5,5],[1,3,9,9],[6,6,8,8],[6,7,8,9],[2,2,2,7],[2,2,3,5],[2,2,5,8],[2,4,7,7],[2,5,7,8],[2,7,8,9],[3,3,3,3],[3,3,5,7],[3,4,4,4],[5,6,6,9],[4,5,8,8],[1,6,6,6],[2,4,4,9],[3,5,5,9],[2,5,5,8],[3,3,6,6],[4,4,4,5],[4,5,9,9],[1,2,7,7],[3,3,3,9],[3,3,5,5],[3,7,7,9],[4,5,5,7],[4,5,5,8],[4,7,7,7],[4,7,9,9],[4,8,9,9],[5,5,5,5],[5,5,8,8],[5,5,9,9],[5,6,6,6],[5,6,7,7],[3,3,7,7],[1,5,5,5],[4,4,7,7],[1,4,5,6],[1,3,4,6],[1,6,6,8],[3,3,8,8]]};
   function make24Catalog(){if(make24CatalogCache)return make24CatalogCache;return make24CatalogCache=Object.fromEntries(Object.entries(MAKE24_TIER_NUMS).map(([k,arr])=>[k,arr.map(nums=>({nums,analysis:null}))]));}
+  const make24EligibleCache=new Map();
+  function make24TierEvidence(m){
+    const norm=(v,lo,hi)=>hi>lo?clamp((Number(v)-lo)/(hi-lo),0,1):0,q=m.solutionCount||1,min=Number.isFinite(m.minCost)?m.minCost:0,div=!!m.requiresDivision,frac=!!m.requiresFraction;
+    const raw=.42*norm(min,2,9)+.28*(1-norm(q,1,16))+.15*(div?1:0)+.15*(frac?1:0);
+    const secondary=.48*norm(min,2,9)+.32*(1-norm(q,1,16))+.20*((div?1:0)+(frac?1:0))/2;
+    return {raw,secondary};
+  }
+  function make24FitsTier(m,difficulty){
+    const e=make24TierEvidence(m),band={Easy:[0,.72],Medium:[.08,.92],Hard:[.28,1]}[difficulty]||[.08,.92];
+    return e.raw>=band[0]&&e.raw<=band[1]&&(difficulty!=='Hard'||e.secondary>=.10);
+  }
+  function make24Eligible(difficulty){
+    if(make24EligibleCache.has(difficulty))return make24EligibleCache.get(difficulty);
+    const source=make24Catalog()[difficulty]||make24Catalog().Medium,eligible=source.filter(entry=>{entry.analysis??=analyze24Numbers(entry.nums);return make24FitsTier(entry.analysis,difficulty);});
+    const out=eligible.length?eligible:source;make24EligibleCache.set(difficulty,out);return out;
+  }
 
   const make24={
-    id:'make-24',name:'Make 24',generatorVersion:3,description:byId['make-24'].description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],
+    id:'make-24',name:'Make 24',generatorVersion:4,description:byId['make-24'].description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],
     rules:{objective:'Use all four numbers exactly once to make 24.',items:['Choose two values and an operation to combine them.','Use +, −, ×, and ÷.','Intermediate fractions are allowed.','When one value remains, it must equal exactly 24.']},
-    async create(seed,difficulty='Medium'){const r=rng(`${seed}:make24:v3`),entry=pick(make24Catalog()[difficulty]||make24Catalog().Medium,r),nums=shuffle([...entry.nums],r),m=analyze24Numbers(entry.nums);return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle:{nums,difficultyScore:+m.score.toFixed(2),difficultyMetrics:{solutionCount:m.solutionCount,requiresDivision:m.requiresDivision,requiresFraction:m.requiresFraction,minComplexity:+m.minCost.toFixed(2)},generatorVersion:3},state:{values:nums.map((n,i)=>({...frac(n),id:`v${i}`})),first:null,op:null,history:[]}}},
+    async create(seed,difficulty='Medium'){const r=rng(`${seed}:make24:v3`),entry=pick(make24Eligible(difficulty),r),nums=shuffle([...entry.nums],r),m=entry.analysis??analyze24Numbers(entry.nums);return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle:{nums,difficultyScore:+m.score.toFixed(2),difficultyMetrics:{solutionCount:m.solutionCount,requiresDivision:m.requiresDivision,requiresFraction:m.requiresFraction,minComplexity:+m.minCost.toFixed(2)},generatorVersion:4},state:{values:nums.map((n,i)=>({...frac(n),id:`v${i}`})),first:null,op:null,history:[]}}},
     async save(a){return saveActive(a);},
     render(a){const values=`<div class="make24"><div class="make24-target">24</div><div class="value-row">${a.state.values.map(v=>`<button class="value-tile ${a.state.first===v.id?'selected':''}" data-value-id="${v.id}">${v.d===1?v.n:`${v.n}/${v.d}`}</button>`).join('')}</div><div class="op-row">${['+','-','×','÷'].map(o=>`<button class="op-button ${a.state.op===o?'selected':''}" data-op="${o}">${o}</button>`).join('')}</div><div class="history-list">${a.state.history.map(h=>`<div>${esc(h.text)}</div>`).join('')}</div></div>`;const result=a.completed?resultPanel(a,this,`<div><strong>${a.state.history.length}</strong><span>Steps</span></div>`):'';main.innerHTML=baseGameShell(byId[this.id],a,values,`<div class="toolbar"><button data-m24-undo>Undo</button><button data-m24-reset>Restart expression</button></div>${result}`);bindGameShell(this,a);this.bind(a);if(a.completed)bindResult(a,this);},
     bind(a){$$('[data-value-id]').forEach(b=>b.onclick=()=>this.value(a,b.dataset.valueId));$$('[data-op]').forEach(b=>b.onclick=()=>{a.state.op=b.dataset.op;this.render(a)});$('[data-m24-undo]').onclick=()=>this.undo(a);$('[data-m24-reset]').onclick=()=>this.reset(a);},
@@ -2827,10 +2843,19 @@
 
   // ---------- Anagrams ----------
   function anagramPool(difficulty){const p=WORD_CONTENT.anagramSets?.filter(x=>x.difficulty===difficulty);if(p?.length)return p;return (ANAGRAM_BANK[difficulty]||ANAGRAM_BANK.Medium).map((w,i)=>({id:`legacy-ana-${i}`,letters:[...w].sort().join(''),answers:[w],difficulty}));}
+  const anagramEligibleCache=new Map();
+  function anagramTierEvidence(entry){
+    const chars=String(entry.letters||''),counts={};for(const c of chars)counts[c]=(counts[c]||0)+1;
+    let bits=0;for(let i=2;i<=chars.length;i++)bits+=Math.log2(i);for(const n of Object.values(counts))for(let i=2;i<=n;i++)bits-=Math.log2(i);
+    const norm=(v,lo,hi)=>hi>lo?clamp((v-lo)/(hi-lo),0,1):0,amb=norm((entry.answers||[]).length,1,5);
+    return {raw:.72*norm(bits,4,15)+.28*amb,secondary:.6*norm(bits,4,15)+.4*amb};
+  }
+  function anagramFitsTier(entry,difficulty){const e=anagramTierEvidence(entry),band={Easy:[0,.72],Medium:[.08,.92],Hard:[.28,1]}[difficulty]||[.08,.92];return e.raw>=band[0]&&e.raw<=band[1]&&(difficulty!=='Hard'||e.secondary>=.10);}
+  function anagramEligiblePool(difficulty){if(anagramEligibleCache.has(difficulty))return anagramEligibleCache.get(difficulty);const source=anagramPool(difficulty),eligible=source.filter(x=>String(x.letters||'').length>=5&&new Set(String(x.letters||'')).size>1&&anagramFitsTier(x,difficulty)),out=eligible.length?eligible:source;anagramEligibleCache.set(difficulty,out);return out;}
   const anagramsGame={
-    id:'anagrams',name:'Anagrams',generatorVersion:4,description:byId.anagrams.description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],
+    id:'anagrams',name:'Anagrams',generatorVersion:5,description:byId.anagrams.description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],
     rules:{objective:'Rearrange every letter to form any valid full anagram.',items:['Use every displayed tile exactly once.','Any dictionary-valid full anagram is accepted, not only the originally curated answer.','You can remove the last tile or clear the whole attempt.','Hints target the intended familiar answer while alternate valid anagrams still solve the puzzle.']},
-    async create(seed,difficulty='Medium'){const r=rng(`${seed}:anagrams:v4`),entry=pick(anagramPool(difficulty),r),answers=[...entry.answers],answer=pick(answers,r),letters=shuffle(entry.letters.split(''),r);if(letters.join('')===answer&&letters.length>1)[letters[0],letters[1]]=[letters[1],letters[0]];return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle:{contentId:entry.id,answer,validAnswers:answers,letters,generatorVersion:4},state:{selected:[],history:[],attempts:0}};},
+    async create(seed,difficulty='Medium'){const r=rng(`${seed}:anagrams:v5`),entry=pick(anagramEligiblePool(difficulty),r),answers=[...entry.answers],answer=pick(answers,r),letters=shuffle(entry.letters.split(''),r);if(letters.join('')===answer&&letters.length>1){const j=letters.findIndex((c,i)=>i>0&&c!==letters[0]);if(j>0)[letters[0],letters[j]]=[letters[j],letters[0]];}return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle:{contentId:entry.id,answer,validAnswers:answers,letters,generatorVersion:5},state:{selected:[],history:[],attempts:0}};},
     async save(a){return saveActive(a);},current(a){return a.state.selected.map(i=>a.puzzle.letters[i]).join('');},answers(a){return [...new Set([...(a.puzzle.validAnswers||[]),...acceptedAnagrams(a.puzzle.letters.join(''))])];},
     render(a){const word=this.current(a),board=`<div class="anagram-wrap"><div class="anagram-answer">${Array.from({length:a.puzzle.letters.length},(_,i)=>`<span>${word[i]||''}</span>`).join('')}</div><div class="anagram-tiles">${a.puzzle.letters.map((c,i)=>`<button data-anagram-tile="${i}" class="${a.state.selected.includes(i)?'used':''}" aria-pressed="${a.state.selected.includes(i)}">${c}</button>`).join('')}</div>${this.answers(a).length>1?`<p class="subtle">${this.answers(a).length} complete dictionary anagrams are accepted.</p>`:''}</div>`,controls=`<div class="toolbar"><button data-anagram-back>Remove last</button><button data-anagram-clear>Clear</button><button data-anagram-submit ${a.state.selected.length===a.puzzle.letters.length?'':'disabled'}>Submit</button></div>${a.completed?resultPanel(a,this,`<div><strong>${a.state.attempts}</strong><span>Attempts</span></div>`):''}`;main.innerHTML=baseGameShell(byId[this.id],a,board,controls);bindGameShell(this,a);this.bind(a);if(a.completed)bindResult(a,this);},
     bind(a){$$('[data-anagram-tile]').forEach(b=>b.onclick=()=>this.tile(a,+b.dataset.anagramTile));$('[data-anagram-back]').onclick=()=>this.back(a);$('[data-anagram-clear]').onclick=()=>this.clear(a);$('[data-anagram-submit]').onclick=()=>this.submit(a);window.onkeydown=e=>{if(a.completed||overlayRoot.innerHTML)return;const k=e.key.toUpperCase();if(/^[A-Z]$/.test(k)){const i=a.puzzle.letters.findIndex((c,j)=>c===k&&!a.state.selected.includes(j));if(i>=0){e.preventDefault();this.tile(a,i);}}else if(e.key==='Backspace'){e.preventDefault();this.back(a)}else if(e.key==='Enter'){e.preventDefault();this.submit(a)}};},
@@ -2877,9 +2902,14 @@
   }
 
   function themeTrailPool(difficulty){const p=WORD_CONTENT.themeTrailBoards?.filter(x=>x.difficulty===difficulty);if(p?.length)return p;return THEME_TRAILS.filter(x=>x.difficulty===difficulty).map((x,i)=>({...buildThemeTrail(x),id:`legacy-trail-${i}`}));}
+  const themeTrailEligibleCache=new Map();
+  function themeTrailTurns(path,n=5){if(!Array.isArray(path)||path.length<3)return 0;let t=0,last=null;for(let k=1;k<path.length;k++){const a=path[k-1],b=path[k],v=[Math.sign(Math.floor(b/n)-Math.floor(a/n)),Math.sign(b%n-a%n)];if(last&&(v[0]!==last[0]||v[1]!==last[1]))t++;last=v;}return t/(path.length-2);}
+  function themeTrailTierEvidence(src){const norm=(v,lo,hi)=>hi>lo?clamp((v-lo)/(hi-lo),0,1):0,avg=(src.words||[]).reduce((sum,w)=>sum+String(w).length,0)/Math.max(1,(src.words||[]).length),turn=(src.paths||[]).reduce((sum,p)=>sum+themeTrailTurns(p,5),0)/Math.max(1,(src.paths||[]).length);return {raw:.45*norm(avg,3,7)+.55*turn,secondary:turn};}
+  function themeTrailFitsTier(src,difficulty){const e=themeTrailTierEvidence(src),band={Easy:[0,.72],Medium:[.08,.92],Hard:[.28,1]}[difficulty]||[.08,.92];return e.raw>=band[0]&&e.raw<=band[1]&&(difficulty!=='Hard'||e.secondary>=.10);}
+  function themeTrailEligiblePool(difficulty){if(themeTrailEligibleCache.has(difficulty))return themeTrailEligibleCache.get(difficulty);const source=themeTrailPool(difficulty),eligible=source.filter(x=>themeTrailFitsTier(x,difficulty)),out=eligible.length?eligible:source;themeTrailEligibleCache.set(difficulty,out);return out;}
   const themeTrailGame={
-    id:'theme-trail',name:'Theme Trail',generatorVersion:4,description:byId['theme-trail'].description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],rules:{objective:'Find every themed word by tracing adjacent letters.',items:['All answers belong to the displayed theme.','Trace neighboring cells without reusing a cell inside the same word.','Correct words lock into the board.','Every cell belongs to exactly one themed answer.']},
-    async create(seed,difficulty='Medium'){const r=rng(`${seed}:theme-trail:v4`),src=pick(themeTrailPool(difficulty),r),puzzle={n:5,theme:src.theme,words:[...src.words],grid:[...src.grid],paths:src.paths.map(p=>[...p]),contentId:src.id,generatorVersion:4};return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle,state:{found:[],path:[],selected:0}};},
+    id:'theme-trail',name:'Theme Trail',generatorVersion:5,description:byId['theme-trail'].description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],rules:{objective:'Find every themed word by tracing adjacent letters.',items:['All answers belong to the displayed theme.','Trace neighboring cells without reusing a cell inside the same word.','Correct words lock into the board.','Every cell belongs to exactly one themed answer.']},
+    async create(seed,difficulty='Medium'){const r=rng(`${seed}:theme-trail:v5`),src=pick(themeTrailEligiblePool(difficulty),r),puzzle={n:5,theme:src.theme,words:[...src.words],grid:[...src.grid],paths:src.paths.map(p=>[...p]),contentId:src.id,generatorVersion:5};return {gameId:this.id,seed,difficulty,createdAt:Date.now(),updatedAt:Date.now(),startedAt:Date.now(),elapsedMs:0,puzzle,state:{found:[],path:[],selected:0}};},
     async save(a){return saveActive(a);},word(a){return a.state.path.map(i=>a.puzzle.grid[i]).join('');},locked(a){const set=new Set();a.state.found.forEach(w=>{const j=a.puzzle.words.indexOf(w);if(j>=0)a.puzzle.paths[j].forEach(i=>set.add(i));});return set;},
     render(a){const locked=this.locked(a),board=`<div class="theme-trail-wrap"><div class="theme-banner"><span>Theme</span><strong>${esc(a.puzzle.theme)}</strong></div><div class="theme-trail-board">${a.puzzle.grid.map((c,i)=>`<button data-trail="${i}" class="trail-cell ${locked.has(i)?'locked':''} ${a.state.path.includes(i)?'path':''} ${i===a.state.selected?'selected':''}">${c}</button>`).join('')}</div><div class="theme-answers">${a.puzzle.words.map(w=>`<span class="${a.state.found.includes(w)?'found':''}">${a.state.found.includes(w)?w:`${w.length} letters`}</span>`).join('')}</div></div>`,controls=`<div class="toolbar"><button data-trail-clear>Clear path</button><button data-trail-submit>Submit</button></div>${a.completed?resultPanel(a,this,`<div><strong>${a.state.found.length}</strong><span>Words</span></div>`):''}`;main.innerHTML=baseGameShell(byId[this.id],a,board,controls);bindGameShell(this,a);this.bind(a);if(a.completed)bindResult(a,this);},
     bind(a){let dragging=false;const canAdd=i=>{const locked=this.locked(a);if(locked.has(i)&&!a.state.path.includes(i))return false;if(!a.state.path.length)return true;const last=a.state.path.at(-1);if(a.state.path.includes(i))return false;const r=Math.floor(last/5),c=last%5,rr=Math.floor(i/5),cc=i%5;return Math.max(Math.abs(r-rr),Math.abs(c-cc))===1;},add=i=>{if(canAdd(i)){a.state.path.push(i);a.state.selected=i;$$('.trail-cell').forEach((el,j)=>el.classList.toggle('path',a.state.path.includes(j)));}};$$('[data-trail]').forEach(b=>{const i=+b.dataset.trail;b.onpointerdown=e=>{e.preventDefault();dragging=true;a.state.path=[];add(i);b.setPointerCapture?.(e.pointerId)};b.onpointerenter=()=>{if(dragging)add(i)};});document.onpointerup=async()=>{if(!dragging)return;dragging=false;await this.submit(a)};document.onpointercancel=()=>{dragging=false;a.state.path=[];this.render(a)};$('[data-trail-clear]').onclick=()=>{a.state.path=[];this.render(a)};$('[data-trail-submit]').onclick=()=>this.submit(a);window.onkeydown=e=>{if(a.completed||overlayRoot.innerHTML)return;let i=a.state.selected,r=Math.floor(i/5),c=i%5,ni=null;if(e.key==='ArrowUp')ni=r?i-5:null;else if(e.key==='ArrowDown')ni=r<4?i+5:null;else if(e.key==='ArrowLeft')ni=c?i-1:null;else if(e.key==='ArrowRight')ni=c<4?i+1:null;else if(e.key==='Backspace'){e.preventDefault();a.state.path.pop();this.render(a);return}else if(e.key==='Enter'){e.preventDefault();this.submit(a);return}else return;if(ni!==null){e.preventDefault();if(canAdd(ni)){a.state.path.push(ni);a.state.selected=ni;}else a.state.selected=ni;this.render(a);}};},
@@ -3928,6 +3958,153 @@
     return {version:P14_VERSION,games:Object.keys(GAMES).length,steps,pass:errors.length===0,errors,report};
   }
   window.__PA_VARIETY_AUDIT__={version:P14_VERSION,signals:{...P14_SIGNALS},fingerprint:p14Fingerprint,novelty:p14Novelty,nearDuplicate:p14NearDuplicate,auditSequence:p14AuditSequence,auditCatalog:p14AuditCatalog};
+
+
+
+  // ---------- Phase 15: Generator robustness, stress testing & long-run reliability ----------
+  // Phase 15 repeatedly exercises the final Phase 13 + 14 generator stack. It checks
+  // failures, deterministic replay, fresh state ownership, quality acceptance, diversity,
+  // fallback pressure, latency outliers, and timing drift without touching saved progress.
+  const P15_VERSION=15;
+  const P15_LEVELS=['Easy','Medium','Hard'];
+  const P15_HEAVY=new Set(['word-ladder','killer-sudoku','unequal','arithmetic-cages','bridges','light-up','islands','hitori','queens','number-path','rectangles','dominoes','towers','fillomino','network','untangle']);
+  const P15_DEFAULT_BUDGET_MS=2500;
+  const P15_HEAVY_BUDGET_MS=5000;
+
+  function p15Median(values){return p13Median(values);}
+  function p15Percentile(values,q=.95){
+    const a=(values||[]).map(Number).filter(Number.isFinite).sort((x,y)=>x-y);
+    if(!a.length)return 0;
+    const i=Math.min(a.length-1,Math.max(0,Math.ceil(a.length*q)-1));
+    return a[i];
+  }
+  function p15StableValue(value,seen=new WeakSet()){
+    if(value==null||typeof value==='string'||typeof value==='boolean')return value;
+    if(typeof value==='number')return Number.isFinite(value)?value:String(value);
+    if(typeof value!=='object')return String(value);
+    if(seen.has(value))return '[Circular]';
+    seen.add(value);
+    if(Array.isArray(value))return value.map(v=>p15StableValue(v,seen));
+    const out={};
+    for(const key of Object.keys(value).sort()){
+      if(key.startsWith('_proofHint'))continue;
+      const v=value[key];
+      if(typeof v==='function'||typeof v==='undefined')continue;
+      out[key]=p15StableValue(v,seen);
+    }
+    return out;
+  }
+  function p15Digest(active){
+    return p14Hash(JSON.stringify(p15StableValue({
+      gameId:active?.gameId,
+      seed:active?.seed,
+      difficulty:active?.difficulty,
+      puzzle:active?.puzzle,
+      state:active?.state
+    })));
+  }
+  function p15CollectRefs(value,set=new Set(),seen=new WeakSet(),depth=0){
+    if(value==null||typeof value!=='object'||depth>12||seen.has(value))return set;
+    seen.add(value);set.add(value);
+    if(Array.isArray(value)){for(const v of value)p15CollectRefs(v,set,seen,depth+1);}
+    else for(const v of Object.values(value))p15CollectRefs(v,set,seen,depth+1);
+    return set;
+  }
+  function p15SharesStateObjects(a,b){
+    const left=p15CollectRefs(a?.state),right=p15CollectRefs(b?.state);
+    for(const ref of left)if(right.has(ref))return true;
+    return false;
+  }
+  function p15Seed(id,difficulty,k){
+    if(k===0)return 'z'.repeat(MAX_SHARED_SEED_LENGTH);
+    if(k===1)return '0';
+    return 'p15-stress-'+id+'-'+difficulty.toLowerCase()+'-'+k;
+  }
+  function p15CenterFirst(p){
+    const rows=p.rows||p.n||p.size||1,cols=p.cols||p.n||p.size||rows;
+    return Math.floor(rows/2)*cols+Math.floor(cols/2);
+  }
+  async function p15CreateMeasured(id,difficulty,seed){
+    const game=GAMES[id],start=performance.now();
+    const active=await game.create(seed,difficulty);
+    if(id==='mines'&&!active.puzzle.mines)game.build(active,p15CenterFirst(active.puzzle));
+    const elapsed=performance.now()-start,evaluation=p13Evaluate(id,active),fingerprint=p14Fingerprint(active),cert=active.puzzle?.qualityCertification||{};
+    return {
+      active,
+      ms:+elapsed.toFixed(2),
+      digest:p15Digest(active),
+      fingerprint,
+      accepted:evaluation.accepted&&cert.accepted!==false,
+      qualityScore:evaluation.qualityScore,
+      difficultyScore:evaluation.difficultyScore,
+      attempts:Number.isFinite(cert.attempts)?cert.attempts:1,
+      sourceSeed:cert.sourceSeed||seed,
+    };
+  }
+  async function p15StressTier(id,difficulty,samples=2){
+    const game=GAMES[id],count=Math.max(1,Math.floor(samples)),first=[],replays=[],errors=[],determinismErrors=[],stateSharingErrors=[];
+    for(let k=0;k<count;k++){
+      const seed=p15Seed(id,difficulty,k);
+      try{first.push({seed,...await p15CreateMeasured(id,difficulty,seed)});}
+      catch(error){errors.push({seed,stage:'first',message:String(error?.message||error)});}
+    }
+    for(let k=count-1;k>=0;k--){
+      const seed=p15Seed(id,difficulty,k),original=first.find(x=>x.seed===seed);
+      if(!original)continue;
+      try{
+        const replay={seed,...await p15CreateMeasured(id,difficulty,seed)};
+        replays.push(replay);
+        if(replay.digest!==original.digest||replay.fingerprint.content!==original.fingerprint.content||replay.fingerprint.shape!==original.fingerprint.shape)determinismErrors.push(seed);
+        if(p15SharesStateObjects(original.active,replay.active))stateSharingErrors.push(seed);
+      }catch(error){errors.push({seed,stage:'replay',message:String(error?.message||error)});}
+    }
+    const rows=[...first,...replays],times=rows.map(x=>x.ms),firstTimes=first.map(x=>x.ms),attempts=rows.map(x=>x.attempts),qualityRejects=rows.filter(x=>!x.accepted).length;
+    const uniqueDigests=new Set(first.map(x=>x.digest)).size,uniqueContent=new Set(first.map(x=>x.fingerprint.content)).size;
+    const requiredUnique=count<2?1:Math.max(2,Math.ceil(count*.5)),diversityPass=uniqueDigests>=Math.min(count,requiredUnique);
+    const half=Math.max(1,Math.floor(firstTimes.length/2)),early=p15Median(firstTimes.slice(0,half)),late=p15Median(firstTimes.slice(-half)),drift=early>0?late/early:1;
+    const budgetMs=P15_HEAVY.has(id)?P15_HEAVY_BUDGET_MS:P15_DEFAULT_BUDGET_MS,maxMs=times.length?Math.max(...times):0;
+    const latencyPass=maxMs<=budgetMs,driftPass=count<4||late<500||drift<=6;
+    const fallbackCount=rows.filter(x=>x.attempts>1).length,fallbackRate=rows.length?fallbackCount/rows.length:0,averageAttempts=attempts.length?p13Mean(attempts):0,retryPass=averageAttempts<3||(fallbackRate<1&&averageAttempts<3.5);
+    const pass=errors.length===0&&qualityRejects===0&&determinismErrors.length===0&&stateSharingErrors.length===0&&diversityPass&&latencyPass&&driftPass&&retryPass&&first.length===count&&replays.length===first.length;
+    return {
+      id,difficulty,samples:count,pass,
+      generations:rows.length,failures:errors.length,qualityRejects,determinismErrors,stateSharingErrors,
+      uniqueDigests,uniqueContent,requiredUnique,diversityPass,
+      timing:{medianMs:+p15Median(times).toFixed(2),p95Ms:+p15Percentile(times,.95).toFixed(2),maxMs:+maxMs.toFixed(2),budgetMs,driftRatio:+drift.toFixed(2),latencyPass,driftPass},
+      retries:{fallbackCount,fallbackRate:+fallbackRate.toFixed(3),averageAttempts:+averageAttempts.toFixed(2),maxAttempts:attempts.length?Math.max(...attempts):0,retryPass},
+      errors,
+      rows:first.map(x=>({seed:x.seed,digest:x.digest,content:x.fingerprint.content,shape:x.fingerprint.shape,ms:x.ms,attempts:x.attempts,qualityScore:x.qualityScore,difficultyScore:x.difficultyScore}))
+    };
+  }
+  async function p15StressGame(id,samples=2){
+    const game=GAMES[id],tiers={},errors=[];
+    for(const difficulty of P15_LEVELS){
+      if(!(game.difficulties||[]).includes(difficulty)){errors.push(difficulty+': unavailable');continue;}
+      try{tiers[difficulty]=await p15StressTier(id,difficulty,samples);if(!tiers[difficulty].pass)errors.push(difficulty+': stress certification failed');}
+      catch(error){errors.push(difficulty+': '+String(error?.message||error));tiers[difficulty]={id,difficulty,pass:false,errors:[String(error?.message||error)]};}
+    }
+    return {id,samples:Math.max(1,Math.floor(samples)),pass:errors.length===0,errors,tiers};
+  }
+  async function p15StressCatalog(samples=2,ids=null){
+    const selected=Array.isArray(ids)&&ids.length?[...new Set(ids.filter(id=>GAMES[id]))]:Object.keys(GAMES),report={},errors=[],start=performance.now();
+    for(const id of selected){
+      const row=await p15StressGame(id,samples);report[id]=row;if(!row.pass)errors.push(...row.errors.map(x=>id+' '+x));
+    }
+    const tierRows=Object.values(report).flatMap(g=>Object.values(g.tiers||{})).filter(Boolean),generations=tierRows.reduce((n,x)=>n+(x.generations||0),0),failures=tierRows.reduce((n,x)=>n+(x.failures||0),0);
+    return {
+      version:P15_VERSION,games:selected.length,samplesPerTier:Math.max(1,Math.floor(samples)),generations,
+      durationMs:+(performance.now()-start).toFixed(2),failures,pass:errors.length===0,errors,report
+    };
+  }
+  window.__PA_GENERATOR_STRESS__={
+    version:P15_VERSION,
+    levels:[...P15_LEVELS],
+    budgets:{defaultMs:P15_DEFAULT_BUDGET_MS,heavyMs:P15_HEAVY_BUDGET_MS,heavyGames:[...P15_HEAVY]},
+    digest:p15Digest,
+    stressTier:p15StressTier,
+    stressGame:p15StressGame,
+    auditCatalog:p15StressCatalog
+  };
 
 
   // Input lifetimes are tied to a render, including pointer cancellation.

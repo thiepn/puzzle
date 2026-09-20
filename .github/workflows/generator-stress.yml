@@ -1,0 +1,65 @@
+name: Generator Deep Stress
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: Seeds per game/difficulty
+        required: false
+        default: '8'
+        type: string
+  schedule:
+    - cron: '17 3 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  generator-stress:
+    name: Stress shard ${{ matrix.shard }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: word
+            games: five-letters,groups,word-ladder,anagrams,letter-hive,word-grid,theme-trail,word-pieces,mini-crossword,cryptogram,word-search
+          - shard: number
+            games: sudoku,killer-sudoku,kakuro,unequal,arithmetic-cages,make-24
+          - shard: logic-a
+            games: mines,nonogram,loop,bridges,light-up,islands,hitori,binary,queens,number-path
+          - shard: logic-spatial
+            games: tents,rectangles,dominoes,towers,fillomino,network,sliding-tiles,lights-out,untangle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium stress dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Run deep generator stress
+        env:
+          STRESS_SAMPLES: ${{ github.event.inputs.samples || '8' }}
+          STRESS_GAMES: ${{ matrix.games }}
+          STRESS_SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          python -m http.server 8080 >/tmp/puzzle-stress-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-generator-stress-browser.py \
+            --base-url http://127.0.0.1:8080/ \
+            --samples "$STRESS_SAMPLES" \
+            --games "$STRESS_GAMES" \
+            --output "generator-stress-$STRESS_SHARD.json"
+      - name: Upload stress report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generator-stress-${{ matrix.shard }}
+          path: generator-stress-${{ matrix.shard }}.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,20 +1,19 @@
-# Puzzle Arcade 1.7.0 — Variety, Novelty & Anti-Repetition
+# Puzzle Arcade 1.8.0 — Generator Robustness, Stress Testing & Long-Run Reliability
 
-Phase 14 prevents a run of individually valid puzzles from feeling like repetitions of the same board.
+Phase 15 stress-tests the complete generator stack rather than only checking isolated examples.
 
-- All 36 games now have explicit content/structure variety fingerprints.
-- New Puzzle compares bounded candidate generations against recent same-game history and the current board.
-- Exact content reuse, repeated canonical shapes, repeated themes, and near-identical difficulty profiles reduce a candidate's novelty score.
-- Square-board fingerprints canonicalize rotations/reflections where those transformations do not represent meaningful structural novelty.
-- Region partitions normalize region IDs, so simple relabeling does not fake variety.
-- Heavy solver-backed games use smaller candidate sets to keep latency bounded.
-- Games without recent comparable history generate normally without extra work.
-- Completed results persist compact Phase 14 fingerprints for future novelty decisions.
-- Mines fingerprints its generated post-first-click layout and uses a simulated center-first-click only for candidate selection/certification.
-- Surprise Me avoids the five most recent game IDs when alternatives exist and prefers a different family from the latest result.
-- Shared explicit seeds remain deterministic and bypass local novelty selection.
-- Chromium certification runs deterministic multi-puzzle sequences across all 36 games and rejects immediate near-duplicates.
+- Added a Phase 15 diagnostic API covering all 36 games and all Easy / Medium / Hard tiers.
+- Every sampled seed is generated twice, with the replay pass executed in reverse order to expose hidden cross-seed state.
+- Stable digests verify deterministic puzzle + initial-state reproduction.
+- Separate active records are checked for shared mutable state references.
+- Phase 13 quality acceptance is rechecked during every stress generation, including deterministic fallback attempts.
+- Seed diversity is measured to detect finite-bank collapse or broken seed mapping.
+- Median, p95, maximum latency, absolute generation budgets, and early-vs-late timing drift are recorded.
+- Phase 13 fallback pressure is measured so generators cannot silently depend on repeated retry rescue.
+- Mines is stress-tested after a deterministic center first click so its actual mine layout is included.
+- The normal release browser gate now adds 864 measured generator executions and enforces timing-drift plus catastrophic heap-growth limits.
+- A weekly/manual deep stress workflow runs 1,728 measured generations across four parallel shards and uploads JSON reports.
 
-Storage schema remains **1**. Service-worker cache is **v26**.
+Storage schema remains **1**. Service-worker cache is **v27**.
 
-See `docs/PHASE14_VARIETY_ANTI_REPETITION.md` for the full fingerprint and certification contract.
+See `docs/PHASE15_GENERATOR_ROBUSTNESS.md` for the complete certification contract.
