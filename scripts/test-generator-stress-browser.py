@@ -57,6 +57,8 @@ def main():
             "tiers":{tier:compact_tier(row) for tier,row in g.get("tiers",{}).items()}
         }
     heap_delta=None if heap_before is None or heap_after is None else heap_after-heap_before
+    heap_limit=128*1024*1024
+    heap_pass=heap_delta is None or heap_delta <= heap_limit
     summary={
         "pass":bool(result.get("pass")) and not page_errors and heap_pass,
         "version":result.get("version"),
@@ -69,7 +71,9 @@ def main():
         "pageErrors":page_errors,
         "heapBefore":heap_before,
         "heapAfter":heap_after,
-        "heapDelta":heap_delta,\n        "heapLimit":heap_limit,\n        "heapPass":heap_pass,
+        "heapDelta":heap_delta,
+        "heapLimit":heap_limit,
+        "heapPass":heap_pass,
         "report":report,
     }
     encoded=json.dumps(summary,indent=2)
