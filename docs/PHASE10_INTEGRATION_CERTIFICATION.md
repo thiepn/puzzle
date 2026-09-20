@@ -59,10 +59,10 @@ node scripts/test-accessibility-controls.mjs
 node scripts/test-phase10-integration.mjs
 node scripts/test-play-experience.mjs
 node scripts/release-check.mjs
-python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/ --quick
+python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
 ```
 
-The cumulative browser suite also retains deeper non-quick Phase 1–8 visual and interaction checks.
+The production release gate runs the full cumulative browser suite, including the Phase 1–8 visual and interaction checks.
 
 ## Shipping gate
 
