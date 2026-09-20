@@ -58,7 +58,7 @@ def main():
         }
     heap_delta=None if heap_before is None or heap_after is None else heap_after-heap_before
     summary={
-        "pass":bool(result.get("pass")) and not page_errors,
+        "pass":bool(result.get("pass")) and not page_errors and heap_pass,
         "version":result.get("version"),
         "games":result.get("games"),
         "samplesPerTier":result.get("samplesPerTier"),
@@ -69,7 +69,7 @@ def main():
         "pageErrors":page_errors,
         "heapBefore":heap_before,
         "heapAfter":heap_after,
-        "heapDelta":heap_delta,
+        "heapDelta":heap_delta,\n        "heapLimit":heap_limit,\n        "heapPass":heap_pass,
         "report":report,
     }
     encoded=json.dumps(summary,indent=2)
