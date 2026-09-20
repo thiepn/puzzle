@@ -1325,7 +1325,7 @@
       const copy=learnStepCopy(game,step),check=LEARN_CHECKS[game.id],percent=((step+1)/5)*100;
       const practice=step===4?`<div class="learn-practice"><div class="learn-practice-preview" aria-hidden="true">${cardPreview(game.id)}</div><div class="learn-options" role="group" aria-label="Practice answers">${check.options.map((option,i)=>`<button data-learn-answer="${i}">${esc(option)}</button>`).join('')}</div><p class="learn-answer-feedback" data-learn-feedback role="status" aria-live="polite"></p></div>`:'';
       overlayRoot.innerHTML=`<div class="modal-backdrop learn-backdrop"><section class="modal learn-modal" role="dialog" aria-modal="true" aria-labelledby="learn-title">
-        <div class="modal-head"><div><span class="learn-modal-game">${esc(CATEGORIES[game.category].label)} · ${esc(game.name)}</span><h2 id="learn-title">${esc(copy.title)}</h2></div><button class="modal-close" data-learn-close aria-label="Close lesson">×</button></div>
+        <div class="modal-head"><div><span class="learn-modal-game">${esc(CATEGORIES[byId[game.id]?.category||'logic'].label)} · ${esc(game.name)}</span><h2 id="learn-title">${esc(copy.title)}</h2></div><button class="modal-close" data-learn-close aria-label="Close lesson">×</button></div>
         <div class="learn-step-meter" role="progressbar" aria-label="Tutorial progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="${step+1}"><i style="width:${percent}%"></i></div>
         <div class="learn-step-copy"><span>${esc(copy.kicker)}</span><p>${esc(copy.body)}</p></div>
         ${practice}
