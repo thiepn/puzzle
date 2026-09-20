@@ -937,7 +937,7 @@
     $$('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
     $('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
     $('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
-    const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>sensoryCue('preview');}
+    const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100,false);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>{setSoundVolume(+volume.value/100,true);sensoryCue('preview');};}
     $('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
     bindCommon();
   }
