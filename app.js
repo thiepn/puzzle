@@ -952,6 +952,40 @@
     });
   }
 
+  async function renderLearn(ticket=routeGeneration){
+    stopTimer();state.currentGame=null;state.currentActive=null;updateNav('learn');document.title='Learn — Puzzle Arcade';
+    const available=ALL_GAMES.filter(g=>g.status==='available');
+    const completed=available.filter(g=>learningStatus(g.id).completed).length;
+    const filtered=available.filter(g=>state.learnCategory==='all'||g.category===state.learnCategory);
+    const cards=filtered.map(game=>{
+      const status=learningStatus(game.id),stateClass=status.completed?'is-complete':status.seen?'is-started':'';
+      const badge=status.completed?'Learned':status.seen&&status.step>0?'Step '+(status.step+1)+'/5':'New';
+      return '<button class="learn-card '+stateClass+'" data-learn-open="'+esc(game.id)+'" data-category="'+esc(game.category)+'">'+
+        '<span class="learn-card-preview" aria-hidden="true">'+cardPreview(game.id)+'</span>'+
+        '<span class="learn-card-copy"><small>'+esc(CATEGORIES[game.category].label)+' · '+esc(badge)+'</small><strong>'+esc(game.name)+'</strong><span>'+esc(game.description)+'</span><em>'+esc(learnProgressLabel(game.id))+' →</em></span>'+
+      '</button>';
+    }).join('');
+    const filters=['all','word','number','logic','spatial'].map(id=>{
+      const label=id==='all'?'All':CATEGORIES[id].label,on=state.learnCategory===id;
+      return '<button data-learn-filter="'+id+'" class="'+(on?'is-active':'')+'" aria-pressed="'+on+'">'+label+'</button>';
+    }).join('');
+    main.innerHTML='<div class="page learn-page">'+
+      '<section class="learn-hero"><div><p class="page-kicker">Learn mode</p><h1>Learn every puzzle.</h1><p>Short lessons teach the goal, first move, controls, strategy, and one safe practice check. Lessons never modify your real puzzle.</p></div>'+
+      '<div class="learn-overall"><strong>'+completed+'<span>/'+available.length+'</span></strong><small>lessons completed</small><div role="progressbar" aria-label="Learn mode completion" aria-valuemin="0" aria-valuemax="'+available.length+'" aria-valuenow="'+completed+'"><i style="width:'+(available.length?completed/available.length*100:0)+'%"></i></div></div></section>'+
+      '<section class="learn-toolbar" aria-label="Learn mode filters"><div class="segmented" role="group" aria-label="Puzzle family">'+filters+'</div><span>'+filtered.length+' lessons</span></section>'+
+      '<div class="learn-grid">'+cards+'</div></div>';
+    bindCommon();
+    $$('[data-learn-filter]').forEach(button=>button.onclick=()=>{state.learnCategory=button.dataset.learnFilter;void renderLearn(ticket);});
+    $$('[data-learn-open]').forEach(button=>button.onclick=()=>showLearnTutorial(GAMES[button.dataset.learnOpen]));
+  }
+
+  function learningSettingsHtml(){
+    const first=['on','off'].map(t=>'<button data-first-play-choice="'+t+'" class="'+(state.settings.firstPlayCoach===t?'is-active':'')+'" aria-pressed="'+(state.settings.firstPlayCoach===t)+'">'+(t==='on'?'On':'Off')+'</button>').join('');
+    return '<section class="settings-group learning-settings"><h2>Learning & onboarding</h2><p class="subtle">First-play coaching stays lightweight. Full lessons are always replayable from Learn mode.</p>'+
+      '<div class="setting-row"><div><h3>First-play coach</h3><p class="subtle">Show a small, non-blocking starter card the first time you open a game.</p></div><div class="segmented" role="group" aria-label="First-play coach">'+first+'</div></div>'+
+      '<div class="learning-settings-actions"><button class="primary-button" data-action="learn-library">Open Learn mode</button><button class="secondary-button" data-action="reset-learning">Reset lesson progress</button></div></section>';
+  }
+
   async function renderSettings(){
     stopTimer(); state.currentGame=null; state.currentActive=null; updateNav('settings'); document.title='Settings — Puzzle Arcade';
     main.innerHTML=`<div class="page"><div class="page-head"><div><p class="page-kicker">Preferences</p><h1>Settings</h1></div></div>
