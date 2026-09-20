@@ -5429,3 +5429,61 @@ html[data-controls="large"] .segmented button {
   .play-commandbar { margin-bottom:6px;padding:6px 0; }
   .game-board-wrap { padding-top:0; }
 }
+
+/* Phase 11 — Audio, haptics & sensory feedback. */
+.sound-toggle {
+  position:relative;
+  font-family:var(--display-font);
+  font-size:19px;
+}
+.sound-toggle[data-sound-state="off"] { color:var(--ink-soft); }
+.sound-toggle[data-sound-state="off"]::after {
+  content:"";
+  position:absolute;
+  width:21px;
+  height:2px;
+  background:currentColor;
+  transform:rotate(-45deg);
+  border-radius:2px;
+}
+.sensory-settings {
+  border-top:2px solid var(--line-strong);
+}
+.sensory-volume {
+  display:grid;
+  grid-template-columns:minmax(130px,220px) 48px;
+  align-items:center;
+  gap:10px;
+}
+.sensory-volume input[type="range"] {
+  width:100%;
+  accent-color:var(--focus);
+  cursor:pointer;
+}
+.sensory-volume input[type="range"]:disabled {
+  opacity:.45;
+  cursor:default;
+}
+.sensory-volume output {
+  min-width:48px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  color:var(--ink-soft);
+  font-size:12px;
+}
+.sensory-test-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  padding-top:12px;
+}
+.sensory-test-row .subtle { margin:0; }
+@media (forced-colors: active) {
+  .sound-toggle[data-sound-state="off"]::after { background:ButtonText; }
+  .sensory-volume input[type="range"] { accent-color:Highlight; }
+}
+@media (max-width:720px) {
+  .sensory-volume { grid-template-columns:minmax(0,1fr) 48px;width:100%; }
+}
+
