@@ -5487,3 +5487,227 @@ html[data-controls="large"] .segmented button {
   .sensory-volume { grid-template-columns:minmax(0,1fr) 48px;width:100%; }
 }
 
+/* Phase 12 — Onboarding, tutorials & Learn mode. */
+.first-play-coach {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:18px;
+  align-items:center;
+  margin:0 0 14px;
+  padding:13px 15px;
+  border:1px solid var(--line-strong);
+  border-left:4px solid var(--play-accent,var(--focus));
+  background:var(--paper-bright);
+  border-radius:var(--radius-m);
+}
+.first-play-coach strong {
+  display:block;
+  font:700 17px/1.25 var(--display-font);
+  margin:2px 0 3px;
+}
+.first-play-coach p { margin:0;color:var(--ink-soft);font-size:12px;line-height:1.45;max-width:72ch; }
+.coach-kicker {
+  display:block;
+  color:var(--ink-soft);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.coach-actions { display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end; }
+
+.learn-page { --learn-card-min:250px; }
+.learn-hero {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:28px;
+  align-items:end;
+  padding:8px 0 26px;
+  border-bottom:2px solid var(--ink);
+}
+.learn-hero h1 { max-width:14ch; }
+.learn-hero p:not(.page-kicker) { max-width:68ch;margin-bottom:0;color:var(--ink-soft); }
+.learn-overall {
+  min-width:190px;
+  padding:14px 0 2px;
+  text-align:right;
+}
+.learn-overall strong { display:block;font:700 40px/1 var(--display-font); }
+.learn-overall strong span { color:var(--ink-soft);font-size:18px; }
+.learn-overall small { display:block;margin:5px 0 10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;font-size:10px; }
+.learn-overall div {
+  height:6px;
+  background:var(--paper-muted);
+  border:1px solid var(--line);
+  overflow:hidden;
+}
+.learn-overall i { display:block;height:100%;background:var(--logic); }
+.learn-toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 0 14px;
+}
+.learn-toolbar>span { color:var(--ink-soft);font-size:12px; }
+.learn-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(var(--learn-card-min),1fr));
+  gap:10px;
+}
+.learn-card {
+  appearance:none;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  text-align:left;
+  min-height:116px;
+  border:1px solid var(--line);
+  background:var(--paper-bright);
+  color:var(--ink);
+  padding:11px;
+  cursor:pointer;
+  border-radius:var(--radius-m);
+}
+.learn-card:hover { border-color:var(--line-strong);box-shadow:var(--shadow); }
+.learn-card.is-started { border-left:3px solid var(--warning); }
+.learn-card.is-complete { border-left:3px solid var(--success); }
+.learn-card-preview {
+  height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--radius-s);
+}
+.learn-card-preview>div { transform:scale(.8);transform-origin:center; }
+.learn-card-copy { min-width:0; }
+.learn-card-copy small {
+  display:block;
+  margin-bottom:3px;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-size:9px;
+}
+.learn-card-copy strong { display:block;font:700 17px/1.2 var(--display-font); }
+.learn-card-copy>span { display:block;margin:4px 0 7px;color:var(--ink-soft);font-size:11px;line-height:1.35; }
+.learn-card-copy em { display:block;color:var(--ink);font-style:normal;font-weight:700;font-size:11px; }
+
+.learn-modal { width:min(680px,100%); }
+.learn-modal-game {
+  display:block;
+  margin-bottom:3px;
+  color:var(--ink-soft);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+}
+.learn-step-meter {
+  height:7px;
+  margin:0 0 20px;
+  border:1px solid var(--line);
+  background:var(--paper);
+  overflow:hidden;
+}
+.learn-step-meter i { display:block;height:100%;background:var(--focus); }
+.learn-step-copy>span {
+  display:block;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  font-size:10px;
+  font-weight:700;
+}
+.learn-step-copy p { margin:8px 0 18px;font-size:16px;line-height:1.6; }
+.learn-practice {
+  display:grid;
+  grid-template-columns:130px minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+  padding:14px;
+  border:1px solid var(--line);
+  background:var(--paper);
+  border-radius:var(--radius-m);
+}
+.learn-practice-preview {
+  min-height:108px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line);
+  background:var(--paper-bright);
+  overflow:hidden;
+}
+.learn-practice-preview>div { transform:scale(.9);transform-origin:center; }
+.learn-options { display:grid;gap:7px; }
+.learn-options button {
+  text-align:left;
+  min-height:42px;
+  border:1px solid var(--line-strong);
+  background:var(--paper-bright);
+  color:var(--ink);
+  padding:9px 11px;
+  cursor:pointer;
+  border-radius:var(--radius-s);
+}
+.learn-options button.is-correct {
+  border:2px solid var(--success);
+  box-shadow:inset 4px 0 0 var(--success);
+}
+.learn-options button.is-wrong {
+  border:2px solid var(--danger);
+  text-decoration:line-through 1px;
+}
+.learn-answer-feedback {
+  grid-column:2;
+  min-height:2.8em;
+  margin:2px 0 0;
+  color:var(--ink-soft);
+  font-size:12px;
+}
+.learn-step-actions {
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:12px;
+  align-items:center;
+  margin-top:20px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.learn-step-actions>span { text-align:center;color:var(--ink-soft);font-size:11px; }
+.learning-settings-actions { display:flex;gap:8px;flex-wrap:wrap;margin-top:14px; }
+
+@media (forced-colors: active) {
+  .first-play-coach,.learn-card,.learn-practice { border-color:CanvasText; }
+  .learn-card.is-started,.learn-card.is-complete { border-left-width:5px; }
+  .learn-options button.is-correct { outline:3px solid Highlight; }
+  .learn-options button.is-wrong { outline:3px dashed Mark; }
+}
+@media (max-width:720px) {
+  .main-nav .nav-link { padding-left:7px;padding-right:7px;font-size:12px; }
+  .learn-hero { grid-template-columns:1fr;gap:6px; }
+  .learn-overall { min-width:0;text-align:left; }
+  .learn-toolbar { align-items:stretch;flex-direction:column; }
+  .learn-toolbar .segmented {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+  }
+  .learn-toolbar .segmented button { min-width:0;padding-left:4px;padding-right:4px;font-size:11px; }
+  .learn-grid { grid-template-columns:1fr; }
+  .first-play-coach { grid-template-columns:1fr;gap:10px;margin-bottom:10px;padding:11px; }
+  .coach-actions { justify-content:flex-start; }
+  .learn-practice { grid-template-columns:1fr; }
+  .learn-practice-preview { min-height:92px; }
+  .learn-answer-feedback { grid-column:1; }
+}
+@media (max-width:390px) {
+  .main-nav .nav-link { font-size:11px;padding-left:4px;padding-right:4px; }
+  .learn-toolbar .segmented button { font-size:10px; }
+  .learn-step-actions { grid-template-columns:1fr 1fr; }
+  .learn-step-actions>span { grid-column:1/-1;grid-row:1; }
+}
+
