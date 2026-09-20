@@ -2851,7 +2851,7 @@
     return {raw:.72*norm(bits,4,15)+.28*amb,secondary:.6*norm(bits,4,15)+.4*amb};
   }
   function anagramFitsTier(entry,difficulty){const e=anagramTierEvidence(entry),band={Easy:[0,.72],Medium:[.08,.92],Hard:[.28,1]}[difficulty]||[.08,.92];return e.raw>=band[0]&&e.raw<=band[1]&&(difficulty!=='Hard'||e.secondary>=.10);}
-  function anagramEligiblePool(difficulty){if(anagramEligibleCache.has(difficulty))return anagramEligibleCache.get(difficulty);const source=anagramPool(difficulty),eligible=source.filter(x=>new Set(String(x.letters||'')).size>1&&anagramFitsTier(x,difficulty)),out=eligible.length?eligible:source;anagramEligibleCache.set(difficulty,out);return out;}
+  function anagramEligiblePool(difficulty){if(anagramEligibleCache.has(difficulty))return anagramEligibleCache.get(difficulty);const source=anagramPool(difficulty),eligible=source.filter(x=>String(x.letters||'').length>=5&&new Set(String(x.letters||'')).size>1&&anagramFitsTier(x,difficulty)),out=eligible.length?eligible:source;anagramEligibleCache.set(difficulty,out);return out;}
   const anagramsGame={
     id:'anagrams',name:'Anagrams',generatorVersion:5,description:byId.anagrams.description,defaultDifficulty:'Medium',difficulties:['Easy','Medium','Hard'],
     rules:{objective:'Rearrange every letter to form any valid full anagram.',items:['Use every displayed tile exactly once.','Any dictionary-valid full anagram is accepted, not only the originally curated answer.','You can remove the last tile or clear the whole attempt.','Hints target the intended familiar answer while alternate valid anagrams still solve the puzzle.']},
