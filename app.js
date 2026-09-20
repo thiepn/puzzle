@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.4.0';
-  const BUILD_PHASE = 'Audio, Haptics & Sensory Feedback';
+  const APP_VERSION = '1.5.0';
+  const BUILD_PHASE = 'Onboarding, Tutorials & Learn Mode';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -387,11 +387,12 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on', firstPlayCoach:'on', learning:{seen:[],completed:[],progress:{}} },
     favorites: [],
     active: [],
     history: [],
     category:'all',
+    learnCategory:'all',
     currentGame:null,
     currentActive:null,
     timer:null,
@@ -674,6 +675,43 @@
     return available[day%available.length];
   }
 
+  function sanitizeLearning(value) {
+    const v=value&&typeof value==='object'?value:{},allowed=new Set(ALL_GAMES.map(g=>g.id));
+    const cleanList=list=>[...new Set(Array.isArray(list)?list.filter(id=>typeof id==='string'&&allowed.has(id)):[])];
+    const progress={};
+    if(v.progress&&typeof v.progress==='object'){
+      for(const [id,step] of Object.entries(v.progress)){
+        if(allowed.has(id)&&Number.isInteger(step)&&step>=0&&step<=4)progress[id]=step;
+      }
+    }
+    return {seen:cleanList(v.seen),completed:cleanList(v.completed),progress};
+  }
+  function learningState(){
+    state.settings.learning=sanitizeLearning(state.settings.learning);
+    return state.settings.learning;
+  }
+  function learningStatus(id){
+    const l=learningState(),completed=l.completed.includes(id),seen=l.seen.includes(id),step=l.progress[id]||0;
+    return {completed,seen,step};
+  }
+  async function saveLearning(){
+    state.settings.learning=sanitizeLearning(state.settings.learning);
+    await db.put('kv',state.settings,'settings');
+  }
+  async function markLearningSeen(id){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);await saveLearning();
+  }
+  async function setLearningProgress(id,step){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);l.progress[id]=clamp(step,0,4);await saveLearning();
+  }
+  async function completeLearning(id){
+    const l=learningState();if(!l.seen.includes(id))l.seen.push(id);if(!l.completed.includes(id))l.completed.push(id);l.progress[id]=4;await saveLearning();
+  }
+  async function resetLearning(){
+    state.settings.learning={seen:[],completed:[],progress:{}};
+    await saveLearning();
+  }
+
   function sanitizeSettings(value) {
     const v=value&&typeof value==='object'?value:{};
     return {
@@ -685,6 +723,8 @@
       sound:['on','off'].includes(v.sound)?v.sound:'on',
       soundVolume:Number.isFinite(v.soundVolume)?clamp(v.soundVolume,0,1):0.35,
       haptics:['on','off'].includes(v.haptics)?v.haptics:'on',
+      firstPlayCoach:['on','off'].includes(v.firstPlayCoach)?v.firstPlayCoach:'on',
+      learning:sanitizeLearning(v.learning),
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -991,7 +1031,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on',firstPlayCoach:'on',learning:{seen:[],completed:[],progress:{}}};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
