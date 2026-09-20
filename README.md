@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.3.0 · Integration, Final Certification & Ship · PWA cache v22**
+**Current release: 1.4.0 · Audio, Haptics & Sensory Feedback · PWA cache v23**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Audio, Haptics & Sensory Feedback 1.4.0
+
+Phase 11 adds a restrained sensory layer without changing puzzle rules or adding media dependencies. Puzzle Arcade now synthesizes short category-aware cues locally with the Web Audio API for completion/failure, meaningful progress, hints, undo/redo, and pause/resume. Ordinary board movement remains silent.
+
+Sound can be muted instantly from the top bar or configured in Settings with a local volume control. Haptic feedback uses the browser vibration API only when available and can be disabled independently. There is no background music, packaged audio, autoplay, remote audio, analytics, or telemetry.
+
+See `docs/PHASE11_SENSORY_FEEDBACK.md` for the sensory design and verification contract.
 
 ## Integration, Final Certification & Ship 1.3.0
 
@@ -51,6 +59,7 @@ There are no placeholder games in the locked V1 catalog.
 - deterministic shareable seeds
 - light / dark / system appearance
 - mouse, touch and keyboard input
+- optional synthesized puzzle sounds and feature-detected haptics
 - offline service worker / installable PWA
 - no accounts, lives, daily lockouts or required remote API
 

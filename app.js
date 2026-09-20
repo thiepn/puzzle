@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.3.0';
-  const BUILD_PHASE = 'Integration, Final Certification & Ship';
+  const APP_VERSION = '1.4.0';
+  const BUILD_PHASE = 'Audio, Haptics & Sensory Feedback';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -387,7 +387,7 @@
   };
 
   const state = {
-    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard' },
+    settings: { theme:'system', playMode:'relaxed', motion:'system', contrast:'system', controls:'standard', sound:'on', soundVolume:0.35, haptics:'on' },
     favorites: [],
     active: [],
     history: [],
@@ -463,6 +463,100 @@
     routeStatus.textContent='';
     requestAnimationFrame(()=>{routeStatus.textContent=label;});
   }
+
+  const SENSORY_CATEGORY_BASE={word:392,number:330,logic:294,spatial:349};
+  let sensoryAudioContext=null;
+  let sensoryUnlocked=false;
+  function sensorySupport(){
+    return {
+      audio:!!(window.AudioContext||window.webkitAudioContext),
+      haptics:typeof navigator.vibrate==='function',
+    };
+  }
+  function syncSensoryChrome(){
+    const button=$('[data-action="sound-toggle"]');
+    if(!button)return;
+    const on=state.settings.sound==='on';
+    button.textContent='♪';
+    button.setAttribute('aria-pressed',String(on));
+    button.setAttribute('aria-label',on?'Mute puzzle sounds':'Enable puzzle sounds');
+    button.title=on?'Mute puzzle sounds':'Enable puzzle sounds';
+    button.dataset.soundState=on?'on':'off';
+  }
+  function ensureSensoryAudio(){
+    if(state.settings.sound!=='on')return null;
+    const AudioCtor=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtor)return null;
+    try{
+      sensoryAudioContext=sensoryAudioContext||new AudioCtor();
+      if(sensoryAudioContext.state==='suspended')void sensoryAudioContext.resume();
+      sensoryUnlocked=true;
+      return sensoryAudioContext;
+    }catch{return null;}
+  }
+  function unlockSensoryAudio(){
+    if(sensoryUnlocked||state.settings.sound!=='on')return;
+    ensureSensoryAudio();
+  }
+  function sensoryTone(freq,duration=0.06,gain=0.12,type='sine',delay=0){
+    if(state.settings.soundVolume<=0)return;
+    const ctx=ensureSensoryAudio();if(!ctx||ctx.state==='closed')return;
+    const start=ctx.currentTime+Math.max(0,delay),end=start+Math.max(0.02,duration);
+    const osc=ctx.createOscillator(),amp=ctx.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(freq,start);
+    const level=Math.max(0.0001,gain*state.settings.soundVolume);
+    amp.gain.setValueAtTime(0.0001,start);
+    amp.gain.exponentialRampToValueAtTime(level,start+Math.min(.015,duration/3));
+    amp.gain.exponentialRampToValueAtTime(0.0001,end);
+    osc.connect(amp);amp.connect(ctx.destination);osc.start(start);osc.stop(end+.015);
+  }
+  function sensoryHaptic(pattern){
+    if(state.settings.haptics!=='on'||document.hidden||typeof navigator.vibrate!=='function')return;
+    try{navigator.vibrate(pattern);}catch{}
+  }
+  function sensoryCue(kind,game=state.currentGame){
+    const category=game?.category||'logic',base=SENSORY_CATEGORY_BASE[category]||330;
+    if(kind==='error'){
+      sensoryTone(base*.55,.085,.16,'triangle');sensoryHaptic([28,24,38]);return;
+    }
+    if(kind==='complete'){
+      sensoryTone(base,.08,.13,'sine');
+      sensoryTone(base*1.25,.10,.12,'sine',.075);
+      sensoryTone(base*1.5,.14,.11,'sine',.16);
+      sensoryHaptic([18,30,28]);return;
+    }
+    if(kind==='progress'){
+      sensoryTone(base*1.12,.07,.09,'sine');sensoryTone(base*1.33,.08,.075,'sine',.055);sensoryHaptic(14);return;
+    }
+    if(kind==='hint'){
+      sensoryTone(base*.9,.06,.075,'sine');sensoryTone(base*1.2,.08,.07,'sine',.07);sensoryHaptic(10);return;
+    }
+    if(kind==='undo'){sensoryTone(base*.72,.045,.055,'triangle');sensoryHaptic(7);return;}
+    if(kind==='redo'){sensoryTone(base*.9,.045,.055,'triangle');sensoryHaptic(7);return;}
+    if(kind==='pause'){sensoryTone(base*.62,.055,.05,'sine');sensoryHaptic(6);return;}
+    if(kind==='resume'){sensoryTone(base*.82,.055,.05,'sine');sensoryHaptic(6);return;}
+    if(kind==='preview'){
+      sensoryTone(base,.07,.11,'sine');sensoryTone(base*1.25,.09,.09,'sine',.075);sensoryHaptic(14);
+    }
+  }
+  function setSound(value,persist=true){
+    state.settings.sound=value==='off'?'off':'on';
+    syncSensoryChrome();
+    if(state.settings.sound==='on')ensureSensoryAudio();
+    else if(sensoryAudioContext?.state==='running')void sensoryAudioContext.suspend();
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function setSoundVolume(value,persist=true){
+    const numeric=Number(value);
+    state.settings.soundVolume=Number.isFinite(numeric)?clamp(numeric,0,1):0.35;
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  function setHaptics(value,persist=true){
+    state.settings.haptics=value==='off'?'off':'on';
+    if(persist)void db.put('kv',state.settings,'settings');
+  }
+  document.addEventListener('pointerdown',unlockSensoryAudio,{passive:true});
+  document.addEventListener('keydown',unlockSensoryAudio,{capture:true});
 
   function parseHash() {
     const raw=location.hash.replace(/^#\/?/,'') || 'home';
@@ -588,6 +682,9 @@
       motion:['system','reduced'].includes(v.motion)?v.motion:'system',
       contrast:['system','high'].includes(v.contrast)?v.contrast:'system',
       controls:['standard','large'].includes(v.controls)?v.controls:'standard',
+      sound:['on','off'].includes(v.sound)?v.sound:'on',
+      soundVolume:Number.isFinite(v.soundVolume)?clamp(v.soundVolume,0,1):0.35,
+      haptics:['on','off'].includes(v.haptics)?v.haptics:'on',
       difficulties:Object.fromEntries(Object.entries(v.difficulties&&typeof v.difficulties==='object'?v.difficulties:{}).filter(([id,d])=>Object.hasOwn(GAMES,id)&&typeof d==='string').map(([id,d])=>[id,normalizeDifficulty(GAMES[id],d)])),
     };
   }
@@ -633,6 +730,7 @@
     state.history = sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt);
     setTheme(state.settings.theme, false);
     applyAccessibilitySettings(false);
+    syncSensoryChrome();
   }
 
   async function renderHome(ticket=routeGeneration){
@@ -825,6 +923,12 @@
         <div class="setting-row"><div><h3>Control size</h3><p class="subtle">Large controls increase non-board touch targets without shrinking puzzle space.</p></div><div class="segmented" role="group" aria-label="Control size">${['standard','large'].map(t=>`<button data-controls-choice="${t}" class="${state.settings.controls===t?'is-active':''}" aria-pressed="${state.settings.controls===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div></div>
         <button class="secondary-button" data-action="controls">Keyboard & touch controls</button>
       </section>
+      <section class="settings-group sensory-settings"><h2>Sound & haptics</h2><p class="subtle">Short locally generated cues reinforce important puzzle events. No audio files, network requests, or background music are used.</p>
+        <div class="setting-row"><div><h3>Puzzle sounds</h3><p class="subtle">Success, mistakes, hints, undo/redo and pause/resume use restrained synthesized cues.</p></div><div class="segmented" role="group" aria-label="Puzzle sounds">${['on','off'].map(t=>`<button data-sound-choice="${t}" class="${state.settings.sound===t?'is-active':''}" aria-pressed="${state.settings.sound===t}">${t==='on'?'On':'Muted'}</button>`).join('')}</div></div>
+        <div class="setting-row sensory-volume-row"><div><h3>Sound level</h3><p class="subtle">Controls only Puzzle Arcade cues, not device volume.</p></div><label class="sensory-volume"><span class="sr-only">Puzzle sound volume</span><input data-sound-volume type="range" min="0" max="100" step="5" value="${Math.round(state.settings.soundVolume*100)}" ${state.settings.sound==='off'?'disabled':''}><output data-sound-volume-output>${Math.round(state.settings.soundVolume*100)}%</output></label></div>
+        <div class="setting-row"><div><h3>Haptic feedback</h3><p class="subtle">${sensorySupport().haptics?'Short vibration patterns are used only for high-signal events.':'This browser does not expose vibration feedback.'}</p></div><div class="segmented" role="group" aria-label="Haptic feedback">${['on','off'].map(t=>`<button data-haptics-choice="${t}" class="${state.settings.haptics===t?'is-active':''}" aria-pressed="${state.settings.haptics===t}" ${!sensorySupport().haptics?'disabled':''}>${t==='on'?'On':'Off'}</button>`).join('')}</div></div>
+        <div class="sensory-test-row"><button class="secondary-button" data-action="sensory-test" ${state.settings.sound==='off'&&!sensorySupport().haptics?'disabled':''}>Test feedback</button><span class="subtle">Reduced-motion and sensory settings remain independent.</span></div>
+      </section>
       <section class="settings-group"><h2>Local data</h2><p class="subtle">Progress, favorites, and statistics are stored locally on this device.</p><button class="danger-button" data-action="clear-data">Reset local puzzle data</button></section>
       <section class="settings-group"><h2>Privacy & notices</h2><p class="subtle">No account or analytics are required. Shared puzzle links contain only the game, seed, and difficulty.</p><div class="result-actions"><button class="secondary-button" data-action="privacy-info">Privacy</button><button class="secondary-button" data-action="license-info">Licenses & notices</button></div></section>
       <section class="settings-group"><h2>About this build</h2><p class="subtle">Puzzle Arcade ${APP_VERSION} · ${BUILD_PHASE} · ${playableIds.length}/${ALL_GAMES.length} playable games · local-first PWA.</p></section>
@@ -834,6 +938,9 @@
     $$('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
     $$('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
     $$('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
+    const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100,false);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>{setSoundVolume(+volume.value/100,true);sensoryCue('preview');};}
+    $$('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
     bindCommon();
   }
 
@@ -884,7 +991,7 @@
         if(state.currentActive) retiredActives.add(state.currentActive);
         ++routeGeneration;
         const deleted=await db.resetAll();
-        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
+        state.settings={theme:'system',playMode:'relaxed',motion:'system',contrast:'system',controls:'standard',sound:'on',soundVolume:0.35,haptics:'on'};state.favorites=[];state.history=[];state.active=[];state.currentGame=null;state.currentActive=null;closeOverlay();setTheme('system',false);applyAccessibilitySettings(false);syncSensoryChrome();renderSettings();toast(deleted?'Local data reset':'Local data cleared where possible. Close other Puzzle Arcade tabs to finish the reset.');
       }}
     ]);
   }
@@ -930,6 +1037,8 @@
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
     $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
+    $$('[data-action="sound-toggle"]').forEach(b=>b.onclick=()=>{const next=state.settings.sound==='on'?'off':'on';setSound(next);if(next==='on')sensoryCue('preview');});
+    $$('[data-action="sensory-test"]').forEach(b=>b.onclick=()=>sensoryCue('preview'));
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
@@ -1060,8 +1169,8 @@
   function canUndoGame(game,a){return !a.completed&&!playSession(a).paused&&typeof game.undo==='function'&&(game.id==='word-ladder'?a.state.chain.length>1:!!a.state.history?.length);}
   function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
   function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
-  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
-  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
+  function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();sensoryCue(ui.paused?'pause':'resume',game);void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
+  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());sensoryCue('redo',game);await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
   function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
   function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
   async function requestGameHint(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.busy)return;ui.busy=true;const button=$('[data-game-hint]');if(button){button.disabled=true;button.textContent='Thinking…';}await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));if(state.currentActive!==a||a.completed||ui.paused){ui.busy=false;return;}const old=a.state._proofHintView?JSON.stringify(a.state._proofHintView):'',before=ui.feedback;try{await game.hint(a);if((a.state._proofHintView&&JSON.stringify(a.state._proofHintView)!==old)||ui.feedback!==before){a.hintsUsed=Math.min(100000,(a.hintsUsed||0)+1);await saveActive(a);}}catch(error){gameFeedback('A hint could not be calculated. Try again, or undo your last move.',a);}finally{ui.busy=false;if(state.currentActive===a){game.render(a);$('[data-game-hint]')?.focus({preventScroll:true});}}}
@@ -1240,13 +1349,15 @@
         root.dataset.motionEvent='focus';
         p6Pulse(p6SelectedElement(game,a),'motion-focus-in',260);
       }
-      if(m.wrong!==null&&wrong>m.wrong){
+      if(m.wrong!==null&&wrong>m.wrong&&!a.completed){
         root.dataset.motionEvent='error';
         document.querySelectorAll('.game-board-wrap .wrong').forEach(el=>p6Pulse(el,'motion-error',380));
+        sensoryCue('error',game);
       }
-      if(game.id==='groups'&&m.solved!==null&&solved>m.solved){
+      if(game.id==='groups'&&m.solved!==null&&solved>m.solved&&!a.completed){
         root.dataset.motionEvent='group-solved';
         const cards=document.querySelectorAll('.group-solved');p6Pulse(cards[cards.length-1],'motion-group-solved',560);
+        sensoryCue('progress',game);
       }
       if(game.id==='anagrams'&&m.picked!==null&&picked>m.picked){
         root.dataset.motionEvent='tile-picked';
@@ -1263,25 +1374,28 @@
         root.dataset.motionEvent='mark';
         p6Pulse(p6SelectedElement(game,a),'motion-cell-mark',300);
       }
-      if(game.id==='word-grid'&&m.found!==null&&found>m.found){
+      if(game.id==='word-grid'&&m.found!==null&&found>m.found&&!a.completed){
         root.dataset.motionEvent='word-found';
         const words=document.querySelectorAll('.found-words span');p6Pulse(words[words.length-1],'motion-word-found',460);
+        sensoryCue('progress',game);
       }
-      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings){
+      if(game.id==='untangle'&&m.crossings!==null&&crossings<m.crossings&&!a.completed){
         root.dataset.motionEvent='crossing-cleared';
         p6Pulse(document.querySelector('.crossing-count'),'motion-progress-good',420);
         p6Pulse(p6SelectedElement(game,a),'motion-node-good',360);
+        sensoryCue('progress',game);
       }
     }
 
     if(a.completed&&!m.completed){
       root.dataset.motionEvent='complete';
+      sensoryCue(a.outcome==='failed'?'error':'complete',game);
       if(!reduced){
         p6Pulse(stage,'motion-complete',760);
         const panel=document.querySelector('.result-panel');p6Pulse(panel,'motion-result-in',720);p6SolveBurst(panel);
       }
     }
-    if(hintLevel!==null&&hintLevel!==m.hintLevel)p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);
+    if(hintLevel!==null&&hintLevel!==m.hintLevel){p6Pulse(document.querySelector('.proof-hint'),'motion-hint-in',380);sensoryCue('hint',game);}
     if(feedback&&feedback!==m.feedback)p6Pulse(document.querySelector('.play-feedback'),'motion-feedback-in',320);
     if(paused!==m.paused&&paused)p6Pulse(document.querySelector('.pause-cover'),'motion-pause-in',420);
 
@@ -1289,7 +1403,7 @@
   }
 
   function installPlayExperience(){
-    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
+    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();sensoryCue('undo',game);}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
     const wordleKey=fiveLetters.key;fiveLetters.key=function(a,key){if(key==='ENTER'&&a.state.guesses.some(g=>g.word===a.state.current)){toast('You already tried that word. Use the feedback to try a different guess.');return;}return wordleKey.call(this,a,key);};
     const groupsSubmit=groupsGame.submit;groupsGame.submit=async function(a){if(a.state.selected.length!==4)return;const key=[...a.state.selected].sort().join('|');a.triedGroups=a.triedGroups||[];if(a.triedGroups.includes(key)){toast('You already tried this combination. No extra mistake counted.');return;}a.triedGroups.push(key);if(a.triedGroups.length>200)a.triedGroups.shift();const picked=a.state.selected.map(id=>a.puzzle.tiles.find(t=>t.id===id)),counts={};for(const t of picked)counts[t.groupId]=(counts[t.groupId]||0)+1;await groupsSubmit.call(this,a);if(Math.max(...Object.values(counts))===3)toast('One away: three of those words share a group.');await saveActive(a);};
     const ladderCreate=wordLadder.create;wordLadder.create=async function(seed,difficulty){const a=await ladderCreate.call(this,seed,difficulty),path=acceptedLadderPath(a.puzzle.start,a.puzzle.target);if(path)a.puzzle.optimal=path.length-1;return a;};
@@ -3470,7 +3584,7 @@
     active.startedAt=active.completed||document.hidden?null:Date.now();
     state.currentGame=game;state.currentActive=active;
     updateNav('');document.title=`${game.name} — Puzzle Arcade`;
-    try { game.render(active); }
+    try { game.render(active); bindCommon(); }
     catch(error){
       if(!routeIsCurrent(ticket))return;
       stopTimer();window.onkeydown=null;clearGamePointerHandlers();

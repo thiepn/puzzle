@@ -1,16 +1,21 @@
 {
-  "version": "1.0.2",
-  "cacheVersion": 19,
+  "version": "1.4.0",
+  "phase": "Audio, Haptics & Sensory Feedback",
+  "cacheVersion": 23,
+  "databaseSchema": 1,
   "catalogGames": 36,
-  "automatedReleaseGate": "PASS",
-  "contentValidation": "PASS",
-  "serviceWorkerRegression": "PASS",
+  "automatedReleaseGate": "REQUIRED_ON_RELEASE",
+  "fullChromiumMatrix": "REQUIRED_ON_RELEASE",
+  "contentValidation": "REQUIRED_ON_RELEASE",
+  "serviceWorkerRegression": "REQUIRED_ON_RELEASE",
+  "accessibilityRegression": "REQUIRED_ON_RELEASE",
+  "sensoryFeedbackRegression": "REQUIRED_ON_RELEASE",
   "manualPhysicalPwaUpdate": "NOT_INDEPENDENTLY_VERIFIED",
   "manualScreenReaderTesting": "NOT_INDEPENDENTLY_VERIFIED",
+  "manualPhysicalHapticsTesting": "NOT_INDEPENDENTLY_VERIFIED",
   "acceptedWordDictionary": {
     "source": "ESDB/SCOWL size <= 70",
     "filteredWords": 132590,
     "fiveLetterWords": 7278
-  },
-  "wordEntryRegression": "PASS_ON_RELEASE_GATE"
+  }
 }

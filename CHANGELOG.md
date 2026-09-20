@@ -1,3 +1,13 @@
+# 1.4.0 — Audio, Haptics & Sensory Feedback
+
+- Added a lazy, local Web Audio synthesis engine with no packaged audio files or network dependencies.
+- Added category-aware completion/failure, progress, hint, undo/redo, and pause/resume cues while keeping ordinary moves silent.
+- Added optional vibration patterns through feature-detected `navigator.vibrate`.
+- Added persistent sound mute, local volume, haptics preferences, and a Settings feedback preview.
+- Added a top-bar sound quick toggle with accessible pressed state and a non-color muted indicator.
+- Added Phase 11 static/browser regression coverage and kept the full cumulative Chromium release matrix.
+- Advanced the PWA cache to v23; IndexedDB schema remains 1.
+
 # 1.3.0 — Integration, Final Certification & Ship
 
 - Unified the cumulative Phase 1–8 v1.2 development branch with the Phase 9 accessibility/device production line.

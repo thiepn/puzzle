@@ -8,8 +8,8 @@ const app=read('app.js'),css=read('styles.css'),browser=read('scripts/test-play-
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
-has(app,"const APP_VERSION = '1.3.0';",'integrated release version missing');
-has(app,"const BUILD_PHASE = 'Integration, Final Certification & Ship';",'Phase 10 identity missing');
+assert.match(app,/const APP_VERSION = '\d+\.\d+\.\d+';/,'release version missing');checks++;
+assert.ok(fs.existsSync(new URL('docs/PHASE10_INTEGRATION_CERTIFICATION.md',root)),'Phase 10 certification document missing');checks++;
 
 // Cumulative Phase 1-8 systems must survive integration.
 has(app,'discovery-home','Phase 3 discovery home missing');
