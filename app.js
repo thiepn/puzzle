@@ -543,6 +543,7 @@
     state.settings.sound=value==='off'?'off':'on';
     syncSensoryChrome();
     if(state.settings.sound==='on')ensureSensoryAudio();
+    else if(sensoryAudioContext?.state==='running')void sensoryAudioContext.suspend();
     if(persist)void db.put('kv',state.settings,'settings');
   }
   function setSoundVolume(value,persist=true){
