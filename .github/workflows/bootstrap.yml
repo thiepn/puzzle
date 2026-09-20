@@ -35,6 +35,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Validate browser test syntax
+        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py
       - name: Install browser test dependencies
         run: |
           python -m pip install --disable-pip-version-check playwright
