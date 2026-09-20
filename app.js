@@ -937,10 +937,10 @@
     $$('[data-mode-choice]').forEach(b=>b.onclick=async()=>{state.settings.playMode=b.dataset.modeChoice;await db.put('kv',state.settings,'settings');renderSettings()});
     $$('[data-motion-choice]').forEach(b=>b.onclick=()=>{state.settings.motion=b.dataset.motionChoice;applyAccessibilitySettings();renderSettings()});
     $$('[data-contrast-choice]').forEach(b=>b.onclick=()=>{state.settings.contrast=b.dataset.contrastChoice;applyAccessibilitySettings();renderSettings()});
-    $('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
-    $('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
+    $$('[data-controls-choice]').forEach(b=>b.onclick=()=>{state.settings.controls=b.dataset.controlsChoice;applyAccessibilitySettings();renderSettings()});
+    $$('[data-sound-choice]').forEach(b=>b.onclick=()=>{setSound(b.dataset.soundChoice);renderSettings();if(b.dataset.soundChoice==='on')sensoryCue('preview');});
     const volume=$('[data-sound-volume]');if(volume){volume.oninput=()=>{setSoundVolume(+volume.value/100,false);const out=$('[data-sound-volume-output]');if(out)out.textContent=volume.value+'%';};volume.onchange=()=>{setSoundVolume(+volume.value/100,true);sensoryCue('preview');};}
-    $('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
+    $$('[data-haptics-choice]').forEach(b=>b.onclick=()=>{setHaptics(b.dataset.hapticsChoice);renderSettings();if(b.dataset.hapticsChoice==='on')sensoryHaptic(14);});
     bindCommon();
   }
 
@@ -1036,9 +1036,9 @@
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
-    $('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
-    $('[data-action="sound-toggle"]').forEach(b=>b.onclick=()=>{const next=state.settings.sound==='on'?'off':'on';setSound(next);if(next==='on')sensoryCue('preview');});
-    $('[data-action="sensory-test"]').forEach(b=>b.onclick=()=>sensoryCue('preview'));
+    $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);
+    $$('[data-action="sound-toggle"]').forEach(b=>b.onclick=()=>{const next=state.settings.sound==='on'?'off':'on';setSound(next);if(next==='on')sensoryCue('preview');});
+    $$('[data-action="sensory-test"]').forEach(b=>b.onclick=()=>sensoryCue('preview'));
     document.querySelectorAll('[data-category-filter]').forEach(b=>b.onclick=()=>{state.category=b.dataset.categoryFilter;renderHome()});
     document.querySelectorAll('[data-discover-category]').forEach(b=>b.onclick=async()=>{state.category=b.dataset.discoverCategory;state.libraryQuery='';await renderHome();requestAnimationFrame(()=>$('[data-catalog-section]')?.scrollIntoView({behavior:'smooth',block:'start'}));});
     document.querySelectorAll('[data-favorite]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleFavorite(b.dataset.favorite)});
