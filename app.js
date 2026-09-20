@@ -499,6 +499,7 @@
     ensureSensoryAudio();
   }
   function sensoryTone(freq,duration=0.06,gain=0.12,type='sine',delay=0){
+    if(state.settings.soundVolume<=0)return;
     const ctx=ensureSensoryAudio();if(!ctx||ctx.state==='closed')return;
     const start=ctx.currentTime+Math.max(0,delay),end=start+Math.max(0.02,duration);
     const osc=ctx.createOscillator(),amp=ctx.createGain();
