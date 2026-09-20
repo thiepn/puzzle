@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.7.0';
-  const BUILD_PHASE = 'Variety, Novelty & Anti-Repetition';
+  const APP_VERSION = '1.8.0';
+  const BUILD_PHASE = 'Generator Robustness, Stress Testing & Long-Run Reliability';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -3928,6 +3928,153 @@
     return {version:P14_VERSION,games:Object.keys(GAMES).length,steps,pass:errors.length===0,errors,report};
   }
   window.__PA_VARIETY_AUDIT__={version:P14_VERSION,signals:{...P14_SIGNALS},fingerprint:p14Fingerprint,novelty:p14Novelty,nearDuplicate:p14NearDuplicate,auditSequence:p14AuditSequence,auditCatalog:p14AuditCatalog};
+
+
+
+  // ---------- Phase 15: Generator robustness, stress testing & long-run reliability ----------
+  // Phase 15 repeatedly exercises the final Phase 13 + 14 generator stack. It checks
+  // failures, deterministic replay, fresh state ownership, quality acceptance, diversity,
+  // fallback pressure, latency outliers, and timing drift without touching saved progress.
+  const P15_VERSION=15;
+  const P15_LEVELS=['Easy','Medium','Hard'];
+  const P15_HEAVY=new Set(['word-ladder','killer-sudoku','unequal','arithmetic-cages','bridges','light-up','islands','hitori','queens','number-path','rectangles','dominoes','towers','fillomino','network','untangle']);
+  const P15_DEFAULT_BUDGET_MS=2500;
+  const P15_HEAVY_BUDGET_MS=5000;
+
+  function p15Median(values){return p13Median(values);}
+  function p15Percentile(values,q=.95){
+    const a=(values||[]).map(Number).filter(Number.isFinite).sort((x,y)=>x-y);
+    if(!a.length)return 0;
+    const i=Math.min(a.length-1,Math.max(0,Math.ceil(a.length*q)-1));
+    return a[i];
+  }
+  function p15StableValue(value,seen=new WeakSet()){
+    if(value==null||typeof value==='string'||typeof value==='boolean')return value;
+    if(typeof value==='number')return Number.isFinite(value)?value:String(value);
+    if(typeof value!=='object')return String(value);
+    if(seen.has(value))return '[Circular]';
+    seen.add(value);
+    if(Array.isArray(value))return value.map(v=>p15StableValue(v,seen));
+    const out={};
+    for(const key of Object.keys(value).sort()){
+      if(key.startsWith('_proofHint'))continue;
+      const v=value[key];
+      if(typeof v==='function'||typeof v==='undefined')continue;
+      out[key]=p15StableValue(v,seen);
+    }
+    return out;
+  }
+  function p15Digest(active){
+    return p14Hash(JSON.stringify(p15StableValue({
+      gameId:active?.gameId,
+      seed:active?.seed,
+      difficulty:active?.difficulty,
+      puzzle:active?.puzzle,
+      state:active?.state
+    })));
+  }
+  function p15CollectRefs(value,set=new Set(),seen=new WeakSet(),depth=0){
+    if(value==null||typeof value!=='object'||depth>12||seen.has(value))return set;
+    seen.add(value);set.add(value);
+    if(Array.isArray(value)){for(const v of value)p15CollectRefs(v,set,seen,depth+1);}
+    else for(const v of Object.values(value))p15CollectRefs(v,set,seen,depth+1);
+    return set;
+  }
+  function p15SharesStateObjects(a,b){
+    const left=p15CollectRefs(a?.state),right=p15CollectRefs(b?.state);
+    for(const ref of left)if(right.has(ref))return true;
+    return false;
+  }
+  function p15Seed(id,difficulty,k){
+    if(k===0)return 'z'.repeat(MAX_SHARED_SEED_LENGTH);
+    if(k===1)return '0';
+    return 'p15-stress-'+id+'-'+difficulty.toLowerCase()+'-'+k;
+  }
+  function p15CenterFirst(p){
+    const rows=p.rows||p.n||p.size||1,cols=p.cols||p.n||p.size||rows;
+    return Math.floor(rows/2)*cols+Math.floor(cols/2);
+  }
+  async function p15CreateMeasured(id,difficulty,seed){
+    const game=GAMES[id],start=performance.now();
+    const active=await game.create(seed,difficulty);
+    if(id==='mines'&&!active.puzzle.mines)game.build(active,p15CenterFirst(active.puzzle));
+    const elapsed=performance.now()-start,evaluation=p13Evaluate(id,active),fingerprint=p14Fingerprint(active),cert=active.puzzle?.qualityCertification||{};
+    return {
+      active,
+      ms:+elapsed.toFixed(2),
+      digest:p15Digest(active),
+      fingerprint,
+      accepted:evaluation.accepted&&cert.accepted!==false,
+      qualityScore:evaluation.qualityScore,
+      difficultyScore:evaluation.difficultyScore,
+      attempts:Number.isFinite(cert.attempts)?cert.attempts:1,
+      sourceSeed:cert.sourceSeed||seed,
+    };
+  }
+  async function p15StressTier(id,difficulty,samples=2){
+    const game=GAMES[id],count=Math.max(1,Math.floor(samples)),first=[],replays=[],errors=[],determinismErrors=[],stateSharingErrors=[];
+    for(let k=0;k<count;k++){
+      const seed=p15Seed(id,difficulty,k);
+      try{first.push({seed,...await p15CreateMeasured(id,difficulty,seed)});}
+      catch(error){errors.push({seed,stage:'first',message:String(error?.message||error)});}
+    }
+    for(let k=count-1;k>=0;k--){
+      const seed=p15Seed(id,difficulty,k),original=first.find(x=>x.seed===seed);
+      if(!original)continue;
+      try{
+        const replay={seed,...await p15CreateMeasured(id,difficulty,seed)};
+        replays.push(replay);
+        if(replay.digest!==original.digest||replay.fingerprint.content!==original.fingerprint.content||replay.fingerprint.shape!==original.fingerprint.shape)determinismErrors.push(seed);
+        if(p15SharesStateObjects(original.active,replay.active))stateSharingErrors.push(seed);
+      }catch(error){errors.push({seed,stage:'replay',message:String(error?.message||error)});}
+    }
+    const rows=[...first,...replays],times=rows.map(x=>x.ms),firstTimes=first.map(x=>x.ms),attempts=rows.map(x=>x.attempts),qualityRejects=rows.filter(x=>!x.accepted).length;
+    const uniqueDigests=new Set(first.map(x=>x.digest)).size,uniqueContent=new Set(first.map(x=>x.fingerprint.content)).size;
+    const requiredUnique=count<2?1:Math.max(2,Math.ceil(count*.5)),diversityPass=uniqueDigests>=Math.min(count,requiredUnique);
+    const half=Math.max(1,Math.floor(firstTimes.length/2)),early=p15Median(firstTimes.slice(0,half)),late=p15Median(firstTimes.slice(-half)),drift=early>0?late/early:1;
+    const budgetMs=P15_HEAVY.has(id)?P15_HEAVY_BUDGET_MS:P15_DEFAULT_BUDGET_MS,maxMs=times.length?Math.max(...times):0;
+    const latencyPass=maxMs<=budgetMs,driftPass=count<4||late<500||drift<=6;
+    const fallbackCount=rows.filter(x=>x.attempts>1).length,fallbackRate=rows.length?fallbackCount/rows.length:0,averageAttempts=attempts.length?p13Mean(attempts):0,retryPass=averageAttempts<3||(fallbackRate<1&&averageAttempts<3.5);
+    const pass=errors.length===0&&qualityRejects===0&&determinismErrors.length===0&&stateSharingErrors.length===0&&diversityPass&&latencyPass&&driftPass&&retryPass&&first.length===count&&replays.length===first.length;
+    return {
+      id,difficulty,samples:count,pass,
+      generations:rows.length,failures:errors.length,qualityRejects,determinismErrors,stateSharingErrors,
+      uniqueDigests,uniqueContent,requiredUnique,diversityPass,
+      timing:{medianMs:+p15Median(times).toFixed(2),p95Ms:+p15Percentile(times,.95).toFixed(2),maxMs:+maxMs.toFixed(2),budgetMs,driftRatio:+drift.toFixed(2),latencyPass,driftPass},
+      retries:{fallbackCount,fallbackRate:+fallbackRate.toFixed(3),averageAttempts:+averageAttempts.toFixed(2),maxAttempts:attempts.length?Math.max(...attempts):0,retryPass},
+      errors,
+      rows:first.map(x=>({seed:x.seed,digest:x.digest,content:x.fingerprint.content,shape:x.fingerprint.shape,ms:x.ms,attempts:x.attempts,qualityScore:x.qualityScore,difficultyScore:x.difficultyScore}))
+    };
+  }
+  async function p15StressGame(id,samples=2){
+    const game=GAMES[id],tiers={},errors=[];
+    for(const difficulty of P15_LEVELS){
+      if(!(game.difficulties||[]).includes(difficulty)){errors.push(difficulty+': unavailable');continue;}
+      try{tiers[difficulty]=await p15StressTier(id,difficulty,samples);if(!tiers[difficulty].pass)errors.push(difficulty+': stress certification failed');}
+      catch(error){errors.push(difficulty+': '+String(error?.message||error));tiers[difficulty]={id,difficulty,pass:false,errors:[String(error?.message||error)]};}
+    }
+    return {id,samples:Math.max(1,Math.floor(samples)),pass:errors.length===0,errors,tiers};
+  }
+  async function p15StressCatalog(samples=2,ids=null){
+    const selected=Array.isArray(ids)&&ids.length?[...new Set(ids.filter(id=>GAMES[id]))]:Object.keys(GAMES),report={},errors=[],start=performance.now();
+    for(const id of selected){
+      const row=await p15StressGame(id,samples);report[id]=row;if(!row.pass)errors.push(...row.errors.map(x=>id+' '+x));
+    }
+    const tierRows=Object.values(report).flatMap(g=>Object.values(g.tiers||{})).filter(Boolean),generations=tierRows.reduce((n,x)=>n+(x.generations||0),0),failures=tierRows.reduce((n,x)=>n+(x.failures||0),0);
+    return {
+      version:P15_VERSION,games:selected.length,samplesPerTier:Math.max(1,Math.floor(samples)),generations,
+      durationMs:+(performance.now()-start).toFixed(2),failures,pass:errors.length===0,errors,report
+    };
+  }
+  window.__PA_GENERATOR_STRESS__={
+    version:P15_VERSION,
+    levels:[...P15_LEVELS],
+    budgets:{defaultMs:P15_DEFAULT_BUDGET_MS,heavyMs:P15_HEAVY_BUDGET_MS,heavyGames:[...P15_HEAVY]},
+    digest:p15Digest,
+    stressTier:p15StressTier,
+    stressGame:p15StressGame,
+    auditCatalog:p15StressCatalog
+  };
 
 
   // Input lifetimes are tied to a render, including pointer cancellation.
