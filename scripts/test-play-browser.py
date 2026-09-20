@@ -368,6 +368,10 @@ with sync_playwright() as p:
 
     # Phase 12 onboarding, tutorials and Learn mode.
     page.set_viewport_size({'width':390,'height':844})
+    navigate('settings');page.locator('[data-action="reset-learning"]').wait_for()
+    page.locator('[data-action="reset-learning"]').click()
+    page.locator('[data-modal-action="1"]').click()
+    page.wait_for_function('() => !document.querySelector(".modal")')
     open_game('make-24','Easy','phase12-first-play')
     coach=page.locator('[data-first-play-coach]')
     assert coach.is_visible()
