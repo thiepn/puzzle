@@ -29,6 +29,7 @@ ok(app.includes("firstPlayCoach:'on'"),'first-play coach default missing');
 ok(app.includes('function sanitizeLearning('),'learning state sanitation missing');
 ok(app.includes('function learningStatus('),'learning status helper missing');
 ok(app.includes('function showLearnTutorial('),'tutorial flow missing');
+ok(app.includes("CATEGORIES[byId[game.id]?.category||'logic'].label"),'tutorial must resolve category from catalog metadata');
 ok(app.includes('function renderLearn('),'Learn library renderer missing');
 ok(app.includes('function firstPlayCoach('),'first-play coach renderer missing');
 ok(app.includes('data-dismiss-learn-coach'),'coach skip control missing');
