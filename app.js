@@ -3809,7 +3809,7 @@
       case 'word-search':{theme=String(p.theme||'');content=hash([theme,sorted(p.words)]);const n=p.size||0,dirs=Object.values(p.paths||{}).map(path=>{if(!path?.length)return '';const a=path[0],z=path.at(-1);return [Math.sign(Math.floor(z/n)-Math.floor(a/n)),Math.sign(z%n-a%n)].join(':');});shape=hash(dirs.sort());break;}
       case 'sudoku':content=p14CanonSquare(p.solution||[],9,true);shape=p14CanonSquare((p.givens||[]).map(Boolean),9);break;
       case 'killer-sudoku':{content=p14CanonSquare(p.solution||[],9,true);const owner=Array(81).fill(-1);(p.cages||[]).forEach((g,j)=>(g.cells||[]).forEach(i=>owner[i]=j));shape=p14Partition(owner,9);break;}
-      case 'kakuro':{content=hash([(p.runs||[]).map(r=>r.sum),p.solution||[]]);shape=p14CanonSquare(p.white||[],Math.round(Math.sqrt((p.white||[]).length)));break;}
+      case 'kakuro':{content=hash([(p.runs||[]).map(r=>r.sum),p.solution||[]]);const sig=(p.white||[]).map((w,i)=>w?'W':p.clues?.[i]?`C${p.clues[i].down||0}:${p.clues[i].across||0}`:'B');shape=p14CanonSquare(sig,p.rows||Math.round(Math.sqrt(sig.length)));break;}
       case 'unequal':content=hash([p.solution||[],p.givens||[]]);shape=hash([(p.givens||[]).map(v=>v==null?0:1),(p.relations||[]).length]);break;
       case 'arithmetic-cages':{content=hash((p.cages||[]).map(g=>[g.op,g.target,sorted(g.cells)]));const owner=Array((p.n||0)**2).fill(-1);(p.cages||[]).forEach((g,j)=>(g.cells||[]).forEach(i=>owner[i]=j));shape=p14Partition(owner,p.n||0);break;}
       case 'make-24':content=hash([...(p.nums||[])].sort((a,b)=>a-b));shape=hash([p.difficultyMetrics?.minComplexity||0,p.difficultyMetrics?.solutionCount||p.solutionFamilyCount||0,!!p.difficultyMetrics?.requiresFraction]);break;
@@ -3818,7 +3818,7 @@
       case 'loop':content=hash([p.clues||[],p.horiz||[],p.vert||[]]);shape=p14CanonSquare(p.clues||[],p.rows||0);break;
       case 'bridges':content=hash([(p.nodes||[]).map(x=>[x.r,x.c]),p.clues||[],p.solution||[]]);shape=hash([(p.nodes||[]).length,(p.edges||[]).length,sorted(p.clues)]);break;
       case 'light-up':{const n=p.n||0,wall=Array(n*n).fill(0);(p.walls||[]).forEach(i=>wall[i]=1);content=hash([wall,p.clues||{}]);shape=p14CanonSquare(wall,n);break;}
-      case 'islands':content=hash([p.solution||[],p.clues||{}]);shape=p14CanonSquare((p.solution||[]).map(v=>v===2?1:0),p.n||0);break;
+      case 'islands':{content=hash([p.solution||[],p.clues||{}]);const sig=(p.solution||[]).map((v,i)=>`${v?1:0}:${p.clues?.[i]??0}`);shape=p14CanonSquare(sig,p.n||0);break;}
       case 'hitori':content=hash(p.grid||[]);shape=p14CanonSquare(p.solutionBlack||[],p.n||0);break;
       case 'binary':content=hash([p.solution||[],p.givens||[]]);shape=p14CanonSquare((p.givens||[]).map(v=>v==null?0:1),p.size||0);break;
       case 'queens':{content=hash(p.solution||[]);shape=p14Partition(p.regions||[],p.size||0);break;}
