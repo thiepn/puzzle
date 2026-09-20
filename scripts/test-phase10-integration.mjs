@@ -44,8 +44,8 @@ has(browser,'Phase 7: finish a real generated Sudoku','Phase 7 browser coverage 
 has(browser,'Phase 8: populate a representative local record','Phase 8 browser coverage missing');
 has(browser,'Phase 9 accessibility/control behavior','Phase 9 browser coverage missing');
 
-assert.ok(!app.includes("$('.nav-link').forEach"),'single-element selector used as navigation collection');checks++;
-assert.ok(!app.includes("$('[data-motion-choice]').forEach"),'single-element selector used as motion collection');checks++;
-assert.ok(!app.includes("$('[data-action=\"controls\"]').forEach"),'single-element selector used as controls collection');checks++;
+assert.ok(!/(^|[^$])\$\('\.nav-link'\)\.forEach/m.test(app),'single-element selector used as navigation collection');checks++;
+assert.ok(!/(^|[^$])\$\('\[data-motion-choice\]'\)\.forEach/m.test(app),'single-element selector used as motion collection');checks++;
+assert.ok(!/(^|[^$])\$\('\[data-action="controls"\]'\)\.forEach/m.test(app),'single-element selector used as controls collection');checks++;
 
 console.log(JSON.stringify({pass:true,checks},null,2));
