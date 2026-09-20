@@ -13,7 +13,7 @@ ok(methodStart>=0&&methodEnd>methodStart,'Phase 13 method registry missing');
 const methods=app.slice(methodStart,methodEnd);
 for(const id of ids)ok(methods.includes("'"+id+"'"),'difficulty method missing '+id);
 ok(ids.length===36,'expected 36 games');
-ok(/const APP_VERSION = '\\d+\\.\\d+\\.\\d+';/.test(app),'release version missing');
+ok(/const APP_VERSION = '[0-9]+\\.[0-9]+\\.[0-9]+';/.test(app),'release version missing');
 ok(app.includes('const P13_VERSION=13;'),'Phase 13 runtime identity missing');
 ok(app.includes('function p13Signal('),'property-based difficulty signal engine missing');
 ok(app.includes('function p13ShapeProblems('),'quality/triviality gate missing');
