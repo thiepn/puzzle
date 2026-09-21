@@ -1,3 +1,17 @@
+# 1.9.0 — Solvability, Hint Correctness & Completion Certification
+
+- Added a canonical completion witness and game-specific completion contract for all 36 puzzle families.
+- Added release certification across all 108 game/difficulty combinations.
+- Added explicit unfinished-start negative controls to reject accidentally solved/trivial starts.
+- Added hint-source certification across every game, including structured proof validation for proof-based number/logic families.
+- Added independent trace solving for Word Grid, piece construction for Word Pieces, substitution verification for Cryptogram, and exact stored-path checks for Theme Trail and Word Search.
+- Added exact completion checks for Sudoku/Killer, Kakuro, Unequal, Arithmetic Cages, Loop, Bridges, Light Up, Islands, Hitori, Binary, Queens, Number Path, Tents, Rectangles, Dominoes, Towers, Fillomino, and Network.
+- Added post-first-click Mines clue recomputation.
+- Added exact Make 24 and Lights Out solve-route verification.
+- Added independent Sliding Tiles parity verification and Untangle planar-witness reconstruction.
+- Preserved the full Phase 13–15 difficulty, variety, generator stress, latency, determinism, state-isolation, and heap gates.
+- Advanced the PWA cache to v28; IndexedDB schema remains 1.
+
 # 1.8.0 — Generator Robustness, Stress Testing & Long-Run Reliability
 
 - Added catalog-wide generator stress certification across all 36 games and all three difficulty tiers.

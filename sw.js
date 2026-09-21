@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.8.0: generator robustness and long-run reliability release shell. */
-const APP_VERSION = '1.8.0';
-const CACHE_VERSION = 'v27';
+/* Puzzle Arcade 1.9.0: solvability, hint and completion certification release shell. */
+const APP_VERSION = '1.9.0';
+const CACHE_VERSION = 'v28';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
