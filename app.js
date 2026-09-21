@@ -4508,6 +4508,7 @@
     x.updatedAt=Math.max(Date.now()+10000,(x.updatedAt||0)+10000);
     const ok=await db.put('active',x);
     try{localStorage.removeItem('pa:checkpoint:'+active.gameId);}catch{}
+    if(ok)retiredActives.add(active);
     return {pass:!!ok,gameId:active.gameId,field,before,after,updatedAt:x.updatedAt};
   }
   async function p17FinishBoundary(){
