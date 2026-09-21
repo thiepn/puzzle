@@ -51,6 +51,23 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
                 f"{before1['transport']} / {before2['transport']}"
             )
 
+    # Two writes queued from the same live object must both commit. This is the
+    # regression for the Phase 18 lock-wait revision race that could otherwise
+    # discard a later completion/autosave as if it came from a stale tab.
+    queued=first.evaluate(
+        "async () => await Promise.all(["
+        "window.__PA_RESILIENCE__.probeCurrent(),"
+        "window.__PA_RESILIENCE__.probeCurrent()])"
+    )
+    if not all(x.get("pass") for x in queued):
+        raise AssertionError(f"queued same-tab saves diverged: {queued}")
+    queued_expected=max(x["expected"] for x in queued)
+    second.wait_for_function(
+        "(expected) => window.__PA_RESILIENCE__?.summary()?.current?.hintsUsed >= expected",
+        arg=queued_expected,
+        timeout=8000,
+    )
+
     probe=first.evaluate("async () => await window.__PA_RESILIENCE__.probeCurrent()")
     if not probe.get("pass"):
         raise AssertionError(f"source-tab save failed: {probe}")
