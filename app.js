@@ -5174,7 +5174,14 @@
     if(overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
     if(e.key==='?'){e.preventDefault();showControlsHelp();}
   },true);
-  window.addEventListener('hashchange',()=>void renderRoute());
+  window.addEventListener('hashchange',()=>{
+    const {parts,params}=parseHash();
+    if(parts[0]==='game'&&parts[1]){
+      const seed=sanitizeSharedSeed(params.get('seed'));
+      if(seed)p18MarkReplacementIntent(parts[1],seed);
+    }
+    void renderRoute();
+  });
   function suspendCurrentGame(){
     const active=state.currentActive;
     if(!active||retiredActives.has(active))return;
