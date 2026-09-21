@@ -62,6 +62,7 @@ if(version==='1.11.0'){
   must(/function p18MarkReplacementIntent\(gameId,seed\)/.test(app),'Phase 18 replacement intent marker missing');
   must(/navigation\?\.type==='reload'\|\|navigation\?\.type==='back_forward'/.test(app),'Phase 18 stale reload suppression missing');
   must(/saveActive\(active,\{replaceExisting:!previous\|\|damaged\|\|outdated\|\|explicitReplacement\}\)/.test(app),'Phase 18 intent-gated replacement path missing');
+  must(/const differentSession=remote\.seed!==current\.seed\|\|remote\.difficulty!==current\.difficulty;/.test(app),'Phase 18 durable session-identity adoption missing');
   must(/pageshow/.test(app)&&/p18ResyncAfterRestore/.test(app),'Phase 18 BFCache resync missing');
   must(/SKIP_WAITING/.test(app)&&/controllerchange/.test(app),'Phase 18 controlled PWA upgrade missing');
 }
