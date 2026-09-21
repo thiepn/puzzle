@@ -13,6 +13,7 @@ function harness(scope='https://example.test/puzzle/'){
   const stores=new Map();
   const deleted=[];
   let claimed=0;
+  let skipped=0;
   let fetches=[];
   let failAddAll=false;
   class Req { constructor(url,opts={}){this.url=String(url);Object.assign(this,opts);} }
@@ -35,19 +36,31 @@ function harness(scope='https://example.test/puzzle/'){
     self:{
       registration:{scope},
       clients:{claim:async()=>{claimed++;}},
+      skipWaiting:async()=>{skipped++;},
       addEventListener(type,handler){handlers[type]=handler;},
     }
   };
   vm.createContext(context);vm.runInContext(sw,context);
-  function fire(type,request){let promise;handlers[type]({request,waitUntil:p=>promise=p,respondWith:p=>promise=p});return promise;}
-  return {handlers,stores,deleted,fetches,scope,fire,setFail:v=>failAddAll=v,get claimed(){return claimed;}};
+  function fire(type,request){
+    let promise;
+    if(type==='message')handlers[type]?.({data:request,waitUntil:p=>promise=p});
+    else handlers[type]?.({request,waitUntil:p=>promise=p,respondWith:p=>promise=p});
+    return promise;
+  }
+  return {handlers,stores,deleted,fetches,scope,fire,setFail:v=>failAddAll=v,get claimed(){return claimed;},get skipped(){return skipped;} };
 }
 function req(url,{method='GET',mode='same-origin'}={}){return {url,method,mode};}
 
-test('precache uses v29 and scoped cache key',async()=>{const h=harness();await h.fire('install');const keys=[...h.stores.keys()];assert.equal(keys.length,1);assert.match(keys[0],/puzzle-arcade-core-.*v29$/);assert.equal(h.stores.get(keys[0]).size,9);});
-test('install does not force skipWaiting',async()=>{assert.ok(!/skipWaiting\s*\(/.test(sw));});
+test('precache uses v30 and scoped cache key',async()=>{const h=harness();await h.fire('install');const keys=[...h.stores.keys()];assert.equal(keys.length,1);assert.match(keys[0],/puzzle-arcade-core-.*v30$/);assert.equal(h.stores.get(keys[0]).size,9);});
+test('install waits by default and explicit update message activates',async()=>{
+  const h=harness();
+  await h.fire('install');
+  assert.equal(h.skipped,0);
+  await h.fire('message',{type:'SKIP_WAITING'});
+  assert.equal(h.skipped,1);
+});
 test('failed install deletes incomplete cache',async()=>{const h=harness();h.setFail(true);await assert.rejects(()=>h.fire('install'));assert.equal(h.stores.size,0);});
-test('activate only deletes same-scope old caches',async()=>{const h=harness();await h.fire('install');const own=[...h.stores.keys()][0];h.stores.set(own.replace(/v29$/,'v17'),new Map());h.stores.set('puzzle-arcade-core-%2Fother%2F-v17',new Map());await h.fire('activate');assert.ok(!h.stores.has(own.replace(/v29$/,'v17')));assert.ok(h.stores.has('puzzle-arcade-core-%2Fother%2F-v17'));assert.equal(h.claimed,1);});
+test('activate only deletes same-scope old caches',async()=>{const h=harness();await h.fire('install');const own=[...h.stores.keys()][0];h.stores.set(own.replace(/v30$/,'v17'),new Map());h.stores.set('puzzle-arcade-core-%2Fother%2F-v17',new Map());await h.fire('activate');assert.ok(!h.stores.has(own.replace(/v30$/,'v17')));assert.ok(h.stores.has('puzzle-arcade-core-%2Fother%2F-v17'));assert.equal(h.claimed,1);});
 test('installations at different paths use isolated caches',async()=>{const a=harness('https://example.test/puzzle/'),b=harness('https://example.test/other/');await a.fire('install');await b.fire('install');assert.notEqual([...a.stores.keys()][0],[...b.stores.keys()][0]);});
 test('cached shell and JS come from same coherent cache',async()=>{const h=harness();await h.fire('install');const shell=await h.fire('fetch',req('https://example.test/puzzle/',{mode:'navigate'}));const js=await h.fire('fetch',req('https://example.test/puzzle/app.js'));assert.equal(shell.source,'cache');assert.equal(js.source,'cache');});
 test('offline root navigation resolves cached shell',async()=>{const h=harness();await h.fire('install');const r=await h.fire('fetch',req('https://example.test/puzzle/',{mode:'navigate'}));assert.equal(r.source,'cache');});
