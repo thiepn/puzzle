@@ -4431,6 +4431,18 @@
     for(const key of Object.keys(initialState||{}))subset[key]=active?.state?.[key];
     return p14Hash(JSON.stringify(p15StableValue(subset)));
   }
+  const p17FreshCache=new Map();
+  async function p17FreshActive(active){
+    const key=active.gameId+'|'+active.difficulty+'|'+active.seed;
+    let template=p17FreshCache.get(key);
+    if(!template){
+      const game=GAMES[active.gameId];
+      template=await game.create(active.seed,active.difficulty);template.startedAt=null;
+      p17FreshCache.set(key,structuredClone(template));
+      if(p17FreshCache.size>256)p17FreshCache.delete(p17FreshCache.keys().next().value);
+    }
+    return structuredClone(template);
+  }
   function p17ResultValid(active){
     if(!active?.completed)return true;
     const r=active.result;
@@ -4450,7 +4462,7 @@
     if(!p17ResultValid(active))errors.push('completed result metadata is inconsistent');
     let repaired=null,fresh=null;
     try{
-      fresh=await game.create(active.seed,active.difficulty);fresh.startedAt=null;
+      fresh=await p17FreshActive(active);
       repaired=repairSavedActive(game,structuredClone(active),fresh);
       if(!repaired)errors.push('save repair rejected the current legal session');
       else if(p17DurableStateDigest(active,fresh.state)!==p17DurableStateDigest(repaired,fresh.state))
