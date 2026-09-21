@@ -1451,7 +1451,8 @@
         p18ScheduleActiveAdoption(active.gameId,true);
         return false;
       }
-      active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1,localVersion+1);
+      const remoteVersion=Number(remote?.updatedAt)||0;
+      active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1,localVersion+1,remoteVersion+1);
       const version=active.updatedAt;
       journalActive(active);
       const ok=await db.put('active',active);
