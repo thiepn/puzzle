@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.11.0 · Cross-Browser, Offline/PWA & Multi-Tab Resilience · PWA cache v30**
+**Current release: 1.12.0 · Performance, Memory & Long-Session Endurance · PWA cache v31**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Performance, Memory & Long-Session Endurance 1.12.0
+
+Phase 19 certifies that Puzzle Arcade remains stable across sustained use rather than only short browser sessions. The release gate warms all 36 games, then performs three additional full-catalog cycles with fresh deterministic seeds while tracking route latency, heap growth, DOM size, storage size, timer balance, handler cleanup, lifecycle transitions, and bounded runtime caches.
+
+Completed-result history is now capped at **10,000 entries** with boot-time and live compaction. A weekly/manual deep endurance workflow expands the browser run to **468 total game routes**.
+
+See docs/PHASE19_PERFORMANCE_MEMORY_ENDURANCE.md for the full endurance contract.
 
 ## Cross-Browser, Offline/PWA & Multi-Tab Resilience 1.11.0
 
