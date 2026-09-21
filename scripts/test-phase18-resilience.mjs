@@ -38,7 +38,11 @@ has(app,'const requestedVersion=Number(active.updatedAt)||0;','queued-save reque
 has(app,'const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);','queued same-tab revision refresh missing');
 has(app,'const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);','newer remote-state detection missing');
 has(app,'if(remoteNewer&&!replaceExisting)','newer remote state stale-write guard missing');
-has(app,'saveActive(active,{replaceExisting:true})','intentional fresh-session replacement path missing');
+has(app,'function p18MarkReplacementIntent(gameId,seed)','replacement intent marker missing');
+has(app,'function p18ConsumeReplacementIntent(gameId,seed)','replacement intent consumer missing');
+has(app,"navigation?.type==='reload'||navigation?.type==='back_forward'",'stale reload replacement suppression missing');
+has(app,'saveActive(active,{replaceExisting:!previous||damaged||outdated||explicitReplacement})','intent-gated fresh-session replacement path missing');
+has(app,'p18NormalizeGameRoute(active)','durable route normalization missing');
 has(app,'saveActive(fresh,{replaceExisting:true})','replay replacement path missing');
 has(app,"toast('This puzzle changed in another tab. Loaded the newest saved state.')",'remote-state adoption feedback missing');
 has(app,"p18Emit({type:'reset'})",'cross-tab reset propagation missing');
