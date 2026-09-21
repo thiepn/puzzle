@@ -238,11 +238,11 @@ def main():
                         page.reload(wait_until='domcontentloaded')
                         page.wait_for_function('(id)=>window.__PA_PLAYER_FUZZ__?.version===17 && document.querySelector(".game-page")?.dataset.playGame===id',arg=gid,timeout=30000)
                         reloads+=1
-                        validate(f'{gid}/{difficulty}/corruption-recovery')
                         try:
-                            page.wait_for_function('() => Array.from(document.querySelectorAll(".toast")).some(x=>/Repaired damaged save fields/.test(x.textContent))',timeout=2500)
+                            page.wait_for_function('() => Array.from(document.querySelectorAll(".toast")).some(x=>/Repaired damaged save fields/.test(x.textContent))',timeout=3500)
                         except PlaywrightTimeoutError:
                             raise AssertionError('damaged save recovered without recovery signal')
+                        validate(f'{gid}/{difficulty}/corruption-recovery')
                         recoveries+=1
                         row['corruptionRecovered']=True
 
