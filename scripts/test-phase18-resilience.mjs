@@ -11,7 +11,7 @@ let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 const lacks=(text,needle,label)=>{assert.ok(!text.includes(needle),label);checks++;};
 
-assert.match(app,/const APP_VERSION = '\\d+\\.\\d+\\.\\d+';/,'release app version missing');checks++;
+assert.match(app,/const APP_VERSION = '\d+\.\d+\.\d+';/,'release app version missing');checks++;
 has(app,'const P18_VERSION=18;','Phase 18 runtime version missing');
 has(app,'window.__PA_RESILIENCE__','Phase 18 diagnostic surface missing');
 
