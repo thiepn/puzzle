@@ -36,6 +36,8 @@ has(app,'async function p18WithLease(','localStorage lease implementation missin
 has(app,'async function p18WithActiveLock(','per-puzzle serialization missing');
 has(app,'const requestedVersion=Number(active.updatedAt)||0;','queued-save requested revision capture missing');
 has(app,'const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);','queued same-tab revision refresh missing');
+has(app,'const remoteVersion=Number(remote?.updatedAt)||0;','remote revision capture missing');
+has(app,'localVersion+1,remoteVersion+1','cross-tab revisions are not globally monotonic under the write lock');
 has(app,'const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);','newer remote-state detection missing');
 has(app,'if(remoteNewer&&!replaceExisting)','newer remote state stale-write guard missing');
 has(app,'function p18MarkReplacementIntent(gameId,seed)','replacement intent marker missing');
