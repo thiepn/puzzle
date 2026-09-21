@@ -44,6 +44,8 @@ has(app,'if((remoteDifferentSession||remoteNewer)&&!replaceExisting)','stale/dif
 has(app,'function p18MarkReplacementIntent(gameId,seed)','replacement intent marker missing');
 has(app,'function p18ConsumeReplacementIntent(gameId,seed)','replacement intent consumer missing');
 has(app,"navigation?.type==='reload'||navigation?.type==='back_forward'",'stale reload replacement suppression missing');
+has(app,"window.addEventListener('hashchange',()=>{",'explicit hash-navigation hook missing');
+has(app,"if(seed)p18MarkReplacementIntent(parts[1],seed);",'seeded hash navigation does not mark replacement intent');
 has(app,'saveActive(active,{replaceExisting:!previous||damaged||outdated||explicitReplacement})','intent-gated fresh-session replacement path missing');
 has(app,'p18NormalizeGameRoute(active)','durable route normalization missing');
 has(app,'const differentSession=remote.seed!==current.seed||remote.difficulty!==current.difficulty;','session-identity adoption guard missing');
