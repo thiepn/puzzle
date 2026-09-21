@@ -4156,7 +4156,7 @@
   const P16_PROOFERS={
     sudoku:sudokuProof,
     'killer-sudoku':killerProof,
-    kakuro:kakuroProof,
+    kakuro:a=>a.puzzle?.runs?w5KakProof(a):kakuroProof(a),
     binary:binaryProof,
     queens:queensProof,
     loop:w6LoopProof,
