@@ -32,12 +32,13 @@ jobs:
       - run: node scripts/test-service-worker.mjs
       - run: node scripts/test-word-entry.mjs
       - run: node scripts/test-phase18-resilience.mjs
+      - run: node scripts/test-phase19-endurance.mjs
       - run: node scripts/release-check.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Validate browser test syntax
-        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py scripts/test-player-fuzz-browser.py scripts/test-resilience-browser.py
+        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py scripts/test-player-fuzz-browser.py scripts/test-resilience-browser.py scripts/test-endurance-browser.py
       - name: Install browser test dependencies
         run: |
           python -m pip install --disable-pip-version-check playwright
@@ -88,6 +89,37 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/test-player-fuzz-browser.py --base-url http://127.0.0.1:8080/ --games "${{ matrix.games }}" --difficulties Medium --steps 12
 
+
+  endurance-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Phase 19 long-session endurance
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/endurance
+          python -m http.server 8080 >/tmp/puzzle-endurance-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-endurance-browser.py \
+            --base-url http://127.0.0.1:8080/ \
+            --cycles 3 \
+            --output test-results/endurance/release.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase19-endurance-release
+          path: test-results/endurance/release.json
+          retention-days: 30
+
   resilience-matrix:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -114,7 +146,7 @@ jobs:
 
   deploy:
     if: github.event_name == 'push'
-    needs: [release-gate, player-fuzz-gate, resilience-matrix]
+    needs: [release-gate, player-fuzz-gate, endurance-gate, resilience-matrix]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -155,8 +187,8 @@ jobs:
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
           curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
-          grep -q "const APP_VERSION = '1.11.0';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v30';" /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.12.0';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v31';" /tmp/live-sw.js
           grep -q 'trace' /tmp/live-dictionary.js
           grep -q 'adieu' /tmp/live-dictionary.js
           echo 'PRODUCTION_SMOKE=PASS'
