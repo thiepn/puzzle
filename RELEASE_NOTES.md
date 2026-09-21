@@ -1,18 +1,20 @@
-# Puzzle Arcade 1.10.0 — Real Player Simulation, State Fuzzing & Interaction Sequence Reliability
+# Puzzle Arcade 1.11.0 — Cross-Browser, Offline/PWA & Multi-Tab Resilience
 
-Phase 17 tests what happens after generation: long, messy player interaction sequences and repeated persistence transitions.
+Phase 18 hardens browser execution, offline installation, and local persistence without changing puzzle rules or the 36-game catalog.
 
-- Added a catalog-wide Phase 17 player-state invariant API covering all 36 games.
-- Every live session is checked against the same production save-repair routine used after a real reload.
-- Legal durable state must survive repair byte-for-byte at the normalized state-digest level.
-- The underlying Phase 16 completion witness is rechecked after interaction sequences.
-- The standard Chromium release gate now fuzzes all 36 games through real rendered controls.
-- Sequences include board actions, keyboard input, hints, undo/redo, keyboard history shortcuts, pause/resume, and game-menu transitions.
-- Every standard session verifies autosave parity and exact state-digest preservation across a full page reload.
-- Every unfinished session receives an intentionally malformed but serializable IndexedDB field, then must recover through the real reload/repair path and emit the recovery notice.
-- Every game crosses the shared completion/result boundary, persists that completed state through reload, and successfully transitions through Next Puzzle to a fresh unfinished seed.
-- A weekly/manual four-shard deep fuzz workflow covers all three difficulties, two deterministic cycles, and 24 interaction steps per session: 5,184 planned interaction steps before reload/recovery/completion probes.
+- Required release coverage now runs in Chromium, Firefox, and WebKit.
+- Two live tabs synchronize active puzzle changes in both directions.
+- BroadcastChannel is the primary signal path; the storage event is a certified fallback.
+- Active-puzzle writes are serialized with Web Locks where available and an expiring localStorage lease otherwise.
+- A stale tab re-reads durable state before committing and refuses to overwrite any newer saved revision.
+- A current tab adopts a newer remote session from storage rather than trusting message payload data.
+- BFCache restoration and visibility return trigger persistence reconciliation before normal play resumes.
+- Compatibility fallbacks cover structured cloning, selector escaping, board-resize observation, and puzzle seed generation.
+- Service-worker updates can activate a fully installed replacement worker without requiring every old tab to close, followed by one guarded reload onto the new controller.
+- Chromium CI performs a real offline service-worker reload; Firefox and WebKit certify production runtime and multi-tab behavior.
+- The existing scoped, atomic core precache and narrow offline fetch policy remain intact.
+- All Phase 13–17 quality, variety, generator, completion, and player-state fuzz gates remain required.
 
-Storage schema remains **1**. Service-worker cache is **v29**.
+Storage schema remains **1**. Service-worker cache is **v30**.
 
-See `docs/PHASE17_PLAYER_STATE_FUZZING.md` for the complete contract.
+See docs/PHASE18_CROSS_BROWSER_PWA_MULTI_TAB.md for the complete contract.
