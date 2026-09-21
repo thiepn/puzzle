@@ -47,11 +47,11 @@ jobs:
           python -m http.server 8080 >/tmp/puzzle-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-completion-browser.py --base-url http://127.0.0.1:8080/ --samples 1
           python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
           python scripts/test-difficulty-browser.py --base-url http://127.0.0.1:8080/ --samples 1
           python scripts/test-variety-browser.py --base-url http://127.0.0.1:8080/ --steps 3
           python scripts/test-generator-stress-browser.py --base-url http://127.0.0.1:8080/ --samples 4
-          python scripts/test-completion-browser.py --base-url http://127.0.0.1:8080/ --samples 1
 
   deploy:
     if: github.event_name == 'push'
