@@ -1,0 +1,41 @@
+name: Long-Session Endurance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  endurance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Run deep endurance certification
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/endurance
+          python -m http.server 8080 >/tmp/puzzle-endurance-deep-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-endurance-browser.py \
+            --base-url http://127.0.0.1:8080/ \
+            --cycles 12 \
+            --heap-growth-mb 128 \
+            --output test-results/endurance/deep.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase19-endurance-deep
+          path: test-results/endurance/deep.json
+          retention-days: 30
