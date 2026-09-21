@@ -1410,15 +1410,19 @@
   async function saveActive(active) {
     if (!active || retiredActives.has(active)) return false;
     if (state.currentActive === active) checkpointTime(active);
-    const baseVersion=Number(active.updatedAt)||0;
+    const requestedVersion=Number(active.updatedAt)||0;
     return p18WithActiveLock(active.gameId,async()=>{
       if(retiredActives.has(active))return false;
+      // Another queued save from this same in-memory session may have advanced the
+      // object while this call waited for the lock. Re-read that revision inside
+      // the critical section so it is not mistaken for a newer remote-tab write.
+      const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);
       const remote=await p18NewestStoredActive(active.gameId);
-      if(remote&&(remote.updatedAt||0)>baseVersion){
+      if(remote&&(remote.updatedAt||0)>localVersion){
         p18ScheduleActiveAdoption(active.gameId,true);
         return false;
       }
-      active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1,baseVersion+1);
+      active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1,localVersion+1);
       const version=active.updatedAt;
       journalActive(active);
       const ok=await db.put('active',active);
