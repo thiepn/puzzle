@@ -1407,7 +1407,7 @@
     try { localStorage.setItem(`pa:checkpoint:${active.gameId}`,JSON.stringify(active)); return true; }
     catch { return false; }
   }
-  async function saveActive(active) {
+  async function saveActive(active,{replaceExisting=false}={}) {
     if (!active || retiredActives.has(active)) return false;
     if (state.currentActive === active) checkpointTime(active);
     const requestedVersion=Number(active.updatedAt)||0;
@@ -1418,7 +1418,8 @@
       // the critical section so it is not mistaken for a newer remote-tab write.
       const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);
       const remote=await p18NewestStoredActive(active.gameId);
-      if(remote&&(remote.updatedAt||0)>localVersion){
+      const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);
+      if(remoteNewer&&!replaceExisting){
         p18ScheduleActiveAdoption(active.gameId,true);
         return false;
       }
@@ -2054,7 +2055,7 @@
       const difficulty=rawDiff?requestedDiff:normalizeDifficulty(game,active?.difficulty||requestedDiff);
       active=await game.create(seed,difficulty); active.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
-      await saveActive(active);
+      await saveActive(active,{replaceExisting:true});
       if(damaged&&routeIsCurrent(ticket))recoveryNotice='Recovered a damaged saved puzzle; other progress was kept.';
     }
     else {
@@ -2131,7 +2132,7 @@
         const fresh=await game.create(active.seed,active.difficulty); fresh.startedAt=null;
         if(!routeIsCurrent(ticket)||state.currentActive!==active)return;
         retiredActives.add(active); state.currentActive=fresh;
-        await saveActive(fresh);
+        await saveActive(fresh,{replaceExisting:true});
         if(!routeIsCurrent(ticket)||state.currentActive!==fresh)return;
         fresh.startedAt=document.hidden?null:Date.now();game.render(fresh);
       } finally { replayingActives.delete(active); }
