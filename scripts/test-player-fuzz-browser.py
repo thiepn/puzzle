@@ -259,7 +259,41 @@ def main():
                         saved=page.evaluate('async()=>await window.__PA_PLAYER_FUZZ__.persistCurrent()')
                         if not saved.get('pass'):raise AssertionError('completed result did not persist')
                         page.reload(wait_until='domcontentloaded')
-                        page.wait_for_function('(id)=>window.__PA_PLAYER_FUZZ__?.version===17 && document.querySelector(".game-page")?.dataset.playGame===id && document.querySelector(".result-panel--reward")',arg=gid,timeout=30000)
+                        try:
+                            page.wait_for_function('(id)=>window.__PA_PLAYER_FUZZ__?.version===17 && document.querySelector(".game-page")?.dataset.playGame===id && document.querySelector(".result-panel--reward")',arg=gid,timeout=30000)
+                        except PlaywrightTimeoutError:
+                            debug=page.evaluate("""async () => {
+                              const summary=window.__PA_PLAYER_FUZZ__?.summary?.()||null;
+                              const persisted=window.__PA_PLAYER_FUZZ__?.persistedStatus?await window.__PA_PLAYER_FUZZ__.persistedStatus():null;
+                              let checkpoint=null;
+                              try {
+                                if(summary?.gameId)checkpoint=JSON.parse(localStorage.getItem('pa:checkpoint:'+summary.gameId));
+                              } catch {}
+                              return {
+                                href:location.href,
+                                readyState:document.readyState,
+                                summary,
+                                persisted: persisted ? {
+                                  pass:persisted.pass,
+                                  currentDigest:persisted.currentDigest,
+                                  storedDigest:persisted.storedDigest,
+                                  storedCompleted:!!persisted.stored?.completed,
+                                  storedOutcome:persisted.stored?.outcome||null,
+                                  storedHasResult:!!persisted.stored?.result,
+                                  storedUpdatedAt:persisted.stored?.updatedAt||0
+                                } : null,
+                                checkpoint: checkpoint ? {
+                                  completed:!!checkpoint.completed,
+                                  outcome:checkpoint.outcome||null,
+                                  hasResult:!!checkpoint.result,
+                                  updatedAt:checkpoint.updatedAt||0
+                                } : null,
+                                domCompleted:document.querySelector('.game-page')?.dataset.playCompleted||null,
+                                resultPanel:!!document.querySelector('.result-panel--reward'),
+                                appVersion:window.__PA_RESILIENCE__?.summary?.().appVersion||null
+                              };
+                            }""")
+                            raise AssertionError('completed reload did not restore result state: '+json.dumps(debug,sort_keys=True))
                         reloads+=1
                         validate(f'{gid}/{difficulty}/completed-reload')
                         next_button=page.locator('[data-next-puzzle]')
