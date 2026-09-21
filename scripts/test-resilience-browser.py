@@ -109,6 +109,11 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
         timeout=30000,
     )
     new_seed=first.evaluate("() => window.__PA_RESILIENCE__.summary().current.seed")
+    # Background pages may be throttled by any engine. The production contract is
+    # that a tab reconciles before the user resumes it, so bring it forward and
+    # explicitly await the same visibility/BFCache resync hook used in production.
+    second.bring_to_front()
+    second.evaluate("async () => await window.__PA_RESILIENCE__.resync()")
     second.wait_for_function(
         "(seed) => window.__PA_RESILIENCE__?.summary()?.current?.seed === seed",
         arg=new_seed,
