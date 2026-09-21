@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.8.0 · Generator Robustness, Stress Testing & Long-Run Reliability · PWA cache v27**
+**Current release: 1.9.0 · Solvability, Hint Correctness & Completion Certification · PWA cache v28**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Solvability, Hint Correctness & Completion Certification 1.9.0
+
+Phase 16 proves that a generated puzzle is not merely valid-looking: it has a completion witness that satisfies the same constraints used by gameplay, its initial state is genuinely unfinished, and its hint system has a valid proof/solution source.
+
+The release browser gate now certifies **36 games × 3 difficulty tiers = 108 completion contracts**. Coverage ranges from accepted word/path witnesses and exact arithmetic routes to Sudoku/cage validation, Mines clue recomputation, loop/network connectivity, exact region/partition checks, Sliding Tiles parity, Lights Out GF(2) solving, and an independently reconstructed crossing-free Untangle embedding.
+
+See `docs/PHASE16_COMPLETION_CERTIFICATION.md` for the full game-by-game contract.
 
 ## Generator Robustness, Stress Testing & Long-Run Reliability 1.8.0
 
