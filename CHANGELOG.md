@@ -1,3 +1,16 @@
+# 1.10.0 — Real Player Simulation, State Fuzzing & Interaction Sequence Reliability
+
+- Added a catalog-wide real-player sequence fuzzer for all 36 games.
+- Added production-state validation by round-tripping every live session through the same save-repair logic used on reload.
+- Added invariant checks for bounded serialization, normalized metadata, result identity, durable-state preservation, and retained Phase 16 solvability witnesses.
+- Added real Chromium interaction sequences spanning board controls, keyboard input, hints, undo/redo, history shortcuts, pause/resume, and menus.
+- Added exact autosave-state parity and full-page reload digest checks.
+- Added deliberate IndexedDB field corruption followed by real production recovery and recovery-notice verification.
+- Added shared completion-boundary, completed-state reload, and Next Puzzle transition checks across every game.
+- Added a weekly/manual four-shard deep fuzz workflow covering Easy/Medium/Hard, two deterministic cycles, and 5,184 planned interaction steps.
+- Preserved the complete Phase 13–16 difficulty, variety, generator-stress, solvability, hint, and completion gates.
+- Advanced the PWA cache to v29; IndexedDB schema remains 1.
+
 # 1.9.0 — Solvability, Hint Correctness & Completion Certification
 
 - Added a canonical completion witness and game-specific completion contract for all 36 puzzle families.
