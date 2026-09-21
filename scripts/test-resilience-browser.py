@@ -99,6 +99,43 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
     if final["current"]["hintsUsed"] != reverse["expected"]:
         raise AssertionError("round-trip cross-tab update diverged")
 
+    # Explicit New Puzzle is allowed to replace the durable session.
+    old_seed=final["current"]["seed"]
+    first.locator("[data-game-menu]").click()
+    first.get_by_role("button",name="New Puzzle",exact=True).click()
+    first.wait_for_function(
+        "(old) => window.__PA_RESILIENCE__?.summary()?.current?.seed !== old",
+        arg=old_seed,
+        timeout=30000,
+    )
+    new_seed=first.evaluate("() => window.__PA_RESILIENCE__.summary().current.seed")
+    second.wait_for_function(
+        "(seed) => window.__PA_RESILIENCE__?.summary()?.current?.seed === seed",
+        arg=new_seed,
+        timeout=10000,
+    )
+
+    # Simulate a stale tab whose address bar still references the obsolete seed.
+    # A reload must keep the newer durable session and normalize the URL, not
+    # resurrect the obsolete puzzle merely because its old seed is in the hash.
+    second.evaluate(
+        "(old) => history.replaceState(history.state,'',"
+        "'#/game/sudoku?seed='+encodeURIComponent(old)+'&difficulty=Easy')",
+        old_seed,
+    )
+    second.reload(wait_until="domcontentloaded",timeout=30000)
+    wait_app(second,"sudoku")
+    second.wait_for_function(
+        "(seed) => window.__PA_RESILIENCE__?.summary()?.current?.seed === seed",
+        arg=new_seed,
+        timeout=10000,
+    )
+    stale_reload=second.evaluate(
+        "() => ({seed:window.__PA_RESILIENCE__.summary().current.seed,hash:location.hash})"
+    )
+    if stale_reload["seed"] != new_seed or new_seed not in stale_reload["hash"]:
+        raise AssertionError(f"stale reload resurrected obsolete route: {stale_reload}")
+
     for page in pages:
         page.close()
     return {
@@ -106,6 +143,8 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
         "transport": before1["transport"],
         "firstWrite": probe["updatedAt"],
         "secondWrite": reverse["updatedAt"],
+        "replacementSeed": new_seed,
+        "staleReloadPreserved": True,
         "pageErrors": errors,
     }
 
