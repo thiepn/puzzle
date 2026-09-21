@@ -26,6 +26,8 @@ def compact_tier(row):
         "fallbackRate":retries.get("fallbackRate"),
         "averageAttempts":retries.get("averageAttempts"),
         "maxAttempts":retries.get("maxAttempts"),
+        "errors":row.get("errors",[]),
+        "failedSeeds":[e.get("seed") for e in row.get("errors",[])],
     }
 
 def main():
