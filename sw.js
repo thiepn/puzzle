@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.10.0: real-player simulation and state-fuzz reliability release shell. */
-const APP_VERSION = '1.10.0';
-const CACHE_VERSION = 'v29';
+/* Puzzle Arcade 1.11.0: cross-browser, offline/PWA and multi-tab resilience release shell. */
+const APP_VERSION = '1.11.0';
+const CACHE_VERSION = 'v30';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
@@ -22,6 +22,11 @@ self.addEventListener('install', event => {
     }
   })());
 });
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'SKIP_WAITING') return;
+  event.waitUntil(self.skipWaiting());
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
