@@ -1,3 +1,17 @@
+# 1.11.0 — Cross-Browser, Offline/PWA & Multi-Tab Resilience
+
+- Added required Chromium, Firefox, and WebKit release-matrix coverage for production runtime and multi-tab behavior.
+- Added BroadcastChannel synchronization with storage-event fallback and duplicate-message suppression.
+- Added per-game Web Locks write serialization with an expiring localStorage lease fallback.
+- Added last-write stale-state rejection so older tabs cannot overwrite newer sessions or resurrect replaced puzzle seeds.
+- Added live adoption of newer durable puzzle state plus cross-tab refresh for settings, favorites, statistics, history, deletes, and resets.
+- Added BFCache and visibility-return resynchronization.
+- Added compatibility fallbacks for structuredClone, CSS.escape, ResizeObserver, and random seed generation, plus WebKit visual compatibility.
+- Added controlled service-worker replacement activation, controller-change reload protection, updateViaCache: none, and online update checks.
+- Added real Chromium offline reload certification while preserving the narrow same-origin app-shell/core-asset cache policy.
+- Added Phase 18 static release contracts and browser resilience automation.
+- Advanced the PWA cache to v30; IndexedDB schema remains 1 and the catalog remains 36 games.
+
 # 1.10.0 — Real Player Simulation, State Fuzzing & Interaction Sequence Reliability
 
 - Added a catalog-wide real-player sequence fuzzer for all 36 games.
