@@ -23,7 +23,7 @@ has(app,'JSON.parse(JSON.stringify(value))','structuredClone JSON fallback missi
 has(app,'function cssEscape(value)','CSS.escape compatibility helper missing');
 has(app,"if(globalThis.CSS?.escape)",'native CSS.escape fast path missing');
 has(app,"'ResizeObserver' in window",'ResizeObserver feature detection missing');
-has(app,"window.addEventListener('resize',update",{passive:true})".replace('"{','{'),'ResizeObserver fallback missing');
+has(app,"window.addEventListener('resize',update,{passive:true})",'ResizeObserver fallback missing');
 has(app,'globalThis.crypto?.getRandomValues','secure random feature detection missing');
 
 // Cross-tab transport + serialization.
