@@ -45,6 +45,8 @@ has(app,'function p18ConsumeReplacementIntent(gameId,seed)','replacement intent 
 has(app,"navigation?.type==='reload'||navigation?.type==='back_forward'",'stale reload replacement suppression missing');
 has(app,'saveActive(active,{replaceExisting:!previous||damaged||outdated||explicitReplacement})','intent-gated fresh-session replacement path missing');
 has(app,'p18NormalizeGameRoute(active)','durable route normalization missing');
+has(app,'const differentSession=remote.seed!==current.seed||remote.difficulty!==current.difficulty;','session-identity adoption guard missing');
+has(app,'if(!differentSession&&(remote.updatedAt||0)<=(current.updatedAt||0))return false;','same-session revision guard missing');
 has(app,'saveActive(fresh,{replaceExisting:true})','replay replacement path missing');
 has(app,"toast('This puzzle changed in another tab. Loaded the newest saved state.')",'remote-state adoption feedback missing');
 has(app,"p18Emit({type:'reset'})",'cross-tab reset propagation missing');
