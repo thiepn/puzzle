@@ -11,8 +11,7 @@ let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 const lacks=(text,needle,label)=>{assert.ok(!text.includes(needle),label);checks++;};
 
-has(app,"const APP_VERSION = '1.11.0';",'Phase 18 app version missing');
-has(app,"const BUILD_PHASE = 'Cross-Browser, Offline/PWA & Multi-Tab Resilience';",'Phase 18 build identity missing');
+assert.match(app,/const APP_VERSION = '\\d+\\.\\d+\\.\\d+';/,'release app version missing');checks++;
 has(app,'const P18_VERSION=18;','Phase 18 runtime version missing');
 has(app,'window.__PA_RESILIENCE__','Phase 18 diagnostic surface missing');
 
@@ -64,8 +63,11 @@ has(app,"document.documentElement.dataset.network=offline?'offline':'online'",'n
 has(app,"navigator.serviceWorker.register('sw.js',{updateViaCache:'none'})",'service-worker cache-bypass update registration missing');
 has(app,"postMessage({type:'SKIP_WAITING',appVersion:APP_VERSION})",'controlled service-worker activation handshake missing');
 has(app,"navigator.serviceWorker.addEventListener('controllerchange'",'controller upgrade reload missing');
-has(sw,"const APP_VERSION = '1.11.0';",'service worker app version mismatch');
-has(sw,"const CACHE_VERSION = 'v30';",'service worker cache generation mismatch');
+const appVersion=app.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const swVersion=sw.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const cacheVersion=Number(sw.match(/const CACHE_VERSION = 'v(\\d+)';/)?.[1]||0);
+assert.equal(swVersion,appVersion,'service worker app version mismatch');checks++;
+assert.ok(cacheVersion>=30,'service worker regressed below Phase 18 cache generation');checks++;
 has(sw,"event.data?.type !== 'SKIP_WAITING'",'service worker explicit activation listener missing');
 lacks(sw,"self.addEventListener('install', event => {\n  self.skipWaiting",'service worker must not force activation during install');
 
