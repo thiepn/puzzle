@@ -584,13 +584,6 @@
       const hadController=!!navigator.serviceWorker.controller;
       const registration=await navigator.serviceWorker.register('sw.js',{updateViaCache:'none'});
       const activateWaiting=worker=>{try{worker?.postMessage({type:'SKIP_WAITING',appVersion:APP_VERSION});}catch{}};
-      if(hadController&&registration.waiting)activateWaiting(registration.waiting);
-      registration.addEventListener?.('updatefound',()=>{
-        const worker=registration.installing;if(!worker)return;
-        worker.addEventListener('statechange',()=>{
-          if(worker.state==='installed'&&navigator.serviceWorker.controller)activateWaiting(worker);
-        });
-      });
       if(hadController){
         navigator.serviceWorker.addEventListener('controllerchange',()=>{
           if(p18ControllerReloaded)return;
@@ -599,6 +592,13 @@
           p18ControllerReloaded=true;location.reload();
         });
       }
+      registration.addEventListener?.('updatefound',()=>{
+        const worker=registration.installing;if(!worker)return;
+        worker.addEventListener('statechange',()=>{
+          if(worker.state==='installed'&&navigator.serviceWorker.controller)activateWaiting(worker);
+        });
+      });
+      if(hadController&&registration.waiting)activateWaiting(registration.waiting);
       if(navigator.onLine!==false)setTimeout(()=>{void registration.update().catch(()=>{});},1200);
       return registration;
     }catch{return null;}
