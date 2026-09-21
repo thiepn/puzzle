@@ -109,6 +109,9 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
         timeout=30000,
     )
     new_seed=first.evaluate("() => window.__PA_RESILIENCE__.summary().current.seed")
+    replacement_persisted=first.evaluate("async () => await window.__PA_PLAYER_FUZZ__.persistedStatus()")
+    if not replacement_persisted.get("pass") or replacement_persisted.get("stored",{}).get("seed") != new_seed:
+        raise AssertionError("intentional replacement was not durable: "+json.dumps(replacement_persisted,sort_keys=True))
     # Background pages may be throttled by any engine. The production contract is
     # that a tab reconciles before the user resumes it, so bring it forward and
     # explicitly await the same visibility/BFCache resync hook used in production.
