@@ -34,7 +34,9 @@ has(app,'navigator.locks','Web Locks path missing');
 has(app,'const P18_LOCK_PREFIX=','lease fallback missing');
 has(app,'async function p18WithLease(','localStorage lease implementation missing');
 has(app,'async function p18WithActiveLock(','per-puzzle serialization missing');
-has(app,"if(remote&&(remote.updatedAt||0)>baseVersion)",'newer remote state stale-write guard missing');
+has(app,'const requestedVersion=Number(active.updatedAt)||0;','queued-save requested revision capture missing');
+has(app,'const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);','queued same-tab revision refresh missing');
+has(app,"if(remote&&(remote.updatedAt||0)>localVersion)",'newer remote state stale-write guard missing');
 has(app,"toast('This puzzle changed in another tab. Loaded the newest saved state.')",'remote-state adoption feedback missing');
 has(app,"p18Emit({type:'reset'})",'cross-tab reset propagation missing');
 
