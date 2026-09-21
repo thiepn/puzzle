@@ -1,19 +1,19 @@
-# Puzzle Arcade 1.8.0 — Generator Robustness, Stress Testing & Long-Run Reliability
+# Puzzle Arcade 1.9.0 — Solvability, Hint Correctness & Completion Certification
 
-Phase 15 stress-tests the complete generator stack rather than only checking isolated examples.
+Phase 16 certifies that every generated puzzle is actually finishable under its real rules.
 
-- Added a Phase 15 diagnostic API covering all 36 games and all Easy / Medium / Hard tiers.
-- Every sampled seed is generated twice, with the replay pass executed in reverse order to expose hidden cross-seed state.
-- Stable digests verify deterministic puzzle + initial-state reproduction.
-- Separate active records are checked for shared mutable state references.
-- Phase 13 quality acceptance is rechecked during every stress generation, including deterministic fallback attempts.
-- Seed diversity is measured to detect finite-bank collapse or broken seed mapping.
-- Median, p95, maximum latency, absolute generation budgets, and early-vs-late timing drift are recorded.
-- Phase 13 fallback pressure is measured so generators cannot silently depend on repeated retry rescue.
-- Mines is stress-tested after a deterministic center first click so its actual mine layout is included.
-- The normal release browser gate now adds 864 measured generator executions and enforces timing-drift plus catastrophic heap-growth limits.
-- A weekly/manual deep stress workflow runs 1,728 measured generations across four parallel shards and uploads JSON reports.
+- Added a catalog-wide canonical completion witness for all 36 games.
+- Added 36 game-specific completion methods spanning dictionary/path solvers, exact constraint validators, stored-solution verification, parity checks, and independently reconstructed spatial witnesses.
+- Added a negative control requiring every generated starting state to remain unfinished.
+- Added hint-source certification for every game.
+- Proof-based number/logic games run their pure proof engine against fresh states and reject malformed proof payloads.
+- Word/path/spatial games validate the exact answer, route, trace, construction, or solver data their hints rely on.
+- Mines is certified after deterministic first-click generation, with every clue recomputed from the mine map.
+- Lights Out applies the exact GF(2) solver result and verifies that the board actually clears.
+- Sliding Tiles independently checks goal-compatible permutation parity.
+- Untangle independently reconstructs the generator's planar embedding and verifies zero crossings/overlaps.
+- The production browser gate now adds 108 completion certifications across all games and difficulty tiers.
 
-Storage schema remains **1**. Service-worker cache is **v27**.
+Storage schema remains **1**. Service-worker cache is **v28**.
 
-See `docs/PHASE15_GENERATOR_ROBUSTNESS.md` for the complete certification contract.
+See `docs/PHASE16_COMPLETION_CERTIFICATION.md` for the complete contract.
