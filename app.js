@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.10.0';
-  const BUILD_PHASE = 'Real Player Simulation, State Fuzzing & Interaction Sequence Reliability';
+  const APP_VERSION = '1.11.0';
+  const BUILD_PHASE = 'Cross-Browser, Offline/PWA & Multi-Tab Resilience';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -13,6 +13,19 @@
   const overlayRoot = $('#overlay-root');
   const toastRoot = $('#toast-root');
   const routeStatus = $('#route-status');
+
+  // Phase 18 compatibility floor: preserve the same data semantics on browsers
+  // that lack newer convenience APIs while keeping modern fast paths intact.
+  function cloneValue(value) {
+    if (typeof globalThis.structuredClone === 'function') return globalThis.cloneValue(value);
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value));
+  }
+  function cssEscape(value) {
+    const text=String(value);
+    if(globalThis.CSS?.escape)return globalThis.CSS.escape(text);
+    return text.replace(/[\0-\x1f\x7f]|^-?\d|[^\w-]/g,ch=>'\\'+ch.codePointAt(0).toString(16)+' ');
+  }
 
   const CATEGORIES = {
     word: { label: 'Word', accent: 'word' },
@@ -315,18 +328,22 @@
     async put(store, value, key) {
       const epoch = this._epoch;
       let snapshot;
-      try { snapshot = structuredClone(value); }
+      try { snapshot = cloneValue(value); }
       catch (error) { this.warnWrite(error); return false; }
+      const resolvedKey = key ?? snapshot?.gameId ?? snapshot?.id;
       const d = await this.open();
       if (epoch !== this._epoch) return false;
       if (!d) {
-        const k = key ?? snapshot.gameId ?? snapshot.id;
-        try { localStorage.setItem(`pa:${store}:${k}`, JSON.stringify(snapshot)); return true; }
+        try {
+          localStorage.setItem(`pa:${store}:${resolvedKey}`, JSON.stringify(snapshot));
+          p18BroadcastWrite(store,resolvedKey,snapshot,'put');
+          return true;
+        }
         catch (error) { this.warnWrite(error); return false; }
       }
-      return new Promise(resolve => {
+      const ok=await new Promise(resolve => {
         let settled = false;
-        const finish = (ok, error) => { if (settled) return; settled = true; if (!ok) this.warnWrite(error); resolve(ok); };
+        const finish = (value, error) => { if (settled) return; settled = true; if (!value) this.warnWrite(error); resolve(value); };
         try {
           const tx = d.transaction(store, 'readwrite');
           const req = key === undefined ? tx.objectStore(store).put(snapshot) : tx.objectStore(store).put(snapshot, key);
@@ -335,18 +352,27 @@
           req.onerror = () => finish(false, req.error);
         } catch (error) { finish(false, error); }
       });
+      if(ok)p18BroadcastWrite(store,resolvedKey,snapshot,'put');
+      return ok;
     },
 
     async del(store, key) {
       const d = await this.open();
-      if (!d) { try { localStorage.removeItem(`pa:${store}:${key}`); } catch {} return; }
-      return new Promise((resolve) => {
-        try {
-          const tx = d.transaction(store,'readwrite');
-          tx.objectStore(store).delete(key);
-          tx.oncomplete = () => resolve(); tx.onerror = () => resolve(); tx.onabort=()=>resolve();
-        } catch { resolve(); }
-      });
+      let ok=true;
+      if (!d) {
+        try { localStorage.removeItem(`pa:${store}:${key}`); }
+        catch { ok=false; }
+      } else {
+        ok=await new Promise((resolve) => {
+          try {
+            const tx = d.transaction(store,'readwrite');
+            tx.objectStore(store).delete(key);
+            tx.oncomplete = () => resolve(true); tx.onerror = () => resolve(false); tx.onabort=()=>resolve(false);
+          } catch { resolve(false); }
+        });
+      }
+      if(ok)p18BroadcastWrite(store,key,null,'delete');
+      return ok;
     },
     async all(store) {
       const d = await this.open();
@@ -382,6 +408,7 @@
       try { Object.keys(localStorage).filter(k => k.startsWith('pa:')).forEach(k => localStorage.removeItem(k)); }
       catch { if (!d) cleared = false; }
       this._writeWarningShown = false;
+      if(cleared)p18Emit({type:'reset'});
       return cleared;
     }
   };
@@ -398,6 +425,199 @@
     timer:null,
   };
 
+  // ---------- Phase 18: cross-browser, offline/PWA & multi-tab resilience ----------
+  const P18_VERSION=18;
+  const P18_SYNC_KEY='pa:sync-pulse';
+  const P18_LOCK_PREFIX='pa:write-lock:';
+  const P18_TAB_ID='tab-'+seedString();
+  const P18_SEEN_LIMIT=256;
+  let p18Channel=null,p18SyncQueue=Promise.resolve(),p18Sequence=0,p18ControllerReloaded=false,p18Booted=false;
+  const p18Seen=new Set();
+
+  function p18PayloadValid(value){
+    return !!(value&&typeof value==='object'&&value.version===P18_VERSION&&typeof value.id==='string'&&typeof value.tabId==='string'&&typeof value.type==='string');
+  }
+  function p18Remember(id){
+    p18Seen.add(id);
+    if(p18Seen.size>P18_SEEN_LIMIT)p18Seen.delete(p18Seen.values().next().value);
+  }
+  function p18Emit(message){
+    const payload={version:P18_VERSION,id:P18_TAB_ID+':'+(++p18Sequence)+':'+Date.now(),tabId:P18_TAB_ID,at:Date.now(),...message};
+    p18Remember(payload.id);
+    try{p18Channel?.postMessage(payload);}catch{}
+    try{localStorage.setItem(P18_SYNC_KEY,JSON.stringify(payload));}catch{}
+    return payload;
+  }
+  function p18BroadcastWrite(store,key,value,action='put'){
+    const updatedAt=Number(value?.updatedAt)||0;
+    p18Emit({type:'db-write',store,key:String(key??''),action,updatedAt});
+  }
+  function p18Receive(payload){
+    if(!p18PayloadValid(payload)||payload.tabId===P18_TAB_ID||p18Seen.has(payload.id))return;
+    p18Remember(payload.id);
+    p18SyncQueue=p18SyncQueue.then(()=>p18HandleRemote(payload)).catch(()=>{});
+  }
+  function p18InitSync(){
+    if(p18Booted)return;p18Booted=true;
+    try{
+      if(typeof BroadcastChannel==='function'){
+        p18Channel=new BroadcastChannel('puzzle-arcade-resilience-v1');
+        p18Channel.onmessage=event=>p18Receive(event.data);
+      }
+    }catch{p18Channel=null;}
+    window.addEventListener('storage',event=>{
+      if(event.key!==P18_SYNC_KEY||!event.newValue)return;
+      try{p18Receive(JSON.parse(event.newValue));}catch{}
+    });
+  }
+  async function p18WithLease(gameId,fn){
+    const key=P18_LOCK_PREFIX+encodeURIComponent(gameId),token=P18_TAB_ID+':'+(++p18Sequence);
+    let acquired=false;
+    try{
+      for(let attempt=0;attempt<40;attempt++){
+        const now=Date.now();let current=null;
+        try{current=JSON.parse(localStorage.getItem(key));}catch{}
+        if(!current||!current.expires||current.expires<now||current.tabId===P18_TAB_ID){
+          const lease={tabId:P18_TAB_ID,token,expires:now+2500};
+          try{localStorage.setItem(key,JSON.stringify(lease));}catch{return fn();}
+          let verify=null;try{verify=JSON.parse(localStorage.getItem(key));}catch{}
+          if(verify?.token===token){acquired=true;break;}
+        }
+        await new Promise(resolve=>setTimeout(resolve,18+(attempt%7)*3));
+      }
+      return await fn();
+    }finally{
+      if(acquired){
+        try{
+          const current=JSON.parse(localStorage.getItem(key));
+          if(current?.token===token)localStorage.removeItem(key);
+        }catch{}
+      }
+    }
+  }
+  async function p18WithActiveLock(gameId,fn){
+    const locks=navigator.locks;
+    if(locks?.request){
+      try{return await locks.request('puzzle-arcade:'+location.pathname+':'+gameId,{mode:'exclusive'},fn);}
+      catch{}
+    }
+    return p18WithLease(gameId,fn);
+  }
+  async function p18NewestStoredActive(gameId){
+    return newestActive(await db.get('active',gameId),readCheckpoint(gameId));
+  }
+  function p18ReplaceActiveList(remote){
+    state.active=state.active.filter(a=>a?.gameId!==remote.gameId);
+    if(!remote.completed)state.active.push(remote);
+  }
+  async function p18AdoptRemoteActive(gameId,notify=true){
+    const current=state.currentActive,game=GAMES[gameId];
+    if(!current||current.gameId!==gameId||!game)return false;
+    const remote=await p18NewestStoredActive(gameId);
+    if(!remote||!activeRecordLooksUsable(game,remote)||(remote.updatedAt||0)<=(current.updatedAt||0))return false;
+    retiredActives.add(current);stopTimer();window.onkeydown=null;clearGamePointerHandlers();
+    remote.startedAt=remote.completed||document.hidden?null:Date.now();
+    state.currentActive=remote;state.currentGame=game;p18ReplaceActiveList(remote);
+    try{game.render(remote);bindCommon();}
+    catch{void renderRoute();return true;}
+    if(notify)toast('This puzzle changed in another tab. Loaded the newest saved state.');
+    return true;
+  }
+  function p18ScheduleActiveAdoption(gameId,notify=true){
+    setTimeout(()=>{void p18AdoptRemoteActive(gameId,notify);},0);
+  }
+  async function p18RefreshPassiveData(){
+    await refreshData();
+    const route=parseHash().parts[0]||'home';
+    if(['home','games','learn','stats','settings'].includes(route)){void renderRoute();return;}
+    if(route==='game'&&state.currentActive?.completed&&state.currentGame){
+      try{state.currentGame.render(state.currentActive);bindCommon();}catch{}
+    }
+  }
+  async function p18HandleRemote(payload){
+    if(payload.type==='reset'){
+      const current=state.currentActive;if(current)retiredActives.add(current);
+      stopTimer();state.currentActive=null;state.currentGame=null;
+      await refreshData();
+      if(parseHash().parts[0]==='game')location.hash='#/home';else void renderRoute();
+      setTimeout(()=>toast('Local puzzle data was reset in another tab.'),0);
+      return;
+    }
+    if(payload.type!=='db-write')return;
+    if(payload.store==='active'){
+      const current=state.currentActive;
+      if(current?.gameId===payload.key){
+        if(payload.action==='delete'){
+          retiredActives.add(current);stopTimer();state.currentActive=null;state.currentGame=null;location.hash='#/home';
+          setTimeout(()=>toast('This puzzle was closed in another tab.'),0);
+        }else p18ScheduleActiveAdoption(payload.key,true);
+      }else if(['home','games'].includes(parseHash().parts[0]||'home'))void p18RefreshPassiveData();
+      return;
+    }
+    void p18RefreshPassiveData();
+  }
+  async function p18ResyncAfterRestore(){
+    const current=state.currentActive;
+    if(current){
+      const adopted=await p18AdoptRemoteActive(current.gameId,false);
+      if(!adopted){
+        checkpointTime(current,true);
+        if(!current.completed&&!document.hidden&&!playSession(current).paused){current.startedAt=Date.now();startTimer(current);}
+      }
+    }else await p18RefreshPassiveData();
+  }
+  function p18SetNetworkState(notify=false){
+    const offline=navigator.onLine===false;
+    document.documentElement.dataset.network=offline?'offline':'online';
+    if(notify)toast(offline?'Offline mode — puzzles and progress remain available on this device.':'Back online.');
+  }
+  async function p18RegisterServiceWorker(){
+    if(!('serviceWorker' in navigator)||!location.protocol.startsWith('http'))return null;
+    try{
+      const hadController=!!navigator.serviceWorker.controller;
+      const registration=await navigator.serviceWorker.register('sw.js',{updateViaCache:'none'});
+      const activateWaiting=worker=>{try{worker?.postMessage({type:'SKIP_WAITING',appVersion:APP_VERSION});}catch{}};
+      if(hadController&&registration.waiting)activateWaiting(registration.waiting);
+      registration.addEventListener?.('updatefound',()=>{
+        const worker=registration.installing;if(!worker)return;
+        worker.addEventListener('statechange',()=>{
+          if(worker.state==='installed'&&navigator.serviceWorker.controller)activateWaiting(worker);
+        });
+      });
+      if(hadController){
+        navigator.serviceWorker.addEventListener('controllerchange',()=>{
+          if(p18ControllerReloaded)return;
+          const key='pa:sw-controller-reload:'+APP_VERSION;
+          try{if(sessionStorage.getItem(key)==='1')return;sessionStorage.setItem(key,'1');}catch{}
+          p18ControllerReloaded=true;location.reload();
+        });
+      }
+      if(navigator.onLine!==false)setTimeout(()=>{void registration.update().catch(()=>{});},1200);
+      return registration;
+    }catch{return null;}
+  }
+  function p18Summary(){
+    const active=state.currentActive;
+    return {
+      version:P18_VERSION,appVersion:APP_VERSION,tabId:P18_TAB_ID,
+      transport:p18Channel?'broadcast-channel':'storage-event',
+      online:navigator.onLine!==false,
+      capabilities:{
+        indexedDB:!!window.indexedDB,serviceWorker:'serviceWorker' in navigator,webLocks:!!navigator.locks?.request,
+        broadcastChannel:typeof BroadcastChannel==='function',structuredClone:typeof globalThis.structuredClone==='function',
+        resizeObserver:'ResizeObserver' in window,cssEscape:!!globalThis.CSS?.escape
+      },
+      current:active?{gameId:active.gameId,seed:active.seed,difficulty:active.difficulty,updatedAt:active.updatedAt||0,hintsUsed:active.hintsUsed||0,completed:!!active.completed}:null
+    };
+  }
+  async function p18ProbeCurrent(){
+    const active=state.currentActive;if(!active)return {pass:false,error:'no active puzzle'};
+    active.hintsUsed=(active.hintsUsed||0)+1;
+    const expected=active.hintsUsed,ok=await saveActive(active);
+    return {pass:!!ok,expected,gameId:active.gameId,updatedAt:active.updatedAt||0};
+  }
+  window.__PA_RESILIENCE__={version:P18_VERSION,summary:p18Summary,probeCurrent:p18ProbeCurrent,resync:p18ResyncAfterRestore,waitForSync:async()=>{await p18SyncQueue;return p18Summary();}};
+
   let routeGeneration = 0;
   let saveClock = 0;
   const retiredActives = new WeakSet();
@@ -407,7 +627,8 @@
 
   function seedString() {
     const arr = new Uint32Array(3);
-    crypto.getRandomValues(arr);
+    if(globalThis.crypto?.getRandomValues)globalThis.crypto.getRandomValues(arr);
+    else for(let i=0;i<arr.length;i++)arr[i]=Math.floor(Math.random()*0x100000000)>>>0;
     return [...arr].map(n=>n.toString(36)).join('-');
   }
   function xmur3(str) {
@@ -1180,17 +1401,26 @@
   async function saveActive(active) {
     if (!active || retiredActives.has(active)) return false;
     if (state.currentActive === active) checkpointTime(active);
-    active.updatedAt=saveClock=Math.max(Date.now(), saveClock+1);
-    const version=active.updatedAt;
-    journalActive(active);
-    const ok=await db.put('active',active);
-    if (ok) {
-      const checkpoint=readCheckpoint(active.gameId);
-      if (checkpoint && checkpoint.updatedAt <= version) {
-        try { localStorage.removeItem(`pa:checkpoint:${active.gameId}`); } catch {}
+    const baseVersion=Number(active.updatedAt)||0;
+    return p18WithActiveLock(active.gameId,async()=>{
+      if(retiredActives.has(active))return false;
+      const remote=await p18NewestStoredActive(active.gameId);
+      if(remote&&remote.seed===active.seed&&remote.difficulty===active.difficulty&&(remote.updatedAt||0)>baseVersion){
+        p18ScheduleActiveAdoption(active.gameId,true);
+        return false;
       }
-    }
-    return ok;
+      active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1,baseVersion+1);
+      const version=active.updatedAt;
+      journalActive(active);
+      const ok=await db.put('active',active);
+      if(ok){
+        const checkpoint=readCheckpoint(active.gameId);
+        if(checkpoint&&checkpoint.updatedAt<=version){
+          try{localStorage.removeItem(`pa:checkpoint:${active.gameId}`);}catch{}
+        }
+      }
+      return ok;
+    });
   }
   async function finishActive(active, metrics={}, outcome='completed') {
     if (!active || active.completed || retiredActives.has(active)) return;
@@ -1368,7 +1598,7 @@
   function playSignature(a){return hintStateFingerprint(a)+JSON.stringify(a.state.notes||[]);}
   function playGuide(game,a){const [start,controls,tip]=PLAY_GUIDES[game.id];return `<section class="play-guide" id="play-guide" ${playSession(a).guide?'':'hidden'} aria-label="${esc(game.name)} playing guide"><div><h2>Find your first move</h2><p>${esc(start)}</p></div><div><h3>Controls</h3><p>${esc(controls)}</p></div><div><h3>Watch for this</h3><p>${esc(tip)}</p></div><button class="small-button" data-game-rules>Full rules</button></section>`;}
   function pauseGame(game,a){if(a.completed)return;const ui=playSession(a);ui.paused=!ui.paused;if(ui.paused){checkpointTime(a,true);stopTimer();}else a.startedAt=document.hidden?null:Date.now();sensoryCue(ui.paused?'pause':'resume',game);void saveActive(a);game.render(a);requestAnimationFrame(()=>{(ui.paused?$('[data-resume-puzzle]'):$('[data-game-pause]'))?.focus({preventScroll:true});});}
-  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=structuredClone(ui.redo.pop());sensoryCue('redo',game);await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
+  async function redoGame(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.restoring||!ui.redo.length)return;ui.restoring=true;try{a.state=cloneValue(ui.redo.pop());sensoryCue('redo',game);await saveActive(a);game.render(a);}finally{ui.restoring=false;}}
   function gameFeedback(message,a=state.currentActive){if(!a)return;playSession(a).feedback=String(message).slice(0,600);const el=$('[data-play-feedback]');if(el){el.textContent=playSession(a).feedback;el.hidden=false;}}
   function dismissGameHint(a){delete a.state._proofHintView;playSession(a).feedback='';state.currentGame.render(a);}
   async function requestGameHint(game,a){const ui=playSession(a);if(a.completed||ui.paused||ui.busy)return;ui.busy=true;const button=$('[data-game-hint]');if(button){button.disabled=true;button.textContent='Thinking…';}await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));if(state.currentActive!==a||a.completed||ui.paused){ui.busy=false;return;}const old=a.state._proofHintView?JSON.stringify(a.state._proofHintView):'',before=ui.feedback;try{await game.hint(a);if((a.state._proofHintView&&JSON.stringify(a.state._proofHintView)!==old)||ui.feedback!==before){a.hintsUsed=Math.min(100000,(a.hintsUsed||0)+1);await saveActive(a);}}catch(error){gameFeedback('A hint could not be calculated. Try again, or undo your last move.',a);}finally{ui.busy=false;if(state.currentActive===a){game.render(a);$('[data-game-hint]')?.focus({preventScroll:true});}}}
@@ -1601,7 +1831,7 @@
   }
 
   function installPlayExperience(){
-    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=structuredClone(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();sensoryCue('undo',game);}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
+    for(const game of Object.values(GAMES))if(typeof game.undo==='function'){const undo=game.undo;game.undo=async function(a){const ui=playSession(a);if(!canUndoGame(game,a)||ui.restoring)return;const snapshot=cloneValue(a.state),signature=playSignature(a);ui.restoring=true;try{await undo.call(this,a);if(playSignature(a)!==signature){ui.redo.push(snapshot);if(ui.redo.length>24)ui.redo.shift();sensoryCue('undo',game);}}finally{ui.restoring=false;if(state.currentActive===a)game.render(a);}};}
     const wordleKey=fiveLetters.key;fiveLetters.key=function(a,key){if(key==='ENTER'&&a.state.guesses.some(g=>g.word===a.state.current)){toast('You already tried that word. Use the feedback to try a different guess.');return;}return wordleKey.call(this,a,key);};
     const groupsSubmit=groupsGame.submit;groupsGame.submit=async function(a){if(a.state.selected.length!==4)return;const key=[...a.state.selected].sort().join('|');a.triedGroups=a.triedGroups||[];if(a.triedGroups.includes(key)){toast('You already tried this combination. No extra mistake counted.');return;}a.triedGroups.push(key);if(a.triedGroups.length>200)a.triedGroups.shift();const picked=a.state.selected.map(id=>a.puzzle.tiles.find(t=>t.id===id)),counts={};for(const t of picked)counts[t.groupId]=(counts[t.groupId]||0)+1;await groupsSubmit.call(this,a);if(Math.max(...Object.values(counts))===3)toast('One away: three of those words share a group.');await saveActive(a);};
     const ladderCreate=wordLadder.create;wordLadder.create=async function(seed,difficulty){const a=await ladderCreate.call(this,seed,difficulty),path=acceptedLadderPath(a.puzzle.start,a.puzzle.target);if(path)a.puzzle.optimal=path.length-1;return a;};
@@ -1755,8 +1985,8 @@
     for(const [key,fallback] of Object.entries(initial)) {
       if(key==='history')continue;
       const value=source[key],check=stateChecks[key];
-      if(check&&check(value))repaired[key]=structuredClone(value);
-      else {repaired[key]=structuredClone(fallback);changed=true;if(['board','cells','h','v','counts','partner','rotations','revealed','positions','rects','path','values','chain','guesses','found','solved','mapping'].includes(key))progressDamaged=true;}
+      if(check&&check(value))repaired[key]=cloneValue(value);
+      else {repaired[key]=cloneValue(fallback);changed=true;if(['board','cells','h','v','counts','partner','rotations','revealed','positions','rects','path','values','chain','guesses','found','solved','mapping'].includes(key))progressDamaged=true;}
     }
     const tupleHistory=h=>{
       if(['lights-out','sliding-tiles'].includes(game.id))return index(h,N);
@@ -1772,7 +2002,7 @@
     if('history' in initial) {
       const history=source.history;
       const check=game.id==='sudoku'?h=>h&&stateChecks.board(h.board)&&stateChecks.notes(h.notes):game.id==='make-24'?h=>h&&arr(h.values,null,fraction)&&typeof h.text==='string':tupleHistory;
-      repaired.history=arr(history,null,check)&&history.length<=2000?structuredClone(history):[];
+      repaired.history=arr(history,null,check)&&history.length<=2000?cloneValue(history):[];
       if(!repaired.history.length&&history?.length)changed=true;
     }
     if(repaired.board){
@@ -4336,7 +4566,7 @@
     const id=active.gameId,game=GAMES[id];if(typeof game?.hint!=='function')return {ok:false,kind:'missing',error:'hint method missing'};
     try{
       if(P16_PROOFERS[id]){
-        const copy=typeof structuredClone==='function'?structuredClone(active):JSON.parse(JSON.stringify(active)),proof=P16_PROOFERS[id](copy);
+        const copy=cloneValue(active),proof=P16_PROOFERS[id](copy);
         if(proof){
           const text=[proof.focus,proof.rule,proof.deduction,proof.reveal].filter(Boolean).join(' ');
           const indexOK=proof.index==null||(Number.isInteger(proof.index)&&proof.index>=0&&proof.index<(active.puzzle.n||active.puzzle.size||active.puzzle.rows||9)**2);
@@ -4438,10 +4668,10 @@
     if(!template){
       const game=GAMES[active.gameId];
       template=await game.create(active.seed,active.difficulty);template.startedAt=null;
-      p17FreshCache.set(key,structuredClone(template));
+      p17FreshCache.set(key,cloneValue(template));
       if(p17FreshCache.size>256)p17FreshCache.delete(p17FreshCache.keys().next().value);
     }
-    return structuredClone(template);
+    return cloneValue(template);
   }
   function p17ResultValid(active){
     if(!active?.completed)return true;
@@ -4463,7 +4693,7 @@
     let repaired=null,fresh=null;
     try{
       fresh=await p17FreshActive(active);
-      repaired=repairSavedActive(game,structuredClone(active),fresh);
+      repaired=repairSavedActive(game,cloneValue(active),fresh);
       if(!repaired)errors.push('save repair rejected the current legal session');
       else if(p17DurableStateDigest(active,fresh.state)!==p17DurableStateDigest(repaired,fresh.state))
         errors.push('save repair would alter the current durable state');
@@ -4504,8 +4734,8 @@
     const active=state.currentActive;if(!active)return {pass:false,error:'no active puzzle'};
     await saveActive(active);
     const raw=await db.get('active',active.gameId);if(!raw?.state)return {pass:false,error:'persisted active missing'};
-    const x=structuredClone(raw),st=x.state;let field=null,before=null,after=null;
-    const set=(key,value)=>{field=key;before=structuredClone(st[key]);st[key]=value;after=structuredClone(value);};
+    const x=cloneValue(raw),st=x.state;let field=null,before=null,after=null;
+    const set=(key,value)=>{field=key;before=cloneValue(st[key]);st[key]=value;after=cloneValue(value);};
     if(Object.prototype.hasOwnProperty.call(st,'selected'))set('selected',Array.isArray(st.selected)?[999999]:-999999);
     else if(Object.prototype.hasOwnProperty.call(st,'status'))set('status','corrupted');
     else if(Object.prototype.hasOwnProperty.call(st,'current'))set('current','9');
@@ -4721,8 +4951,13 @@
     slider.oninput=()=>{viewport.scrollLeft=+slider.value;memo.left=viewport.scrollLeft;};
     viewport.onscroll=()=>{memo.left=viewport.scrollLeft;slider.value=String(viewport.scrollLeft);};
     fit.onclick=()=>{memo.fit=!memo.fit;memo.left=0;update();};update();
-    const observer=new ResizeObserver(update);observer.observe(frame);
-    const cleanup=pointerCleanup;pointerCleanup=()=>{observer.disconnect();cleanup?.();};
+    if('ResizeObserver' in window){
+      const observer=new ResizeObserver(update);observer.observe(frame);
+      const cleanup=pointerCleanup;pointerCleanup=()=>{observer.disconnect();cleanup?.();};
+    }else{
+      window.addEventListener('resize',update,{passive:true});
+      const cleanup=pointerCleanup;pointerCleanup=()=>{window.removeEventListener('resize',update);cleanup?.();};
+    }
   }
   const mineInputState=new WeakMap();
   const mineKeyboardBind=mines.bind;
@@ -4794,7 +5029,7 @@
         if(focusKey&&!active.completed){
           const [key,oldValue]=focusKey,attr='data-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
           const value=typeof active.state.selected==='number'&&gridCellKey(key)&&/^\d+$/.test(oldValue)?String(active.state.selected):oldValue;
-          $(`[${attr}="${CSS.escape(value)}"]`,main)?.focus({preventScroll:true});
+          $(`[${attr}="${cssEscape(value)}"]`,main)?.focus({preventScroll:true});
         }
         enhanceBoardAccessibility(game,active);
         const undoKeys=window.onkeydown;window.onkeydown=e=>{if(!e.defaultPrevented&&!overlayRoot.firstChild&&!active.completed&&!playSession(active).paused&&(e.ctrlKey||e.metaKey)&&!e.altKey&&!e.target?.closest?.('input,textarea,select,[contenteditable="true"]')){const k=e.key.toLowerCase();if(k==='z'||k==='y'){e.preventDefault();if(k==='y'||e.shiftKey)redoGame(game,active);else if(canUndoGame(game,active))game.undo(active);return;}}undoKeys?.(e);};
@@ -4889,8 +5124,7 @@
     const active=state.currentActive;
     if(!active||retiredActives.has(active))return;
     checkpointTime(active,true);stopTimer();
-    active.updatedAt=saveClock=Math.max(Date.now(),saveClock+1);
-    journalActive(active);void saveActive(active);
+    void saveActive(active);
   }
   window.addEventListener('pagehide',suspendCurrentGame);
   window.addEventListener('beforeunload',suspendCurrentGame);
@@ -4898,9 +5132,15 @@
     if(document.hidden){suspendCurrentGame();return;}
     const active=state.currentActive;
     if(active&&!active.completed&&!retiredActives.has(active)&&!playSession(active).paused){active.startedAt=Date.now();startTimer(active);}
+    void p18ResyncAfterRestore();
   });
+  window.addEventListener('pageshow',event=>{if(event.persisted)void p18ResyncAfterRestore();});
+  window.addEventListener('online',()=>p18SetNetworkState(true));
+  window.addEventListener('offline',()=>p18SetNetworkState(true));
 
-  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  p18InitSync();
+  p18SetNetworkState(false);
+  void p18RegisterServiceWorker();
 
   (async()=>{
     let bootTheme=null; try { bootTheme=localStorage.getItem('pa:bootstrap-theme'); } catch {} if(bootTheme) document.documentElement.dataset.theme=bootTheme;
