@@ -980,7 +980,9 @@
     try { return JSON.parse(localStorage.getItem(`pa:checkpoint:${id}`)); } catch { return null; }
   }
   function newestActive(stored, checkpoint) {
-    return checkpoint && (!stored || (checkpoint.updatedAt || 0) > (stored.updatedAt || 0)) ? checkpoint : stored;
+    // Equal-version checkpoints win: pagehide writes the latest in-memory state
+    // synchronously before the asynchronous IndexedDB commit gets a chance to run.
+    return checkpoint && (!stored || (checkpoint.updatedAt || 0) >= (stored.updatedAt || 0)) ? checkpoint : stored;
   }
   async function activeRecords() {
     const records = new Map((await db.all('active')).filter(a => a && typeof a.gameId === 'string').map(a => [a.gameId,a]));
@@ -5131,6 +5133,7 @@
     const active=state.currentActive;
     if(!active||retiredActives.has(active))return;
     checkpointTime(active,true);stopTimer();
+    journalActive(active);
     void saveActive(active);
   }
   window.addEventListener('pagehide',suspendCurrentGame);
