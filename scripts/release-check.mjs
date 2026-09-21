@@ -56,6 +56,7 @@ if(version==='1.11.0'){
   must(/addEventListener\('storage'/.test(app),'Phase 18 storage-event fallback missing');
   must(/navigator\.locks/.test(app)&&/P18_LOCK_PREFIX/.test(app),'Phase 18 write serialization missing');
   must(/const localVersion=Math\.max\(requestedVersion,Number\(active\.updatedAt\)\|\|0\);/.test(app),'Phase 18 queued-save revision refresh missing');
+  must(/const remoteVersion=Number\(remote\?\.updatedAt\)\|\|0;/.test(app)&&/localVersion\+1,remoteVersion\+1/.test(app),'Phase 18 locked revisions are not globally monotonic');
   must(/const remoteNewer=!!\(remote&&\(remote\.updatedAt\|\|0\)>localVersion\);/.test(app),'Phase 18 newer remote-state detection missing');
   must(/if\(remoteNewer&&!replaceExisting\)/.test(app),'Phase 18 stale-write guard missing');
   must(/function p18MarkReplacementIntent\(gameId,seed\)/.test(app),'Phase 18 replacement intent marker missing');
