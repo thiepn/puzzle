@@ -1,11 +1,12 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.11.0';
-  const BUILD_PHASE = 'Cross-Browser, Offline/PWA & Multi-Tab Resilience';
+  const APP_VERSION = '1.12.0';
+  const BUILD_PHASE = 'Performance, Memory & Long-Session Endurance';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
+  const MAX_HISTORY_ENTRIES = 10000;
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -390,6 +391,40 @@
         } catch { resolve([]); }
       });
     },
+    async trimHistory(limit=MAX_HISTORY_ENTRIES) {
+      const cap=Math.max(1,Math.floor(Number(limit)||MAX_HISTORY_ENTRIES));
+      const d=await this.open();
+      if(!d){
+        try{
+          const prefix='pa:history:';
+          const rows=Object.keys(localStorage).filter(k=>k.startsWith(prefix)).map(key=>{
+            let value=null;try{value=JSON.parse(localStorage.getItem(key));}catch{}
+            return {key,value};
+          }).filter(x=>x.value&&typeof x.value==='object').sort((a,b)=>(b.value.endedAt||0)-(a.value.endedAt||0));
+          const extras=rows.slice(cap);
+          extras.forEach(x=>localStorage.removeItem(x.key));
+          if(extras.length)p18Emit({type:'db-write',store:'history',key:'__prune__',action:'prune',updatedAt:Date.now()});
+          return {before:rows.length,removed:extras.length,after:Math.min(rows.length,cap)};
+        }catch{return {before:0,removed:0,after:0};}
+      }
+      return new Promise(resolve=>{
+        let before=0,removed=0;
+        try{
+          const tx=d.transaction('history','readwrite'),store=tx.objectStore('history'),req=store.getAll();
+          req.onsuccess=()=>{
+            const rows=(req.result||[]).filter(x=>x&&typeof x.id==='string').sort((a,b)=>(b.endedAt||0)-(a.endedAt||0));
+            before=rows.length;
+            for(const row of rows.slice(cap)){store.delete(row.id);removed++;}
+          };
+          req.onerror=()=>resolve({before:0,removed:0,after:0});
+          tx.oncomplete=()=>{
+            if(removed)p18Emit({type:'db-write',store:'history',key:'__prune__',action:'prune',updatedAt:Date.now()});
+            resolve({before,removed,after:Math.max(0,before-removed)});
+          };
+          tx.onerror=tx.onabort=()=>resolve({before,removed:0,after:before});
+        }catch{resolve({before:0,removed:0,after:0});}
+      });
+    },
     async resetAll() {
       ++this._epoch;
       if(this._opening)await this._opening;
@@ -652,6 +687,72 @@
     return {pass:!!ok,expected,gameId:active.gameId,updatedAt:active.updatedAt||0};
   }
   window.__PA_RESILIENCE__={version:P18_VERSION,summary:p18Summary,probeCurrent:p18ProbeCurrent,resync:p18ResyncAfterRestore,waitForSync:async()=>{await p18SyncQueue;return p18Summary();}};
+
+  // ---------- Phase 19: performance, memory & long-session endurance ----------
+  const P19_VERSION=19;
+  const p19Counters={routeRenders:0,gameRenders:0,pointerCleanups:0,timerStarts:0,timerStops:0,lifecycleSuspends:0,lifecycleResumes:0,historyPrunes:0};
+  function p19MemorySnapshot(){
+    const m=performance.memory;
+    return m&&Number.isFinite(m.usedJSHeapSize)?{
+      usedJSHeapSize:m.usedJSHeapSize,
+      totalJSHeapSize:m.totalJSHeapSize,
+      jsHeapSizeLimit:m.jsHeapSizeLimit
+    }:null;
+  }
+  function p19RuntimeSnapshot(){
+    const active=state.currentActive,parts=parseHash().parts;
+    return {
+      version:P19_VERSION,appVersion:APP_VERSION,route:parts[0]||'home',
+      currentGame:active?.gameId||null,
+      domNodes:document.getElementsByTagName('*').length,
+      mainNodes:main?.getElementsByTagName('*').length||0,
+      overlayNodes:overlayRoot?.getElementsByTagName('*').length||0,
+      toastNodes:toastRoot?.getElementsByTagName('*').length||0,
+      timerActive:state.timer!=null,
+      pointerCleanupActive:typeof pointerCleanup==='function',
+      globalHandlers:{
+        keydown:typeof window.onkeydown==='function',
+        pointermove:typeof document.onpointermove==='function',
+        pointerup:typeof document.onpointerup==='function',
+        pointercancel:typeof document.onpointercancel==='function'
+      },
+      counters:{...p19Counters},
+      boundedCaches:{
+        syncSeen:p18Seen.size,
+        playerFresh:p17FreshCache.size,
+        syncSeenLimit:P18_SEEN_LIMIT,
+        playerFreshLimit:256
+      },
+      inMemory:{active:state.active.length,history:state.history.length,historyLimit:MAX_HISTORY_ENTRIES},
+      memory:p19MemorySnapshot()
+    };
+  }
+  async function p19StorageSnapshot(){
+    const [active,history]=await Promise.all([db.all('active'),db.all('history')]);
+    let estimate=null;
+    try{estimate=await navigator.storage?.estimate?.()||null;}catch{}
+    return {active:active.length,history:history.length,historyLimit:MAX_HISTORY_ENTRIES,estimate};
+  }
+  async function p19CompactHistory(limit=MAX_HISTORY_ENTRIES){
+    const result=await db.trimHistory(limit);
+    if(result.removed)p19Counters.historyPrunes+=result.removed;
+    state.history=sanitizeHistory(await db.all('history')).sort((a,b)=>b.endedAt-a.endedAt).slice(0,Math.max(1,Math.floor(Number(limit)||MAX_HISTORY_ENTRIES)));
+    return {...result,inMemory:state.history.length};
+  }
+  async function p19Settle(){
+    if(state.currentActive&&!retiredActives.has(state.currentActive))await saveActive(state.currentActive);
+    await p18SyncQueue;
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return p19RuntimeSnapshot();
+  }
+  window.__PA_ENDURANCE__={
+    version:P19_VERSION,
+    snapshot:p19RuntimeSnapshot,
+    storage:p19StorageSnapshot,
+    compactHistory:p19CompactHistory,
+    settle:p19Settle
+  };
+
 
   let routeGeneration = 0;
   let saveClock = 0;
@@ -1414,7 +1515,9 @@
     routeToGame(id,seed,null,!!seed);
   }
 
-  function stopTimer(){ if(state.timer != null){clearInterval(state.timer);state.timer=null;} }
+  function stopTimer(){
+    if(state.timer != null){clearInterval(state.timer);state.timer=null;p19Counters.timerStops++;}
+  }
   function activeDuration(active) {
     if (active.completed) return Math.max(0, active.durationMs || 0);
     const elapsed = Number.isFinite(active.elapsedMs) ? Math.max(0,active.elapsedMs) : 0;
@@ -1431,7 +1534,7 @@
     draw();
     if (active.completed || document.hidden || retiredActives.has(active) || playSession(active).paused) return;
     if (!active.startedAt) active.startedAt=Date.now();
-    state.timer=setInterval(draw,500);
+    state.timer=setInterval(draw,500);p19Counters.timerStarts++;
   }
   function journalActive(active) {
     try { localStorage.setItem(`pa:checkpoint:${active.gameId}`,JSON.stringify(active)); return true; }
@@ -1482,6 +1585,11 @@
     await db.put('history',entry);
     if(epoch!==db._epoch)return;
     if(!state.history.some(h=>h.id===entry.id))state.history.unshift(entry);
+    if(state.history.length>MAX_HISTORY_ENTRIES){
+      const extras=state.history.splice(MAX_HISTORY_ENTRIES);
+      await Promise.all(extras.map(h=>db.del('history',h.id)));
+      p19Counters.historyPrunes+=extras.length;
+    }
   }
 
   function proofHintContent(view){if(!view)return '';const items=view.stages.slice(0,view.level+1).map((text,i)=>`<li><span>${esc(view.labels[i])}</span><p>${esc(text)}</p></li>`).join('');return `<div class="proof-hint-head"><strong>Hint ${view.level+1}/4 · ${esc(view.labels[view.level])}</strong><small>${view.level<3?'Press Hint again for the next layer.':'Full deduction revealed.'}</small></div><ol>${items}</ol>`;}
@@ -4845,7 +4953,7 @@
   // Input lifetimes are tied to a render, including pointer cancellation.
   let pointerCleanup=null;
   function clearGamePointerHandlers() {
-    const cleanup=pointerCleanup;pointerCleanup=null;if(cleanup)cleanup();
+    const cleanup=pointerCleanup;pointerCleanup=null;if(cleanup){cleanup();p19Counters.pointerCleanups++;}
     document.onpointermove=null;document.onpointerup=null;document.onpointercancel=null;
   }
   function bindTraceGame(game,a,attr) {
@@ -5058,6 +5166,7 @@
       }
       const render=game.render;
       game.render=function(active){
+        p19Counters.gameRenders++;
         if(state.currentActive!==active||state.currentGame!==game||parseHash().parts[1]!==game.id)return;
         const focused=document.activeElement;
         const focusKey=focused?.closest('#main')?Object.entries(focused.dataset||{}).find(([key])=>key!=='n'):null;
@@ -5143,6 +5252,7 @@
     }
   }
   async function renderRoute(){
+    p19Counters.routeRenders++;
     const ticket=++routeGeneration,outgoing=state.currentActive;
     stopTimer();window.onkeydown=null;clearGamePointerHandlers();
     closeOverlay();toastRoot.innerHTML='';
@@ -5183,6 +5293,7 @@
     void renderRoute();
   });
   function suspendCurrentGame(){
+    p19Counters.lifecycleSuspends++;
     const active=state.currentActive;
     if(!active||retiredActives.has(active))return;
     checkpointTime(active,true);stopTimer();
@@ -5197,7 +5308,7 @@
     if(active&&!active.completed&&!retiredActives.has(active)&&!playSession(active).paused){active.startedAt=Date.now();startTimer(active);}
     void p18ResyncAfterRestore();
   });
-  window.addEventListener('pageshow',event=>{if(event.persisted)void p18ResyncAfterRestore();});
+  window.addEventListener('pageshow',event=>{p19Counters.lifecycleResumes++;if(event.persisted)void p18ResyncAfterRestore();});
   window.addEventListener('online',()=>p18SetNetworkState(true));
   window.addEventListener('offline',()=>p18SetNetworkState(true));
 
@@ -5208,6 +5319,7 @@
 
   (async()=>{
     let bootTheme=null; try { bootTheme=localStorage.getItem('pa:bootstrap-theme'); } catch {} if(bootTheme) document.documentElement.dataset.theme=bootTheme;
+    const historyTrim=await db.trimHistory(MAX_HISTORY_ENTRIES);if(historyTrim.removed)p19Counters.historyPrunes+=historyTrim.removed;
     await refreshData(); if(!location.hash)location.hash='#/home'; else renderRoute();
   })();
 })();
