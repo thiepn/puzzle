@@ -4461,6 +4461,7 @@
       else canonical=p16Canonical(active);
       if(!canonical.ok)errors.push('puzzle witness stopped satisfying Phase 16');
     }catch(error){errors.push('completion witness validation threw: '+String(error?.message||error));}
+    const durableDigest=fresh?p17DurableStateDigest(active,fresh.state):null;
     return {
       pass:errors.length===0,
       version:P17_VERSION,
@@ -4469,6 +4470,7 @@
       seed:active.seed,
       completed:!!active.completed,
       stateDigest:p17StateDigest(active),
+      durableDigest,
       canonical,
       errors
     };
