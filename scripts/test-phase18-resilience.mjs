@@ -36,7 +36,10 @@ has(app,'async function p18WithLease(','localStorage lease implementation missin
 has(app,'async function p18WithActiveLock(','per-puzzle serialization missing');
 has(app,'const requestedVersion=Number(active.updatedAt)||0;','queued-save requested revision capture missing');
 has(app,'const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);','queued same-tab revision refresh missing');
-has(app,"if(remote&&(remote.updatedAt||0)>localVersion)",'newer remote state stale-write guard missing');
+has(app,'const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);','newer remote-state detection missing');
+has(app,'if(remoteNewer&&!replaceExisting)','newer remote state stale-write guard missing');
+has(app,'saveActive(active,{replaceExisting:true})','intentional fresh-session replacement path missing');
+has(app,'saveActive(fresh,{replaceExisting:true})','replay replacement path missing');
 has(app,"toast('This puzzle changed in another tab. Loaded the newest saved state.')",'remote-state adoption feedback missing');
 has(app,"p18Emit({type:'reset'})",'cross-tab reset propagation missing');
 
