@@ -104,7 +104,7 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
     first.locator("[data-game-menu]").click()
     first.get_by_role("button",name="New Puzzle",exact=True).click()
     first.wait_for_function(
-        "(old) => window.__PA_RESILIENCE__?.summary()?.current?.seed !== old",
+        "(old) => { const current=window.__PA_RESILIENCE__?.summary()?.current; return !!current && current.seed !== old; }",
         arg=old_seed,
         timeout=30000,
     )
