@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Validate browser test syntax
-        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py
+        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py scripts/test-player-fuzz-browser.py
       - name: Install browser test dependencies
         run: |
           python -m pip install --disable-pip-version-check playwright
@@ -48,6 +48,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/test-completion-browser.py --base-url http://127.0.0.1:8080/ --samples 1
+          python scripts/test-player-fuzz-browser.py --base-url http://127.0.0.1:8080/ --difficulties Medium --steps 12
           python scripts/test-play-browser.py --base-url http://127.0.0.1:8080/
           python scripts/test-difficulty-browser.py --base-url http://127.0.0.1:8080/ --samples 1
           python scripts/test-variety-browser.py --base-url http://127.0.0.1:8080/ --steps 3
@@ -96,8 +97,8 @@ jobs:
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
           curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
-          grep -q "const APP_VERSION = '1.9.0';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v28';" /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.10.0';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v29';" /tmp/live-sw.js
           grep -q 'trace' /tmp/live-dictionary.js
           grep -q 'adieu' /tmp/live-dictionary.js
           echo 'PRODUCTION_SMOKE=PASS'
