@@ -55,7 +55,8 @@ if(version==='1.11.0'){
   must(/new BroadcastChannel\('puzzle-arcade-resilience-v1'\)/.test(app),'Phase 18 BroadcastChannel transport missing');
   must(/addEventListener\('storage'/.test(app),'Phase 18 storage-event fallback missing');
   must(/navigator\.locks/.test(app)&&/P18_LOCK_PREFIX/.test(app),'Phase 18 write serialization missing');
-  must(/if\(remote&&\(remote\.updatedAt\|\|0\)>baseVersion\)/.test(app),'Phase 18 stale-write guard missing');
+  must(/const localVersion=Math\.max\(requestedVersion,Number\(active\.updatedAt\)\|\|0\);/.test(app),'Phase 18 queued-save revision refresh missing');
+  must(/if\(remote&&\(remote\.updatedAt\|\|0\)>localVersion\)/.test(app),'Phase 18 stale-write guard missing');
   must(/pageshow/.test(app)&&/p18ResyncAfterRestore/.test(app),'Phase 18 BFCache resync missing');
   must(/SKIP_WAITING/.test(app)&&/controllerchange/.test(app),'Phase 18 controlled PWA upgrade missing');
 }
