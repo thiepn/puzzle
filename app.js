@@ -1412,7 +1412,7 @@
     return p18WithActiveLock(active.gameId,async()=>{
       if(retiredActives.has(active))return false;
       const remote=await p18NewestStoredActive(active.gameId);
-      if(remote&&remote.seed===active.seed&&remote.difficulty===active.difficulty&&(remote.updatedAt||0)>baseVersion){
+      if(remote&&(remote.updatedAt||0)>baseVersion){
         p18ScheduleActiveAdoption(active.gameId,true);
         return false;
       }
