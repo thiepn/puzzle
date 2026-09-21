@@ -39,7 +39,8 @@ has(app,'const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||
 has(app,'const remoteVersion=Number(remote?.updatedAt)||0;','remote revision capture missing');
 has(app,'localVersion+1,remoteVersion+1','cross-tab revisions are not globally monotonic under the write lock');
 has(app,'const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);','newer remote-state detection missing');
-has(app,'if(remoteNewer&&!replaceExisting)','newer remote state stale-write guard missing');
+has(app,'const remoteDifferentSession=!!(remote&&(remote.seed!==active.seed||remote.difficulty!==active.difficulty));','different-session conflict detection missing');
+has(app,'if((remoteDifferentSession||remoteNewer)&&!replaceExisting)','stale/different-session write guard missing');
 has(app,'function p18MarkReplacementIntent(gameId,seed)','replacement intent marker missing');
 has(app,'function p18ConsumeReplacementIntent(gameId,seed)','replacement intent consumer missing');
 has(app,"navigation?.type==='reload'||navigation?.type==='back_forward'",'stale reload replacement suppression missing');
