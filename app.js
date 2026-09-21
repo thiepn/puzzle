@@ -1801,7 +1801,7 @@
     const rawSeed=params.get('seed'), rawDiff=params.get('difficulty');
     const requestedSeed=sanitizeSharedSeed(rawSeed), requestedDiff=normalizeDifficulty(game,rawDiff||state.settings.difficulties?.[game.id]);
     if((rawSeed&&!requestedSeed)||(rawDiff&&requestedDiff!==rawDiff)) setTimeout(()=>{if(routeIsCurrent(ticket))toast('Ignored invalid shared-puzzle parameters.');},0);
-    let active=newestActive(await db.get('active',game.id),readCheckpoint(game.id));
+    let active=newestActive(await db.get('active',game.id),readCheckpoint(game.id)),recoveryNotice=null;
     if(!routeIsCurrent(ticket))return null;
     const damaged=active&&!activeRecordLooksUsable(game,active);
     const outdated=active&&game.generatorVersion&&active.puzzle?.generatorVersion!==game.generatorVersion;
@@ -1812,18 +1812,19 @@
       active=await game.create(seed,difficulty); active.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
       await saveActive(active);
-      if(damaged&&routeIsCurrent(ticket))toast('Recovered a damaged saved puzzle; other progress was kept.');
+      if(damaged&&routeIsCurrent(ticket))recoveryNotice='Recovered a damaged saved puzzle; other progress was kept.';
     }
     else {
       const fresh=await game.create(active.seed,active.difficulty);fresh.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
       const repaired=repairSavedActive(game,active,fresh);
       active=repaired||fresh;
-      if(!repaired||active._recoveredFields){delete active._recoveredFields;toast('Repaired damaged save fields; valid progress in other games was kept.');}
+      if(!repaired||active._recoveredFields){delete active._recoveredFields;recoveryNotice='Repaired damaged save fields; valid progress in other games was kept.';}
       await saveActive(active);
     }
     if(!routeIsCurrent(ticket))return null;
     if(active.completed&&active.result&&sanitizeHistory([active.result]).length)await db.put('history',active.result);
+    if(recoveryNotice&&routeIsCurrent(ticket))Object.defineProperty(active,'_recoveryNotice',{value:recoveryNotice,writable:true,configurable:true,enumerable:false});
     return routeIsCurrent(ticket)?active:null;
   }
 
@@ -4822,7 +4823,13 @@
     active.startedAt=active.completed||document.hidden?null:Date.now();
     state.currentGame=game;state.currentActive=active;
     updateNav('');document.title=`${game.name} — Puzzle Arcade`;
-    try { game.render(active); bindCommon(); }
+    try {
+      game.render(active); bindCommon();
+      if(active._recoveryNotice){
+        const message=active._recoveryNotice;delete active._recoveryNotice;
+        requestAnimationFrame(()=>{if(routeIsCurrent(ticket)&&state.currentActive===active)toast(message);});
+      }
+    }
     catch(error){
       if(!routeIsCurrent(ticket))return;
       stopTimer();window.onkeydown=null;clearGamePointerHandlers();
