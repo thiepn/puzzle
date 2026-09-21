@@ -35,6 +35,11 @@ def exercise_two_tabs(context, base_url, seed, expect_transport=None):
         open_game(page, base_url, seed)
 
     first,second=pages
+    # Opening the second tab can legitimately create a newer repaired save. Reconcile
+    # both live pages before the first deliberate write so stale-write rejection is
+    # tested as a guard, not mistaken for a synchronization failure.
+    first.evaluate("async () => { await window.__PA_RESILIENCE__.resync(); await window.__PA_RESILIENCE__.waitForSync(); }")
+    second.evaluate("async () => { await window.__PA_RESILIENCE__.resync(); await window.__PA_RESILIENCE__.waitForSync(); }")
     before1=first.evaluate("() => window.__PA_RESILIENCE__.summary()")
     before2=second.evaluate("() => window.__PA_RESILIENCE__.summary()")
     if before1["tabId"] == before2["tabId"]:
