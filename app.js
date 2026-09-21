@@ -431,8 +431,34 @@
   const P18_LOCK_PREFIX='pa:write-lock:';
   const P18_TAB_ID='tab-'+seedString();
   const P18_SEEN_LIMIT=256;
-  let p18Channel=null,p18SyncQueue=Promise.resolve(),p18Sequence=0,p18ControllerReloaded=false,p18Booted=false;
+  let p18Channel=null,p18SyncQueue=Promise.resolve(),p18Sequence=0,p18ControllerReloaded=false,p18Booted=false,p18ReplacementIntent=null;
   const p18Seen=new Set();
+
+  function p18MarkReplacementIntent(gameId,seed){
+    if(typeof gameId==='string'&&sanitizeSharedSeed(seed)===seed)p18ReplacementIntent={gameId,seed,at:Date.now()};
+  }
+  function p18ConsumeReplacementIntent(gameId,seed){
+    const intent=p18ReplacementIntent;
+    const ok=!!(intent&&intent.gameId===gameId&&intent.seed===seed&&Date.now()-intent.at<15000);
+    if(ok)p18ReplacementIntent=null;
+    return ok;
+  }
+  function p18MarkInitialRouteIntent(){
+    const navigation=performance.getEntriesByType?.('navigation')?.[0];
+    if(navigation?.type==='reload'||navigation?.type==='back_forward')return;
+    const {parts,params}=parseHash();
+    if(parts[0]!=='game'||!parts[1])return;
+    const seed=sanitizeSharedSeed(params.get('seed'));
+    if(seed)p18MarkReplacementIntent(parts[1],seed);
+  }
+  function p18NormalizeGameRoute(active){
+    if(!active||parseHash().parts[0]!=='game')return;
+    const {parts,params}=parseHash();
+    if(parts[1]!==active.gameId)return;
+    if(params.get('seed')===active.seed&&params.get('difficulty')===active.difficulty)return;
+    const q=new URLSearchParams({seed:active.seed,difficulty:active.difficulty});
+    history.replaceState(history.state,'',`#/game/${active.gameId}?${q}`);
+  }
 
   function p18PayloadValid(value){
     return !!(value&&typeof value==='object'&&value.version===P18_VERSION&&typeof value.id==='string'&&typeof value.tabId==='string'&&typeof value.type==='string');
@@ -524,7 +550,7 @@
     if(!remote||!activeRecordLooksUsable(game,remote)||(remote.updatedAt||0)<=(current.updatedAt||0))return false;
     retiredActives.add(current);stopTimer();window.onkeydown=null;clearGamePointerHandlers();
     remote.startedAt=remote.completed||document.hidden?null:Date.now();
-    state.currentActive=remote;state.currentGame=game;p18ReplaceActiveList(remote);
+    state.currentActive=remote;state.currentGame=game;p18ReplaceActiveList(remote);p18NormalizeGameRoute(remote);
     try{game.render(remote);bindCommon();}
     catch{void renderRoute();return true;}
     if(notify)toast('This puzzle changed in another tab. Loaded the newest saved state.');
@@ -1375,13 +1401,15 @@
     openGame(g.id, false);
   }
 
-  function routeToGame(id, seed, difficulty){
+  function routeToGame(id, seed, difficulty, replaceExisting=false){
+    if(replaceExisting&&seed)p18MarkReplacementIntent(id,seed);
     const q=new URLSearchParams(); if(seed)q.set('seed',seed); if(difficulty)q.set('difficulty',difficulty);
     go(`game/${id}${q.toString()?`?${q}`:''}`);
   }
   function openGame(id, forceNew=false){
     const g=byId[id]; if(!g||g.status!=='available'){ toast('That puzzle is not playable in this build yet.'); return; }
-    routeToGame(id, forceNew?seedString():null, null);
+    const seed=forceNew?seedString():null;
+    routeToGame(id,seed,null,!!seed);
   }
 
   function stopTimer(){ if(state.timer != null){clearInterval(state.timer);state.timer=null;} }
@@ -1925,7 +1953,7 @@
     const normalized=normalizeDifficulty(game,difficulty);
     rememberDifficulty(game,normalized);
     const seed=await p14SelectSeed(game,normalized,state.currentActive?.gameId===id?state.currentActive:null);
-    routeToGame(id,seed,normalized);
+    routeToGame(id,seed,normalized,true);
   }
 
   function boundedSaveData(value) {
@@ -2050,12 +2078,21 @@
     const damaged=active&&!activeRecordLooksUsable(game,active);
     const outdated=active&&game.generatorVersion&&active.puzzle?.generatorVersion!==game.generatorVersion;
     const different=active&&((requestedSeed&&active.seed!==requestedSeed)||(rawDiff&&active.difficulty!==requestedDiff));
+    const explicitReplacement=!!(different&&requestedSeed&&p18ConsumeReplacementIntent(game.id,requestedSeed));
     if(!active||damaged||outdated||different){
+      const previous=active;
       const seed=requestedSeed||sanitizeSharedSeed(active?.seed)||seedString();
       const difficulty=rawDiff?requestedDiff:normalizeDifficulty(game,active?.difficulty||requestedDiff);
       active=await game.create(seed,difficulty); active.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
-      await saveActive(active,{replaceExisting:true});
+      const saved=await saveActive(active,{replaceExisting:!previous||damaged||outdated||explicitReplacement});
+      if(!saved&&different&&!explicitReplacement){
+        const durable=await p18NewestStoredActive(game.id);
+        if(durable&&activeRecordLooksUsable(game,durable)){
+          active=durable;
+          recoveryNotice='Loaded the newer puzzle saved in another tab.';
+        }
+      }
       if(damaged&&routeIsCurrent(ticket))recoveryNotice='Recovered a damaged saved puzzle; other progress was kept.';
     }
     else {
@@ -5083,7 +5120,7 @@
     const active=await getOrCreateActive(game,params,ticket);
     if(!active||!routeIsCurrent(ticket))return;
     active.startedAt=active.completed||document.hidden?null:Date.now();
-    state.currentGame=game;state.currentActive=active;
+    state.currentGame=game;state.currentActive=active;p18NormalizeGameRoute(active);
     updateNav('');document.title=`${game.name} — Puzzle Arcade`;
     try {
       game.render(active); bindCommon();
@@ -5154,6 +5191,7 @@
   window.addEventListener('offline',()=>p18SetNetworkState(true));
 
   p18InitSync();
+  p18MarkInitialRouteIntent();
   p18SetNetworkState(false);
   void p18RegisterServiceWorker();
 
