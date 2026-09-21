@@ -1,3 +1,17 @@
+# 1.12.0 — Performance, Memory & Long-Session Endurance
+
+- Added a required warmed 144-route Chromium endurance certification to the release workflow.
+- Added a weekly/manual deep endurance run covering 468 total game routes.
+- Added production-safe endurance diagnostics for DOM size, timer state, pointer cleanup, global handlers, render/lifecycle counters, runtime cache bounds, storage counts, and heap data where supported.
+- Added a durable 10,000-entry completed-history ceiling with boot-time migration and live pruning.
+- Added one-transaction IndexedDB history compaction plus localStorage fallback compaction and cross-tab prune signaling.
+- Added post-warm heap-growth certification with a 96 MiB release ceiling and 128 MiB deep-run ceiling.
+- Added home-route DOM growth limits and transient overlay/toast leak checks.
+- Added timer-start/stop balance, pointer cleanup, global handler cleanup, and lifecycle endurance checks.
+- Added route p95 / maximum latency ceilings and first-cycle → final-cycle degradation checks.
+- Preserved all Phase 13–18 quality, fuzz, offline, cross-browser, and multi-tab certification.
+- Advanced the PWA cache to v31; IndexedDB schema remains 1 and the catalog remains 36 games.
+
 # 1.11.0 — Cross-Browser, Offline/PWA & Multi-Tab Resilience
 
 - Added required Chromium, Firefox, and WebKit release-matrix coverage for production runtime and multi-tab behavior.
