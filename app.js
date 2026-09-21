@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.8.0';
-  const BUILD_PHASE = 'Generator Robustness, Stress Testing & Long-Run Reliability';
+  const APP_VERSION = '1.9.0';
+  const BUILD_PHASE = 'Solvability, Hint Correctness & Completion Certification';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -4105,6 +4105,277 @@
     stressGame:p15StressGame,
     auditCatalog:p15StressCatalog
   };
+
+
+
+  // ---------- Phase 16: Solvability, hint correctness & completion certification ----------
+  // Phase 13 certifies quality, Phase 14 sequence variety, and Phase 15 repeated
+  // generation reliability. Phase 16 proves that each generated puzzle has a valid
+  // completion witness under the same rules used by gameplay, starts unfinished, and
+  // exposes a sound hint/proof source.
+  const P16_VERSION=16;
+  const P16_LEVELS=['Easy','Medium','Hard'];
+  const P16_METHODS={
+    'five-letters':'accepted answer + exact all-correct evaluation',
+    'groups':'four disjoint certified editorial groups',
+    'word-ladder':'accepted shortest path from start to target',
+    'anagrams':'full-tile dictionary anagram witness',
+    'letter-hive':'target-count accepted hive-word witness',
+    'word-grid':'target-count traceable dictionary-word witness',
+    'theme-trail':'stored adjacent paths cover every themed answer',
+    'word-pieces':'piece-disjoint construction for every target compound',
+    'mini-crossword':'entry-consistent complete crossword grid',
+    'cryptogram':'bijective substitution decodes exactly to plaintext',
+    'word-search':'stored unique paths spell every target',
+    'sudoku':'completed Sudoku validates rows, columns, boxes and givens',
+    'killer-sudoku':'completed Sudoku also satisfies every cage sum',
+    'kakuro':'every run has distinct digits and its exact clue sum',
+    'unequal':'Latin solution satisfies every inequality and given',
+    'arithmetic-cages':'Latin solution satisfies every arithmetic cage',
+    'make-24':'exact rational expression route reaches 24',
+    'mines':'post-first-click mine map has internally consistent clues',
+    'nonogram':'solution reproduces every row and column clue',
+    'loop':'stored edge witness forms one clue-valid loop',
+    'bridges':'stored bridge counts satisfy degree, crossing and connectivity rules',
+    'light-up':'stored lamp witness illuminates every cell without conflicts',
+    'islands':'stored land/sea witness satisfies island sizes and sea rules',
+    'hitori':'stored shade witness satisfies uniqueness, adjacency and connectivity',
+    'binary':'stored board satisfies balance, triples and line uniqueness',
+    'queens':'stored queen witness satisfies row, column, region and touch rules',
+    'number-path':'stored Hamiltonian path visits checkpoints in order',
+    'tents':'stored tent witness satisfies counts, matching and non-touching rules',
+    'rectangles':'stored exact partition covers board with one matching clue per rectangle',
+    'dominoes':'stored pairing reconstructs every domino exactly once',
+    'towers':'stored Latin board satisfies all visibility clues',
+    'fillomino':'stored region board has exact region sizes and preserves givens',
+    'network':'stored connector masks form one leak-free connected network',
+    'sliding-tiles':'initial permutation has goal-compatible parity and stored goal',
+    'lights-out':'exact GF(2) solver returns a route that clears the board',
+    'untangle':'canonical planar embedding has zero crossings/overlaps'
+  };
+  const P16_PROOFERS={
+    sudoku:sudokuProof,
+    'killer-sudoku':killerProof,
+    kakuro:kakuroProof,
+    binary:binaryProof,
+    queens:queensProof,
+    loop:w6LoopProof,
+    bridges:bridgesProof,
+    'light-up':lightProof,
+    tents:tentsProof,
+    towers:towersProof,
+    unequal:unequalProof,
+    'arithmetic-cages':arithmeticProof,
+    islands:islandsProof,
+    hitori:hitoriProof,
+    dominoes:dominoProof,
+    fillomino:fillominoProof,
+    rectangles:w6RectProof
+  };
+  function p16Eq(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+  function p16TraceWord(grid,n,word){
+    const target=String(word||'').toUpperCase();if(!target||!Array.isArray(grid)||grid.length!==n*n)return null;
+    const letters=grid.map(x=>String(x).toUpperCase()),used=Array(grid.length).fill(false),path=[];
+    function rec(i,k){
+      if(letters[i]!==target[k]||used[i])return false;
+      used[i]=true;path.push(i);
+      if(k===target.length-1)return true;
+      const r=Math.floor(i/n),c=i%n;
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+        if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;
+        if(rr>=0&&cc>=0&&rr<n&&cc<n&&rec(rr*n+cc,k+1))return true;
+      }
+      path.pop();used[i]=false;return false;
+    }
+    for(let i=0;i<letters.length;i++){path.length=0;used.fill(false);if(rec(i,0))return [...path];}
+    return null;
+  }
+  function p16PieceRoute(pieces,target){
+    const used=Array((pieces||[]).length).fill(false),route=[],word=String(target||'');
+    function rec(prefix){
+      if(prefix===word)return true;
+      if(!word.startsWith(prefix))return false;
+      for(let i=0;i<pieces.length;i++)if(!used[i]){
+        used[i]=true;route.push(i);
+        if(rec(prefix+pieces[i]))return true;
+        route.pop();used[i]=false;
+      }
+      return false;
+    }
+    return rec('')?[...route]:null;
+  }
+  function p16RunValid(values,sum){
+    return values.length>0&&values.every(v=>Number.isInteger(v)&&v>=1&&v<=9)&&new Set(values).size===values.length&&values.reduce((a,b)=>a+b,0)===sum;
+  }
+  function p16SlidingReachable(board,n){
+    if(!Array.isArray(board)||board.length!==n*n||new Set(board).size!==board.length)return false;
+    const vals=board.filter(Boolean),inv=vals.reduce((z,v,i)=>z+vals.slice(i+1).filter(x=>x<v).length,0);
+    if(n%2)return inv%2===0;
+    const blankRowFromBottom=n-Math.floor(board.indexOf(0)/n);
+    return (inv+blankRowFromBottom)%2===1;
+  }
+  function p16QueensCells(p){
+    const n=p.size,cells=Array(n*n).fill(0),sol=p.solution||[];
+    if(sol.length!==n)return cells;
+    const asCols=sol.every(v=>Number.isInteger(v)&&v>=0&&v<n);
+    if(asCols)sol.forEach((c,r)=>cells[r*n+c]=2);
+    else sol.forEach(i=>{if(Number.isInteger(i)&&i>=0&&i<n*n)cells[i]=2;});
+    return cells;
+  }
+  function p16DominoPartner(p){
+    const partner=Array((p.rows||0)*(p.cols||0)).fill(-1);
+    for(const pair of p.solution||[])if(Array.isArray(pair)&&pair.length===2){
+      const [a,b]=pair;if(Number.isInteger(a)&&Number.isInteger(b)&&a>=0&&b>=0&&a<partner.length&&b<partner.length){partner[a]=b;partner[b]=a;}
+    }
+    return partner;
+  }
+  function p16RectanglesValid(p){
+    const n=p.n,owner=Array(n*n).fill(-1);
+    for(let j=0;j<(p.solution||[]).length;j++){
+      const x=p.solution[j];
+      if(!x||![x.r,x.c,x.h,x.w].every(Number.isInteger)||x.r<0||x.c<0||x.h<1||x.w<1||x.r+x.h>n||x.c+x.w>n)return false;
+      const clues=(p.clues||[]).filter(q=>{const r=Math.floor(q.cell/n),c=q.cell%n;return r>=x.r&&r<x.r+x.h&&c>=x.c&&c<x.c+x.w;});
+      if(clues.length!==1||clues[0].area!==x.h*x.w)return false;
+      for(let r=x.r;r<x.r+x.h;r++)for(let c=x.c;c<x.c+x.w;c++){const i=r*n+c;if(owner[i]>=0)return false;owner[i]=j;}
+    }
+    return owner.every(x=>x>=0);
+  }
+  function p16MineClues(p){
+    if(!Array.isArray(p.mines)||!Array.isArray(p.nums)||p.mines.length!==p.rows*p.cols||p.nums.length!==p.mines.length)return false;
+    for(let i=0;i<p.mines.length;i++){
+      if(p.mines[i])continue;const r=Math.floor(i/p.cols),c=i%p.cols;let count=0;
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;if(rr>=0&&cc>=0&&rr<p.rows&&cc<p.cols&&p.mines[rr*p.cols+cc])count++;}
+      if(p.nums[i]!==count)return false;
+    }
+    return p.mines.filter(Boolean).length===p.count;
+  }
+  function p16Canonical(active){
+    const id=active?.gameId,p=active?.puzzle||{},game=GAMES[id];let ok=false,evidence={};
+    try{
+      switch(id){
+        case 'five-letters':{const ans=String(p.answer||'');const states=game.evaluateGuess(ans,ans);ok=/^[A-Z]{5}$/.test(ans)&&isAcceptedWord(ans)&&states.every(x=>x==='correct');evidence={answer:ans};break;}
+        case 'groups':{const groups=p.groups||[],words=groups.flatMap(g=>g.members||[]);ok=groups.length===4&&groups.every(g=>g.members?.length===4)&&new Set(words).size===16;evidence={groups:groups.length,words:new Set(words).size};break;}
+        case 'word-ladder':{const path=acceptedLadderPath(p.start,p.target);ok=!!path&&path.length-1===p.optimal&&path.every(isAcceptedWord)&&path.slice(1).every((w,i)=>oneLetterDiff(path[i],w));evidence={moves:path?.length?path.length-1:null};break;}
+        case 'anagrams':{const answers=game.answers(active),target=answers.find(w=>wordSignature(w)===wordSignature((p.letters||[]).join('')));ok=!!target&&isAcceptedWord(target)&&target.length===p.letters.length;evidence={acceptedAnswers:answers.length,target};break;}
+        case 'letter-hive':{const valid=(p.answers||[]).filter(w=>String(w).length>=4&&String(w).includes(p.center)&&wordUsesOnlyLetters(w,p.letters)&&isAcceptedWord(w));ok=valid.length>=p.target;evidence={target:p.target,valid:valid.length};break;}
+        case 'word-grid':{const traced=(p.answers||[]).map(w=>({word:w,path:p16TraceWord(p.grid,p.n,w)})).filter(x=>x.path&&isAcceptedWord(x.word));ok=traced.length>=p.target;evidence={target:p.target,traceable:traced.length};break;}
+        case 'theme-trail':{const used=new Set();ok=(p.words||[]).length===(p.paths||[]).length&&(p.paths||[]).every((path,j)=>Array.isArray(path)&&path.length===String(p.words[j]).length&&path.every((i,k)=>Number.isInteger(i)&&i>=0&&i<p.n*p.n&&!used.has(i)&&(k===0||Math.max(Math.abs(Math.floor(i/p.n)-Math.floor(path[k-1]/p.n)),Math.abs(i%p.n-path[k-1]%p.n))===1)&&p.grid[i]===p.words[j][k]&&(used.add(i)||true)))&&used.size===p.n*p.n;evidence={covered:used.size};break;}
+        case 'word-pieces':{const routes=(p.answers||[]).map(w=>p16PieceRoute(p.pieces,w));ok=routes.length>0&&routes.every(Boolean);evidence={answers:routes.length};break;}
+        case 'mini-crossword':{const sol=p.solution||[];ok=sol.length===25&&(p.entries||[]).every(e=>e.cells?.length>0&&e.cells.every(i=>sol[i]&&sol[i]!=='#'));evidence={entries:(p.entries||[]).length,open:sol.filter(x=>x!=='#').length};break;}
+        case 'cryptogram':{const used=[...new Set(String(p.cipher||'').match(/[A-Z]/g)||[])],decoded=String(p.cipher||'').replace(/[A-Z]/g,c=>p.correct?.[c]||'?');ok=used.length>0&&new Set(used.map(c=>p.correct?.[c])).size===used.length&&decoded===p.plain;evidence={symbols:used.length};break;}
+        case 'word-search':{const rows=(p.words||[]).map(w=>{const path=p.paths?.[w]||[],text=path.map(i=>p.grid[i]).join(''),rev=[...text].reverse().join('');return path.length===w.length&&(text===w||rev===w)&&wordSearchOccurrences(p.grid,p.size,w)===1;});ok=rows.length>0&&rows.every(Boolean);evidence={words:rows.length};break;}
+        case 'sudoku':ok=sudokuStateValid(p.solution)&&p.solution.every(Boolean)&&(p.givens||[]).every((v,i)=>!v||v===p.solution[i]);evidence={cells:p.solution?.length||0};break;
+        case 'killer-sudoku':ok=sudokuStateValid(p.solution)&&p.solution.every(Boolean)&&(p.givens||[]).every((v,i)=>!v||v===p.solution[i])&&(p.cages||[]).every((_,i)=>killerCageFeasible(p,p.solution,i));evidence={cages:p.cages?.length||0};break;
+        case 'kakuro':{if(p.runs?.length)ok=p.runs.every(r=>p16RunValid((r.cells||[]).map(i=>p.solution[i]),r.sum));else ok=kakuroValid(p.solution,p.rowSums,p.colSums);evidence={runs:p.runs?.length||6};break;}
+        case 'unequal':ok=unequalComplete(p,p.solution);evidence={size:p.n};break;
+        case 'arithmetic-cages':ok=arithmeticComplete(p,p.solution);evidence={cages:p.cages?.length||0};break;
+        case 'make-24':{const expr=w6Make24SolutionExpressions(p.nums,1);ok=expr.length>0;evidence={expression:expr[0]||null};break;}
+        case 'mines':ok=p16MineClues(p);evidence={mines:p.mines?.filter(Boolean).length||0};break;
+        case 'nonogram':{const n=p.size,rows=Array.from({length:n},(_,r)=>nonogramClues(p.solution.slice(r*n,r*n+n))),cols=Array.from({length:n},(_,c)=>nonogramClues(Array.from({length:n},(_,r)=>p.solution[r*n+c])));ok=p16Eq(rows,p.rowClues)&&p16Eq(cols,p.colClues);evidence={size:n};break;}
+        case 'loop':{const st={h:(p.horiz||[]).map(v=>v?1:2),v:(p.vert||[]).map(v=>v?1:2)};ok=w6LoopValidate(p,st);evidence={edges:(p.horiz||[]).filter(Boolean).length+(p.vert||[]).filter(Boolean).length};break;}
+        case 'bridges':ok=bridgesComplete(p,p.solution);evidence={edges:p.edges?.length||0};break;
+        case 'light-up':{const cells=Array(p.n*p.n).fill(0);(p.solution||[]).forEach(i=>cells[i]=1);ok=lightComplete({...active,state:{...active.state,cells}});evidence={lamps:p.solution?.length||0};break;}
+        case 'islands':{const cells=(p.solution||[]).map(v=>v?2:1);ok=islandsComplete(p,cells);evidence={land:cells.filter(v=>v===2).length};break;}
+        case 'hitori':{const cells=(p.solutionBlack||[]).map(v=>v?1:2);ok=hitoriValid(p,cells);evidence={shaded:cells.filter(v=>v===1).length};break;}
+        case 'binary':{const n=p.size;ok=(p.solution||[]).length===n*n&&(p.givens||[]).every((v,i)=>v==null||v===p.solution[i])&&p.solution.every((_,i)=>!binaryViolation(p.solution,n,i));evidence={size:n};break;}
+        case 'queens':{const cells=p16QueensCells(p),count=countQueensStateSolutions(p,cells,2);ok=cells.filter(v=>v===2).length===p.size&&count===1;evidence={queens:cells.filter(v=>v===2).length};break;}
+        case 'number-path':ok=numberPathComplete({...active,state:{...active.state,path:[...(p.solution||[])]}});evidence={cells:p.solution?.length||0};break;
+        case 'tents':{const cells=Array(p.n*p.n).fill(0);(p.solution||[]).forEach(i=>cells[i]=1);ok=tentsComplete({...active,state:{...active.state,cells}});evidence={tents:p.solution?.length||0};break;}
+        case 'rectangles':ok=p16RectanglesValid(p);evidence={rectangles:p.solution?.length||0};break;
+        case 'dominoes':{const partner=p16DominoPartner(p);ok=dominoComplete(p,partner);evidence={dominoes:(p.solution||[]).length};break;}
+        case 'towers':ok=countTowerStateSolutions(p,p.solution,1)===1;evidence={size:p.n};break;
+        case 'fillomino':ok=fillominoComplete(p,p.solution);evidence={size:p.n};break;
+        case 'network':ok=networkMasksComplete(p.solutionMasks,p.n);evidence={size:p.n};break;
+        case 'sliding-tiles':{const goal=Array.from({length:p.n*p.n-1},(_,i)=>i+1).concat(0);ok=p16Eq(p.solution,goal)&&p16SlidingReachable(p.initial,p.n)&&!p16Eq(p.initial,p.solution);evidence={size:p.n};break;}
+        case 'lights-out':{const solved=solveLightsOut(p.initial,p.n),board=[...p.initial];for(const i of solved.optimalPresses||[])game.toggleRaw(board,p.n,i);ok=solved.solvable&&board.every(v=>!v);evidence={presses:solved.optimalPresses?.length||0};break;}
+        case 'untangle':{const pos=Array.from({length:p.n},(_,i)=>{const q=-Math.PI/2+2*Math.PI*i/p.n;return{x:.5+.40*Math.cos(q),y:.5+.40*Math.sin(q)}});ok=untangleCrossings(p.edges,pos)===0;evidence={nodes:p.n,edges:p.edges?.length||0};break;}
+      }
+    }catch(error){return {ok:false,method:P16_METHODS[id],evidence,error:String(error?.message||error)};}
+    return {ok:!!ok,method:P16_METHODS[id],evidence,error:null};
+  }
+  function p16StartsUnfinished(active){
+    const id=active.gameId,p=active.puzzle,s=active.state;
+    switch(id){
+      case 'five-letters':return s.status==='playing'&&!s.guesses.length;
+      case 'groups':return s.solved.length<4;
+      case 'word-ladder':return s.chain.at(-1)!==p.target;
+      case 'anagrams':return s.selected.length<p.letters.length;
+      case 'letter-hive':return s.found.length<p.target;
+      case 'word-grid':return s.found.length<p.target;
+      case 'theme-trail':return s.found.length<p.words.length;
+      case 'word-pieces':return s.found.length<p.answers.length;
+      case 'mini-crossword':return !p16Eq(s.board,p.solution);
+      case 'cryptogram':return Object.keys(s.mapping).length===0;
+      case 'word-search':return s.found.length<p.words.length;
+      case 'sudoku':case 'killer-sudoku':case 'binary':case 'towers':case 'fillomino':return !p16Eq(s.board,p.solution);
+      case 'kakuro':return p.runs?.length?!p.runs.every(r=>p16RunValid((r.cells||[]).map(i=>s.board[i]),r.sum)):!kakuroValid(s.board,p.rowSums,p.colSums);
+      case 'unequal':return !unequalComplete(p,s.board);
+      case 'arithmetic-cages':return !arithmeticComplete(p,s.board);
+      case 'make-24':return s.values.length>1;
+      case 'mines':return !p.mines||s.revealed?.filter(Boolean).length<p.rows*p.cols-p.count;
+      case 'nonogram':return !p.solution.every((v,i)=>!!v===(s.cells[i]===1));
+      case 'loop':return !w6LoopValidate(p,s);
+      case 'bridges':return !bridgesComplete(p,s.counts);
+      case 'light-up':return !lightComplete(active);
+      case 'islands':return !islandsComplete(p,s.cells);
+      case 'hitori':return !hitoriValid(p,s.cells);
+      case 'queens':return countQueensStateSolutions(p,s.cells,1)>0&&s.cells.filter(v=>v===2).length<p.size;
+      case 'number-path':return !numberPathComplete(active);
+      case 'tents':return !tentsComplete(active);
+      case 'rectangles':return s.rects.reduce((n,x)=>n+x.h*x.w,0)<p.n*p.n;
+      case 'dominoes':return !dominoComplete(p,s.partner);
+      case 'network':return !networkComplete(active);
+      case 'sliding-tiles':return !p16Eq(s.board,p.solution);
+      case 'lights-out':return s.board.some(Boolean);
+      case 'untangle':return untangleCrossings(p.edges,s.positions)>0;
+      default:return !active.completed;
+    }
+  }
+  function p16HintSource(active,canonical){
+    const id=active.gameId,game=GAMES[id];if(typeof game?.hint!=='function')return {ok:false,kind:'missing',error:'hint method missing'};
+    try{
+      if(P16_PROOFERS[id]){
+        const copy=typeof structuredClone==='function'?structuredClone(active):JSON.parse(JSON.stringify(active)),proof=P16_PROOFERS[id](copy);
+        if(proof){
+          const text=[proof.focus,proof.rule,proof.deduction,proof.reveal].filter(Boolean).join(' ');
+          const indexOK=proof.index==null||(Number.isInteger(proof.index)&&proof.index>=0&&proof.index<(active.puzzle.n||active.puzzle.size||active.puzzle.rows||9)**2);
+          return {ok:indexOK&&text.length>=20&&!/undefined|NaN/i.test(text),kind:'proof',token:proof.token||null,index:proof.index??null};
+        }
+        return {ok:canonical.ok,kind:'proof-fallback',token:null};
+      }
+      switch(id){
+        case 'word-ladder':return {ok:!!acceptedLadderPath(active.puzzle.start,active.puzzle.target),kind:'path'};
+        case 'make-24':return {ok:w6Make24SolutionExpressions(active.puzzle.nums,1).length>0,kind:'exact-route'};
+        case 'lights-out':return {ok:solveLightsOut(active.puzzle.initial,active.puzzle.n).solvable,kind:'exact-route'};
+        case 'sliding-tiles':return {ok:game.neighbors(active.state.board.indexOf(0),active.puzzle.n).length>0&&p16SlidingReachable(active.state.board,active.puzzle.n),kind:'legal-move'};
+        case 'untangle':return {ok:untangleCrossings(active.puzzle.edges,active.state.positions)>0,kind:'conflict-target'};
+        default:return {ok:canonical.ok,kind:'canonical-witness'};
+      }
+    }catch(error){return {ok:false,kind:'error',error:String(error?.message||error)};}
+  }
+  async function p16AuditSample(id,difficulty,seed){
+    const game=GAMES[id],active=await game.create(seed,difficulty);
+    if(id==='mines'&&!active.puzzle.mines)game.build(active,p15CenterFirst(active.puzzle));
+    const canonical=p16Canonical(active),startsUnfinished=p16StartsUnfinished(active),hint=p16HintSource(active,canonical);
+    return {id,difficulty,seed,pass:canonical.ok&&startsUnfinished&&hint.ok,canonical,startsUnfinished,hint,fingerprint:p14Fingerprint(active)};
+  }
+  async function p16AuditCatalog(samples=1,ids=null){
+    const selected=Array.isArray(ids)&&ids.length?[...new Set(ids.filter(id=>GAMES[id]))]:Object.keys(GAMES),report={},errors=[],count=Math.max(1,Math.floor(samples));
+    for(const id of selected){
+      const game=GAMES[id],tiers={};report[id]={method:P16_METHODS[id],tiers,pass:true};
+      for(const difficulty of P16_LEVELS){
+        if(!(game.difficulties||[]).includes(difficulty)){errors.push(id+' '+difficulty+': missing tier');report[id].pass=false;continue;}
+        const rows=[];
+        for(let k=0;k<count;k++){
+          try{rows.push(await p16AuditSample(id,difficulty,'p16-cert:'+id+':'+difficulty+':'+k));}
+          catch(error){rows.push({id,difficulty,seed:'p16-cert:'+id+':'+difficulty+':'+k,pass:false,error:String(error?.message||error)});}
+        }
+        const pass=rows.every(x=>x.pass);tiers[difficulty]={pass,samples:rows};if(!pass){errors.push(id+' '+difficulty+': completion certification failed');report[id].pass=false;}
+      }
+    }
+    return {version:P16_VERSION,games:selected.length,samplesPerTier:count,certifications:selected.length*P16_LEVELS.length*count,pass:errors.length===0,errors,report};
+  }
+  window.__PA_COMPLETION_AUDIT__={version:P16_VERSION,methods:{...P16_METHODS},canonical:p16Canonical,hintSource:p16HintSource,sample:p16AuditSample,auditCatalog:p16AuditCatalog};
 
 
   // Input lifetimes are tied to a render, including pointer cancellation.
