@@ -65,7 +65,7 @@ has(app,"postMessage({type:'SKIP_WAITING',appVersion:APP_VERSION})",'controlled 
 has(app,"navigator.serviceWorker.addEventListener('controllerchange'",'controller upgrade reload missing');
 const appVersion=app.match(/const APP_VERSION = '([^']+)';/)?.[1];
 const swVersion=sw.match(/const APP_VERSION = '([^']+)';/)?.[1];
-const cacheVersion=Number(sw.match(/const CACHE_VERSION = 'v(\\d+)';/)?.[1]||0);
+const cacheVersion=Number(sw.match(/const CACHE_VERSION = 'v(\d+)';/)?.[1]||0);
 assert.equal(swVersion,appVersion,'service worker app version mismatch');checks++;
 assert.ok(cacheVersion>=30,'service worker regressed below Phase 18 cache generation');checks++;
 has(sw,"event.data?.type !== 'SKIP_WAITING'",'service worker explicit activation listener missing');
