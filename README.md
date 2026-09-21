@@ -1,8 +1,18 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.10.0 · Real Player Simulation, State Fuzzing & Interaction Sequence Reliability · PWA cache v29**
+**Current release: 1.11.0 · Cross-Browser, Offline/PWA & Multi-Tab Resilience · PWA cache v30**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Cross-Browser, Offline/PWA & Multi-Tab Resilience 1.11.0
+
+Phase 18 hardens the environment around all 36 games. Active puzzle writes are serialized across tabs, stale tabs cannot overwrite newer persisted sessions, and live tabs adopt newer durable state through BroadcastChannel with a storage-event fallback. BFCache and visibility restoration now resynchronize before play resumes.
+
+The PWA update path now supports controlled activation of a fully installed replacement worker, a one-time controller reload, cache-bypassed update checks, and an offline reload certification. Cross-browser CI adds Chromium, Firefox, and WebKit runtime/multi-tab coverage; Chromium additionally runs the real service-worker offline test.
+
+Compatibility fallbacks cover structured cloning, selector escaping, board resize observation, and seed generation without changing the IndexedDB schema or puzzle catalog.
+
+See docs/PHASE18_CROSS_BROWSER_PWA_MULTI_TAB.md for the full resilience contract.
 
 ## Real Player Simulation, State Fuzzing & Interaction Sequence Reliability 1.10.0
 
