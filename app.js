@@ -17,7 +17,7 @@
   // Phase 18 compatibility floor: preserve the same data semantics on browsers
   // that lack newer convenience APIs while keeping modern fast paths intact.
   function cloneValue(value) {
-    if (typeof globalThis.structuredClone === 'function') return globalThis.cloneValue(value);
+    if (typeof globalThis.structuredClone === 'function') return globalThis.structuredClone(value);
     if (value === undefined) return undefined;
     return JSON.parse(JSON.stringify(value));
   }
@@ -498,8 +498,15 @@
   async function p18WithActiveLock(gameId,fn){
     const locks=navigator.locks;
     if(locks?.request){
-      try{return await locks.request('puzzle-arcade:'+location.pathname+':'+gameId,{mode:'exclusive'},fn);}
-      catch{}
+      let entered=false;
+      try{
+        return await locks.request('puzzle-arcade:'+location.pathname+':'+gameId,{mode:'exclusive'},()=>{
+          entered=true;
+          return fn();
+        });
+      }catch(error){
+        if(entered)throw error;
+      }
     }
     return p18WithLease(gameId,fn);
   }
