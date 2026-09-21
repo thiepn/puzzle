@@ -1,7 +1,7 @@
 {
-  "version": "1.8.0",
-  "phase": "Generator Robustness, Stress Testing & Long-Run Reliability",
-  "cacheVersion": 27,
+  "version": "1.9.0",
+  "phase": "Solvability, Hint Correctness & Completion Certification",
+  "cacheVersion": 28,
   "databaseSchema": 1,
   "catalogGames": 36,
   "difficultyTiersPerGame": 3,
@@ -15,6 +15,9 @@
   "deepStressDefaultSamplesPerTier": 8,
   "deepStressMeasuredGenerations": 1728,
   "deepStressShards": 4,
+  "completionMethods": 36,
+  "completionReleaseSamplesPerTier": 1,
+  "completionReleaseCertifications": 108,
   "learningLessons": 36,
   "automatedReleaseGate": "REQUIRED_ON_RELEASE",
   "fullChromiumMatrix": "REQUIRED_ON_RELEASE",
@@ -25,6 +28,9 @@
   "generatorStressRegression": "REQUIRED_ON_RELEASE",
   "generatorStressBrowserCertification": "REQUIRED_ON_RELEASE",
   "generatorDeepStressWorkflow": "WEEKLY_AND_MANUAL",
+  "completionRegression": "REQUIRED_ON_RELEASE",
+  "completionBrowserCertification": "REQUIRED_ON_RELEASE",
+  "hintSourceCertification": "REQUIRED_ON_RELEASE",
   "contentValidation": "REQUIRED_ON_RELEASE",
   "serviceWorkerRegression": "REQUIRED_ON_RELEASE",
   "accessibilityRegression": "REQUIRED_ON_RELEASE",
@@ -39,4 +45,4 @@
     "fiveLetterWords": 7278
   },
   "releaseStressHeapLimitBytes": 134217728
-}\n
+}
