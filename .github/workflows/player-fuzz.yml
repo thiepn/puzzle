@@ -1,0 +1,56 @@
+name: Player Deep Fuzz
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 3 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  player-fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: word
+            games: five-letters,groups,word-ladder,anagrams,letter-hive,word-grid,theme-trail,word-pieces,mini-crossword,cryptogram,word-search
+          - shard: number
+            games: sudoku,killer-sudoku,kakuro,unequal,arithmetic-cages,make-24
+          - shard: logic-a
+            games: mines,nonogram,loop,bridges,light-up,islands,hitori,binary
+          - shard: logic-spatial
+            games: queens,number-path,tents,rectangles,dominoes,towers,fillomino,network,sliding-tiles,lights-out,untangle
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Run family fuzz shard
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/player-fuzz
+          python -m http.server 8080 >/tmp/puzzle-player-fuzz-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-player-fuzz-browser.py \
+            --base-url http://127.0.0.1:8080/ \
+            --games "${{ matrix.games }}" \
+            --difficulties Easy,Medium,Hard \
+            --steps 24 \
+            --cycles 2 \
+            --output "test-results/player-fuzz/${{ matrix.shard }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-fuzz-${{ matrix.shard }}
+          path: test-results/player-fuzz/${{ matrix.shard }}.json
+          retention-days: 30

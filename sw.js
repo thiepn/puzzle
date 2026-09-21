@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.9.0: solvability, hint and completion certification release shell. */
-const APP_VERSION = '1.9.0';
-const CACHE_VERSION = 'v28';
+/* Puzzle Arcade 1.10.0: real-player simulation and state-fuzz reliability release shell. */
+const APP_VERSION = '1.10.0';
+const CACHE_VERSION = 'v29';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;

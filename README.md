@@ -1,8 +1,16 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.9.0 · Solvability, Hint Correctness & Completion Certification · PWA cache v28**
+**Current release: 1.10.0 · Real Player Simulation, State Fuzzing & Interaction Sequence Reliability · PWA cache v29**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Real Player Simulation, State Fuzzing & Interaction Sequence Reliability 1.10.0
+
+Phase 17 tests the app as a long-lived player state machine rather than a set of isolated puzzle generators. All 36 games now undergo real Chromium interaction sequences with board actions, keyboard input, hints, undo/redo, pause/resume, menu transitions, reloads, malformed-save recovery, completion, and Next Puzzle transitions.
+
+Every sequence step is checked against the same production save-repair path used by a returning player. The standard release gate also requires exact autosave/reload state parity. A separate weekly/manual deep workflow expands the matrix to Easy / Medium / Hard, two cycles, and **5,184 planned interaction steps** before persistence and completion probes.
+
+See `docs/PHASE17_PLAYER_STATE_FUZZING.md` for the full reliability contract.
 
 ## Solvability, Hint Correctness & Completion Certification 1.9.0
 

@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.9.0';
-  const BUILD_PHASE = 'Solvability, Hint Correctness & Completion Certification';
+  const APP_VERSION = '1.10.0';
+  const BUILD_PHASE = 'Real Player Simulation, State Fuzzing & Interaction Sequence Reliability';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -1801,7 +1801,7 @@
     const rawSeed=params.get('seed'), rawDiff=params.get('difficulty');
     const requestedSeed=sanitizeSharedSeed(rawSeed), requestedDiff=normalizeDifficulty(game,rawDiff||state.settings.difficulties?.[game.id]);
     if((rawSeed&&!requestedSeed)||(rawDiff&&requestedDiff!==rawDiff)) setTimeout(()=>{if(routeIsCurrent(ticket))toast('Ignored invalid shared-puzzle parameters.');},0);
-    let active=newestActive(await db.get('active',game.id),readCheckpoint(game.id));
+    let active=newestActive(await db.get('active',game.id),readCheckpoint(game.id)),recoveryNotice=null;
     if(!routeIsCurrent(ticket))return null;
     const damaged=active&&!activeRecordLooksUsable(game,active);
     const outdated=active&&game.generatorVersion&&active.puzzle?.generatorVersion!==game.generatorVersion;
@@ -1812,18 +1812,19 @@
       active=await game.create(seed,difficulty); active.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
       await saveActive(active);
-      if(damaged&&routeIsCurrent(ticket))toast('Recovered a damaged saved puzzle; other progress was kept.');
+      if(damaged&&routeIsCurrent(ticket))recoveryNotice='Recovered a damaged saved puzzle; other progress was kept.';
     }
     else {
       const fresh=await game.create(active.seed,active.difficulty);fresh.startedAt=null;
       if(!routeIsCurrent(ticket))return null;
       const repaired=repairSavedActive(game,active,fresh);
       active=repaired||fresh;
-      if(!repaired||active._recoveredFields){delete active._recoveredFields;toast('Repaired damaged save fields; valid progress in other games was kept.');}
+      if(!repaired||active._recoveredFields){delete active._recoveredFields;recoveryNotice='Repaired damaged save fields; valid progress in other games was kept.';}
       await saveActive(active);
     }
     if(!routeIsCurrent(ticket))return null;
     if(active.completed&&active.result&&sanitizeHistory([active.result]).length)await db.put('history',active.result);
+    if(recoveryNotice&&routeIsCurrent(ticket))Object.defineProperty(active,'_recoveryNotice',{value:recoveryNotice,writable:true,configurable:true,enumerable:false});
     return routeIsCurrent(ticket)?active:null;
   }
 
@@ -4378,6 +4379,184 @@
   window.__PA_COMPLETION_AUDIT__={version:P16_VERSION,methods:{...P16_METHODS},canonical:p16Canonical,hintSource:p16HintSource,sample:p16AuditSample,auditCatalog:p16AuditCatalog};
 
 
+  // ---------- Phase 17: real-player simulation, state fuzzing & sequence reliability ----------
+  // Phase 17 treats a playable session as a state machine rather than a collection
+  // of isolated button handlers. Browser tests exercise actual rendered controls,
+  // while this runtime audit surface validates save repair, persistence parity,
+  // completion transitions, and catalog-wide state invariants.
+  const P17_VERSION=17;
+  const P17_METHODS={
+    'five-letters':'typed guesses + validation + completion lock',
+    'groups':'tile selection/submission + shuffle + mistake recovery',
+    'word-ladder':'text entry + legal-chain persistence + undo/redo',
+    'anagrams':'tile sequencing + clear/backtrack + submit recovery',
+    'letter-hive':'letter entry + rejected/accepted word continuity',
+    'word-grid':'trace state + keyboard/pointer interruption recovery',
+    'theme-trail':'trace state + locked-cell continuity',
+    'word-pieces':'piece selection + clear/backtrack + submit continuity',
+    'mini-crossword':'cell entry + direction changes + history restoration',
+    'cryptogram':'mapping uniqueness + clear/undo continuity',
+    'word-search':'endpoint/trace interaction continuity',
+    'sudoku':'entry/notes/history + undo/redo + reload repair',
+    'killer-sudoku':'entry/history + cage-aware hint continuity',
+    'kakuro':'arbitrary-run entry/history + reload repair',
+    'unequal':'Latin entry/history + reload repair',
+    'arithmetic-cages':'cage entry/history + reload repair',
+    'make-24':'operand/operator sequence + undo/recovery',
+    'mines':'reveal/flag/chord + deferred-board persistence',
+    'nonogram':'paint/mark/history + pointer interruption recovery',
+    'loop':'edge cycling + history + topology-safe persistence',
+    'bridges':'bridge cycling + history + connectivity-state persistence',
+    'light-up':'lamp/mark cycling + history persistence',
+    'islands':'sea/land cycling + history persistence',
+    'hitori':'shade/keep-white cycling + history persistence',
+    'binary':'0/1 entry + history persistence',
+    'queens':'queen/X cycling + history persistence',
+    'number-path':'path growth/backtrack + pointer interruption recovery',
+    'tents':'tent/grass cycling + history persistence',
+    'rectangles':'anchor/partition editing + history persistence',
+    'dominoes':'pair/unpair + history persistence',
+    'towers':'height entry + history persistence',
+    'fillomino':'region-number entry + history persistence',
+    'network':'rotation sequences + history persistence',
+    'sliding-tiles':'legal move chains + undo/reload parity',
+    'lights-out':'toggle chains + undo/reload parity',
+    'untangle':'drag/keyboard node movement + undo/reload geometry'
+  };
+  function p17StateDigest(active){
+    return p14Hash(JSON.stringify(p15StableValue(active?.state||null)));
+  }
+  function p17DurableStateDigest(active,initialState){
+    const subset={};
+    for(const key of Object.keys(initialState||{}))subset[key]=active?.state?.[key];
+    return p14Hash(JSON.stringify(p15StableValue(subset)));
+  }
+  const p17FreshCache=new Map();
+  async function p17FreshActive(active){
+    const key=active.gameId+'|'+active.difficulty+'|'+active.seed;
+    let template=p17FreshCache.get(key);
+    if(!template){
+      const game=GAMES[active.gameId];
+      template=await game.create(active.seed,active.difficulty);template.startedAt=null;
+      p17FreshCache.set(key,structuredClone(template));
+      if(p17FreshCache.size>256)p17FreshCache.delete(p17FreshCache.keys().next().value);
+    }
+    return structuredClone(template);
+  }
+  function p17ResultValid(active){
+    if(!active?.completed)return true;
+    const r=active.result;
+    return !!(r&&r.gameId===active.gameId&&r.difficulty===active.difficulty&&
+      r.puzzleIdentity===active.gameId+':'+active.difficulty+':'+active.seed&&
+      ['completed','failed'].includes(r.outcome)&&Number.isFinite(r.durationMs)&&r.durationMs>=0);
+  }
+  async function p17ValidateActive(active=state.currentActive){
+    const errors=[];
+    if(!active)return {pass:false,version:P17_VERSION,errors:['no active puzzle']};
+    const game=GAMES[active.gameId];
+    if(!game)return {pass:false,version:P17_VERSION,gameId:active.gameId,errors:['unknown game']};
+    if(!activeRecordLooksUsable(game,active))errors.push('active record failed generic save contract');
+    if(!boundedSaveData(active))errors.push('active record is not bounded/serializable');
+    if(sanitizeSharedSeed(active.seed)!==active.seed)errors.push('seed is not share-safe');
+    if(normalizeDifficulty(game,active.difficulty)!==active.difficulty)errors.push('difficulty is not normalized');
+    if(!p17ResultValid(active))errors.push('completed result metadata is inconsistent');
+    let repaired=null,fresh=null;
+    try{
+      fresh=await p17FreshActive(active);
+      repaired=repairSavedActive(game,structuredClone(active),fresh);
+      if(!repaired)errors.push('save repair rejected the current legal session');
+      else if(p17DurableStateDigest(active,fresh.state)!==p17DurableStateDigest(repaired,fresh.state))
+        errors.push('save repair would alter the current durable state');
+    }catch(error){errors.push('repair validation threw: '+String(error?.message||error));}
+    let canonical={ok:true,deferred:false};
+    try{
+      if(active.gameId==='mines'&&!active.puzzle?.mines)canonical={ok:true,deferred:true};
+      else canonical=p16Canonical(active);
+      if(!canonical.ok)errors.push('puzzle witness stopped satisfying Phase 16');
+    }catch(error){errors.push('completion witness validation threw: '+String(error?.message||error));}
+    const durableDigest=fresh?p17DurableStateDigest(active,fresh.state):null;
+    return {
+      pass:errors.length===0,
+      version:P17_VERSION,
+      gameId:active.gameId,
+      difficulty:active.difficulty,
+      seed:active.seed,
+      completed:!!active.completed,
+      stateDigest:p17StateDigest(active),
+      durableDigest,
+      canonical,
+      errors
+    };
+  }
+  async function p17PersistCurrent(){
+    const active=state.currentActive;
+    if(!active)return {pass:false,error:'no active puzzle'};
+    const ok=await saveActive(active),stored=await db.get('active',active.gameId);
+    const currentDigest=p17StateDigest(active),storedDigest=p17StateDigest(stored);
+    return {pass:!!ok&&!!stored&&currentDigest===storedDigest,gameId:active.gameId,currentDigest,storedDigest,updatedAt:stored?.updatedAt||null};
+  }
+  async function p17PersistedStatus(){
+    const active=state.currentActive;if(!active)return {pass:false,error:'no active puzzle'};
+    const stored=await db.get('active',active.gameId);
+    return {pass:!!stored&&p17StateDigest(stored)===p17StateDigest(active),gameId:active.gameId,currentDigest:p17StateDigest(active),storedDigest:p17StateDigest(stored),stored};
+  }
+  async function p17CorruptPersisted(){
+    const active=state.currentActive;if(!active)return {pass:false,error:'no active puzzle'};
+    await saveActive(active);
+    const raw=await db.get('active',active.gameId);if(!raw?.state)return {pass:false,error:'persisted active missing'};
+    const x=structuredClone(raw),st=x.state;let field=null,before=null,after=null;
+    const set=(key,value)=>{field=key;before=structuredClone(st[key]);st[key]=value;after=structuredClone(value);};
+    if(Object.prototype.hasOwnProperty.call(st,'selected'))set('selected',Array.isArray(st.selected)?[999999]:-999999);
+    else if(Object.prototype.hasOwnProperty.call(st,'status'))set('status','corrupted');
+    else if(Object.prototype.hasOwnProperty.call(st,'current'))set('current','9');
+    else if(Object.prototype.hasOwnProperty.call(st,'input'))set('input','9');
+    else if(Object.prototype.hasOwnProperty.call(st,'tool'))set('tool',99);
+    else if(Object.prototype.hasOwnProperty.call(st,'direction'))set('direction','sideways');
+    else if(Object.prototype.hasOwnProperty.call(st,'history'))set('history',[999999]);
+    else {
+      const key=Object.keys(st).find(k=>Array.isArray(st[k]));
+      if(key)set(key,[999999]);else return {pass:false,error:'no fuzzable persisted field'};
+    }
+    x.updatedAt=Math.max(Date.now()+10000,(x.updatedAt||0)+10000);
+    const ok=await db.put('active',x);
+    try{localStorage.removeItem('pa:checkpoint:'+active.gameId);}catch{}
+    if(ok)retiredActives.add(active);
+    return {pass:!!ok,gameId:active.gameId,field,before,after,updatedAt:x.updatedAt};
+  }
+  async function p17FinishBoundary(){
+    const active=state.currentActive,game=state.currentGame;
+    if(!active||!game)return {pass:false,error:'no active puzzle'};
+    if(!active.completed)await finishActive(active,{phase17Boundary:true});
+    game.render(active);
+    const valid=p17ResultValid(active);
+    return {pass:!!active.completed&&valid,gameId:active.gameId,outcome:active.outcome,resultId:active.result?.id||null};
+  }
+  function p17SessionSummary(){
+    const active=state.currentActive;
+    if(!active)return null;
+    const ui=playSession(active);
+    return {
+      gameId:active.gameId,seed:active.seed,difficulty:active.difficulty,
+      completed:!!active.completed,outcome:active.outcome||null,
+      digest:p17StateDigest(active),hintsUsed:active.hintsUsed||0,
+      paused:!!ui.paused,redoDepth:ui.redo.length,
+      historyDepth:Array.isArray(active.state?.history)?active.state.history.length:
+        active.gameId==='word-ladder'?Math.max(0,(active.state?.chain?.length||1)-1):0
+    };
+  }
+  window.__PA_PLAYER_FUZZ__={
+    version:P17_VERSION,
+    methods:{...P17_METHODS},
+    validateCurrent:p17ValidateActive,
+    persistCurrent:p17PersistCurrent,
+    persistedStatus:p17PersistedStatus,
+    corruptPersisted:p17CorruptPersisted,
+    finishBoundary:p17FinishBoundary,
+    summary:p17SessionSummary,
+    digest:()=>state.currentActive?p17StateDigest(state.currentActive):null
+  };
+
+
   // Input lifetimes are tied to a render, including pointer cancellation.
   let pointerCleanup=null;
   function clearGamePointerHandlers() {
@@ -4657,7 +4836,13 @@
     active.startedAt=active.completed||document.hidden?null:Date.now();
     state.currentGame=game;state.currentActive=active;
     updateNav('');document.title=`${game.name} — Puzzle Arcade`;
-    try { game.render(active); bindCommon(); }
+    try {
+      game.render(active); bindCommon();
+      if(active._recoveryNotice){
+        const message=active._recoveryNotice;delete active._recoveryNotice;
+        requestAnimationFrame(()=>{if(routeIsCurrent(ticket)&&state.currentActive===active)toast(message);});
+      }
+    }
     catch(error){
       if(!routeIsCurrent(ticket))return;
       stopTimer();window.onkeydown=null;clearGamePointerHandlers();
