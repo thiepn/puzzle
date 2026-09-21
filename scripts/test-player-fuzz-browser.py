@@ -221,13 +221,14 @@ def main():
 
                     persisted=page.evaluate('async()=>await window.__PA_PLAYER_FUZZ__.persistCurrent()')
                     if not persisted.get('pass'):raise AssertionError('autosave parity failed: '+json.dumps(persisted))
-                    pre_reload=current_summary()['digest']
+                    pre_reload=validate(f'{gid}/{difficulty}/pre-reload')['durableDigest']
+                    if not pre_reload:raise AssertionError('durable pre-reload digest missing')
                     page.reload(wait_until='domcontentloaded')
                     page.wait_for_function('(id)=>window.__PA_PLAYER_FUZZ__?.version===17 && document.querySelector(".game-page")?.dataset.playGame===id',arg=gid,timeout=30000)
                     reloads+=1
                     post=validate(f'{gid}/{difficulty}/reload')
-                    if post['stateDigest']!=pre_reload:
-                        raise AssertionError(f'reload state mismatch {pre_reload} != {post["stateDigest"]}')
+                    if post.get('durableDigest')!=pre_reload:
+                        raise AssertionError(f'durable reload state mismatch {pre_reload} != {post.get("durableDigest")}')
                     row['reloadPreserved']=True
 
                     if not opt.skip_corruption and not current_summary().get('completed'):
