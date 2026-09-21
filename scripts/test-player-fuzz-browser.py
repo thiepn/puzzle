@@ -235,6 +235,7 @@ def main():
                         corruption=page.evaluate('async()=>await window.__PA_PLAYER_FUZZ__.corruptPersisted()')
                         if not corruption.get('pass'):raise AssertionError('failed to inject persisted-state fuzz: '+json.dumps(corruption))
                         row['corruptionField']=corruption.get('field')
+                        context['label']=f'{gid}/{difficulty}/corruption-recovery'
                         page.reload(wait_until='domcontentloaded')
                         page.wait_for_function('(id)=>window.__PA_PLAYER_FUZZ__?.version===17 && document.querySelector(".game-page")?.dataset.playGame===id',arg=gid,timeout=30000)
                         reloads+=1
