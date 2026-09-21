@@ -1448,8 +1448,9 @@
       // the critical section so it is not mistaken for a newer remote-tab write.
       const localVersion=Math.max(requestedVersion,Number(active.updatedAt)||0);
       const remote=await p18NewestStoredActive(active.gameId);
+      const remoteDifferentSession=!!(remote&&(remote.seed!==active.seed||remote.difficulty!==active.difficulty));
       const remoteNewer=!!(remote&&(remote.updatedAt||0)>localVersion);
-      if(remoteNewer&&!replaceExisting){
+      if((remoteDifferentSession||remoteNewer)&&!replaceExisting){
         p18ScheduleActiveAdoption(active.gameId,true);
         return false;
       }
