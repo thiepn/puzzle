@@ -22,7 +22,7 @@ for(const needle of [
   'function p17SessionSummary(',
   'window.__PA_PLAYER_FUZZ__'
 ]) ok(app.includes(needle),`missing Phase 17 contract: ${needle}`);
-ok(app.includes('repairSavedActive(game,structuredClone(active),fresh)'),'Phase 17 does not validate against production save repair');
+ok(app.includes('repairSavedActive(game,cloneValue(active),fresh)'),'Phase 17 does not validate against production save repair');
 ok(app.includes("errors.push('puzzle witness stopped satisfying Phase 16')"),'Phase 17 does not retain Phase 16 witness');
 ok(app.includes("localStorage.removeItem('pa:checkpoint:'+active.gameId)"),'corruption probe does not isolate the persisted record');
 ok(app.includes('phase17Boundary:true'),'completion boundary probe missing');
