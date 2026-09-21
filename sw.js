@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.11.0: cross-browser, offline/PWA and multi-tab resilience release shell. */
-const APP_VERSION = '1.11.0';
-const CACHE_VERSION = 'v30';
+/* Puzzle Arcade 1.12.0: performance, memory and long-session endurance release shell. */
+const APP_VERSION = '1.12.0';
+const CACHE_VERSION = 'v31';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;

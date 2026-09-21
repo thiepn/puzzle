@@ -1,20 +1,18 @@
-# Puzzle Arcade 1.11.0 — Cross-Browser, Offline/PWA & Multi-Tab Resilience
+# Puzzle Arcade 1.12.0 — Performance, Memory & Long-Session Endurance
 
-Phase 18 hardens browser execution, offline installation, and local persistence without changing puzzle rules or the 36-game catalog.
+Phase 19 turns sustained browser use into a release requirement.
 
-- Required release coverage now runs in Chromium, Firefox, and WebKit.
-- Two live tabs synchronize active puzzle changes in both directions.
-- BroadcastChannel is the primary signal path; the storage event is a certified fallback.
-- Active-puzzle writes are serialized with Web Locks where available and an expiring localStorage lease otherwise.
-- A stale tab re-reads durable state before committing and refuses to overwrite any newer saved revision.
-- A current tab adopts a newer remote session from storage rather than trusting message payload data.
-- BFCache restoration and visibility return trigger persistence reconciliation before normal play resumes.
-- Compatibility fallbacks cover structured cloning, selector escaping, board-resize observation, and puzzle seed generation.
-- Service-worker updates can activate a fully installed replacement worker without requiring every old tab to close, followed by one guarded reload onto the new controller.
-- Chromium CI performs a real offline service-worker reload; Firefox and WebKit certify production runtime and multi-tab behavior.
-- The existing scoped, atomic core precache and narrow offline fetch policy remain intact.
-- All Phase 13–17 quality, variety, generator, completion, and player-state fuzz gates remain required.
+- The required endurance job warms all 36 puzzle families and then runs 108 measured fresh-seed routes.
+- The weekly/manual deep workflow runs 432 measured routes after the same full-catalog warm pass.
+- Route latency, DOM growth, heap growth, timers, pointer cleanup, global handlers, lifecycle recovery, runtime caches, and storage are measured in one persistent browser session.
+- Chromium heap growth is measured only after lazy puzzle/cache initialization, preventing legitimate warm-up memory from being misclassified as a leak.
+- Completed history is now bounded to 10,000 durable entries instead of growing forever.
+- Oversized legacy history is compacted on boot; ongoing play prunes excess results.
+- IndexedDB and localStorage fallback storage follow the same retention rule.
+- The endurance gate independently verifies history compaction using real browser storage.
+- Active-puzzle storage remains naturally bounded to one record per game.
+- Existing Phase 18 Chromium/Firefox/WebKit resilience certification and Phase 17 four-shard player fuzzing remain required for deployment.
 
-Storage schema remains **1**. Service-worker cache is **v30**.
+IndexedDB schema remains **1**. Service-worker cache is **v31**.
 
-See docs/PHASE18_CROSS_BROWSER_PWA_MULTI_TAB.md for the complete contract.
+See docs/PHASE19_PERFORMANCE_MEMORY_ENDURANCE.md for the complete contract.
