@@ -547,7 +547,9 @@
     const current=state.currentActive,game=GAMES[gameId];
     if(!current||current.gameId!==gameId||!game)return false;
     const remote=await p18NewestStoredActive(gameId);
-    if(!remote||!activeRecordLooksUsable(game,remote)||(remote.updatedAt||0)<=(current.updatedAt||0))return false;
+    if(!remote||!activeRecordLooksUsable(game,remote))return false;
+    const differentSession=remote.seed!==current.seed||remote.difficulty!==current.difficulty;
+    if(!differentSession&&(remote.updatedAt||0)<=(current.updatedAt||0))return false;
     retiredActives.add(current);stopTimer();window.onkeydown=null;clearGamePointerHandlers();
     remote.startedAt=remote.completed||document.hidden?null:Date.now();
     state.currentActive=remote;state.currentGame=game;p18ReplaceActiveList(remote);p18NormalizeGameRoute(remote);
