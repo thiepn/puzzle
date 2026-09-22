@@ -1,6 +1,6 @@
 /* Puzzle Arcade 1.14.0: QoL release shell; refreshed for certified regression repair. */
 const APP_VERSION = '1.14.0';
-const CACHE_VERSION = 'v33';
+const CACHE_VERSION = 'v34';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;
