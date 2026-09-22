@@ -176,23 +176,23 @@ There are no placeholder games in the locked V1 catalog.
 
 ## S+ hardening progress
 
+> Historical Wave 1–8 sections below summarize earlier development work. Their detailed Wave-era certification artifacts are no longer retained in the current repository. Current maintained operational/certification documentation is listed in the Maintenance status section above.
+
+
 ### Wave 1 — correctness emergencies
 
 Hitori, Bridges, Number Path, Network, Islands and Fillomino received exact uniqueness/validity certification. Stale pre-hardening sessions are generator-version migrated.
 
-See `docs/WAVE1_CORRECTNESS.md` and `docs/WAVE1_CERTIFICATION.json`.
 
 ### Wave 2 — proof-based hints
 
 Sixteen number/logic games now use progressive **Focus → Rule → Deduction → Reveal** hints derived from the current board rather than direct stored-answer lookup. Certification covered 920 fresh states with zero hint-engine errors.
 
-See `docs/WAVE2_HINTS.md` and `docs/WAVE2_CERTIFICATION.json`.
 
 ### Wave 3 — measured difficulty
 
 Eleven games with weak Easy/Medium/Hard semantics received deterministic measured difficulty systems. Certification covered 990 fresh states with non-overlapping sampled bands.
 
-See `docs/WAVE3_DIFFICULTY.md` and `docs/WAVE3_CERTIFICATION.json`.
 
 ### Wave 4 — weak-content rebuild
 
@@ -217,7 +217,6 @@ Wave 4 certification:
 - full-catalog creation: **212 / 212**
 - full-catalog render smoke: **36 / 36**
 
-See `docs/WAVE4_CONTENT.md`, `docs/WAVE4_CONTENT_MANIFEST.json`, and `docs/WAVE4_CERTIFICATION.json`.
 
 
 ### Wave 5 — classic game depth
@@ -235,7 +234,6 @@ Eight classic games received deeper version-5 engines instead of relying on toy 
 
 Final Wave 5 evidence includes 192 independent solver checks, 120 bounded deterministic runtime cases, 533 Mines first-click/no-guess cases, 90 final Kakuro and 90 final Towers focused checks, 108/108 full-catalog creation configurations, 36/36 render smoke, and 16/16 real Chromium mobile/desktop Wave-5 route-interaction checks.
 
-See `docs/WAVE5_CLASSIC_DEPTH.md` and `docs/WAVE5_CERTIFICATION.json`.
 
 
 ### Wave 6 — already-strong games → exceptional
@@ -255,9 +253,8 @@ Ten of the strongest games received version-6 depth upgrades:
 
 Wave 6 certification: **360/360 target runtime cases**, **108/108 full-catalog creation cases**, **36/36 render smoke**, and **20/20 Chromium mobile/desktop target interaction cases**.
 
-See `docs/WAVE6_EXCEPTIONAL.md`, `docs/WAVE6_CERTIFICATION.json`, `docs/WAVE6_BROWSER_QA.json`, and `docs/WAVE6_FEATURE_METRICS.json`.
 
-The historical Wave 6 build used PWA cache v16; the current release uses v21.
+The Wave 6 section is historical; cache generations mentioned there no longer describe the maintained runtime. The current release identity is declared at the top of this README and in `release-manifest.json`.
 
 ## Word content workflow
 
@@ -280,7 +277,7 @@ Runtime game data is emitted to `word-content.js`; editable source material is r
 Service workers require HTTP(S):
 
 ```bash
-cd endless-puzzle-arcade
+cd puzzle
 python -m http.server 8080
 ```
 
@@ -308,18 +305,16 @@ Final Wave 7 evidence:
 
 Wave 7 also upgrades the service worker to cache v13: navigation gets an explicit app-shell fallback while failed static-asset requests are no longer incorrectly answered with `index.html`; app icons are part of the offline core.
 
-See `docs/WAVE7_GLOBAL_SPLUS.md`, `docs/WAVE7_CERTIFICATION.json`, `docs/WAVE7_STRESS.json`, `docs/WAVE7_BROWSER_MOBILE.json`, and `docs/WAVE7_BROWSER_DESKTOP.json`.
 
 ## Development direction
 
-The 36-game catalog remains frozen. Phase 13 adds a permanent generation-quality gate on top of the earlier solver/content work; future puzzle changes should extend the measured evidence and certification contracts rather than weakening them. Remaining release work should preserve the cumulative regression matrix and focus on endurance, accessibility/device verification, PWA update behavior, and production hardening.
+The 36-game catalog remains frozen. Puzzle Arcade is in formal maintenance mode: future puzzle changes should be defect-driven and extend the measured evidence/certification contracts rather than weaken them. New product capability requires an explicit product-direction decision before implementation.
 
 
 ## Wave 8 — final certification
 
-Wave 8 is the catalog-wide break-it pass. The current build passed 10,800 generator creations, 270 independent exact uniqueness checks, 300 no-guess Mines first-click boards, 1,080 determinism cases, 36/36 mobile + desktop + 320px browser-DOM matrices, storage corruption/quota recovery, save/resume/migration checks, service-worker logic tests, keyboard/accessibility automation, and memory endurance. Killer Sudoku and Towers were moved to exact-certified runtime banks to eliminate rare multi-second generation tails. The PWA cache is **v14**.
+The Wave 8 build passed 10,800 generator creations, 270 independent exact uniqueness checks, 300 no-guess Mines first-click boards, 1,080 determinism cases, 36/36 mobile + desktop + 320px browser-DOM matrices, storage corruption/quota recovery, save/resume/migration checks, service-worker logic tests, keyboard/accessibility automation, and memory endurance. Killer Sudoku and Towers were moved to exact-certified runtime banks to eliminate rare multi-second generation tails. That historical build used PWA cache **v14**.
 
-See `docs/WAVE8_FINAL_CERTIFICATION.md` and `docs/WAVE8_CERTIFICATION.json`.
 
 ## Wave 9 — production hardening
 
@@ -331,15 +326,20 @@ Run the production gate with:
 node scripts/release-check.mjs
 ```
 
-Build the optional single-file convenience version with:
+The retired single-file convenience build is no longer part of the maintained toolchain. Production is built and deployed through the certified PWA workflow.
 
-```bash
-python3 scripts/build-standalone.py ../puzzle-arcade-standalone.html
-```
+Current operational documentation:
 
-Operational documentation is under `docs/PRODUCTION_CONFIG.md`, `docs/SECURITY.md`, `docs/PRIVACY.md`, `docs/STORAGE_SCHEMA.md`, `docs/DEPLOYMENT.md`, `docs/ROLLBACK.md`, `docs/THIRD_PARTY_NOTICES.md`, and `docs/RELEASE_CHECKLIST.md`.
+- `docs/MAINTENANCE_HANDOFF.md` — maintenance scope, severity, patch discipline and cadence
+- `docs/MAINTENANCE_BASELINE.md` — technical invariants and required gates
+- `docs/RELEASE_CHECKLIST.md` — release checklist
+- `docs/ROLLBACK.md` — production rollback procedure
+- `SECURITY.md` — security policy and trust boundary
+- `THIRD_PARTY_NOTICES.md` — third-party attribution
+- `docs/PHASE20_FINAL_CERTIFICATION.md` — final production-hardening contract
+- `docs/QOL_KEYBOARD_MOBILE_1_14.md` — 1.14.0 QoL interaction contract
 
-Wave 10 produced the certified V1 release, completed automated production verification, and froze the initial application at v1.0.0; the audited maintenance build is v1.0.1. Physical install/update and assistive-technology checks remain documented as manual post-ship verification because they cannot be independently executed in the automated release environment.
+Wave 10 historically produced the certified V1 release and early audited maintenance builds. Those version numbers are historical; the supported maintenance line is defined by the current release metadata above. Physical install/update and assistive-technology checks remain documented as manual verification because they cannot be independently executed in the automated release environment.
 
 ## Broad English input dictionary
 

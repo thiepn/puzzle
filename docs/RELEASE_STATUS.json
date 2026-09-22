@@ -122,5 +122,9 @@
   "maintenancePullRequestTemplate": "ENABLED",
   "maintenanceReleaseChecklist": "docs/RELEASE_CHECKLIST.md",
   "maintenanceRollbackProcedure": "docs/ROLLBACK.md",
-  "maintenanceHandoffDocument": "docs/MAINTENANCE_HANDOFF.md"
+  "maintenanceHandoffDocument": "docs/MAINTENANCE_HANDOFF.md",
+  "maintenancePass": "PASS_1_POST_HANDOFF_DOCS_INTEGRITY",
+  "documentationIntegrityRegression": "REQUIRED_ON_RELEASE",
+  "documentationIntegrityWeekly": "REQUIRED_ON_MAINTENANCE_BASELINE",
+  "documentationIntegrityDocument": "docs/MAINTENANCE_PASS1_DOCS_INTEGRITY.md"
 }
