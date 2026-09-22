@@ -4,7 +4,7 @@ Puzzle Arcade is a static, local-first browser application. It has no account sy
 
 ## Supported release
 
-The actively maintained production baseline is **1.13.x**. Security corrections should normally be released as patch versions unless they require a deliberate compatibility break.
+The actively maintained production baseline is **1.14.x**. Security corrections should normally be released as patch versions unless they require a deliberate compatibility break.
 
 ## Security model
 
