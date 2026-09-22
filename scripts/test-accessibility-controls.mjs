@@ -10,7 +10,7 @@ const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;
 has(index,'class="skip-link"','skip link missing');
 has(index,'id="route-status"','route live region missing');
 has(index,'data-action="controls"','controls help entry missing');
-assert.ok(!/maximum-scale|user-scalable\s*=\s*no/i.test(index),'viewport zoom must remain available');checks++;
+assert.ok(/maximum-scale=1/.test(index)&&/user-scalable=no/.test(index),'app viewport must disable browser zoom');checks++;
 
 for(const key of ["motion:['system','reduced']","contrast:['system','high']","controls:['standard','large']"]) {
   has(app,key,'sanitized accessibility setting missing: '+key);
