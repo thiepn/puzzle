@@ -40,6 +40,11 @@ has(css,'--on-accent: #fffdf8;','light on-accent token missing');
 has(css,'html[data-theme="dark"] {','explicit dark theme missing');
 has(css,'color-scheme: dark;','dark native-control color scheme missing');
 has(css,'.mine-cell[data-n="1"]{color:var(--number)}','Minesweeper number colors must use theme tokens');
+has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.correct {','Five Letters correct-tile override missing');
+has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.present {','Five Letters present-tile override missing');
+has(css,'.game-page[data-play-game="five-letters"] .key.correct {','Five Letters correct-key feedback missing');
+has(css,'.game-page[data-play-game="five-letters"] .key.present {','Five Letters present-key feedback missing');
+
 assert.ok(!/\bcolor\s*:\s*(?:#(?:fff|ffffff)|white)\b/i.test(css),'literal white text color bypasses theme-aware on-accent token');checks++;
 
 const hexVars=block=>Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map(m=>[m[1],m[2]]));
