@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.13.0';
-  const BUILD_PHASE = 'Final Production Hardening, Release Certification & Maintenance Baseline';
+  const APP_VERSION = '1.14.0';
+  const BUILD_PHASE = 'QoL, Keyboard Navigation & Mobile UI Polish';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
@@ -1635,18 +1635,76 @@
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   }
+  function qolLatestActive(){
+    return sanitizeActiveList(state.active).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0]||null;
+  }
+  function qolResumeLatest(){
+    const active=qolLatestActive();
+    if(!active){toast('No puzzle is waiting to be resumed.');return false;}
+    openGame(active.gameId);return true;
+  }
+  function qolCommandItems(){
+    const active=qolLatestActive(),items=[];
+    if(active&&byId[active.gameId])items.push({
+      id:'continue',label:`Continue ${byId[active.gameId].name}`,meta:`${active.difficulty} · ${safeProgressLabel(active)}`,
+      keywords:'continue resume latest active open',run:()=>openGame(active.gameId)
+    });
+    if(state.currentGame&&state.currentActive)items.push({
+      id:'game-options',label:`${state.currentGame.name} options`,meta:'Current puzzle',
+      keywords:'current game options rules pause favorite new puzzle',run:()=>gameMenu(state.currentGame,state.currentActive)
+    });
+    items.push(
+      {id:'random',label:'Surprise me',meta:'Random puzzle',keywords:'random surprise puzzle',run:randomGame},
+      {id:'home',label:'Puzzles',meta:'Go to library',keywords:'home puzzles games library',run:()=>go('home')},
+      {id:'learn',label:'Learn',meta:'Tutorials',keywords:'learn tutorials help',run:()=>go('learn')},
+      {id:'stats',label:'Stats',meta:'Local record',keywords:'stats statistics record history',run:()=>go('stats')},
+      {id:'settings',label:'Settings',meta:'Preferences',keywords:'settings options preferences backup accessibility',run:()=>go('settings')}
+    );
+    return items;
+  }
   function showSearch(){
     overlayReturnFocus=document.activeElement;
     main.inert=true; $('.topbar').inert=true;
-    overlayRoot.innerHTML=`<div class="search-panel"><div class="search-wrap" role="dialog" aria-modal="true" aria-label="Search puzzles"><div class="search-row"><input class="search-input" aria-label="Search puzzles" placeholder="Search puzzles…" autofocus><button class="icon-button" data-search-close aria-label="Close search">×</button></div><div class="search-results"></div></div></div>`;
+    overlayRoot.innerHTML=`<div class="search-panel"><div class="search-wrap" role="dialog" aria-modal="true" aria-label="Quick switcher"><div class="search-row"><input class="search-input" role="combobox" aria-expanded="true" aria-controls="quick-search-results" aria-autocomplete="list" aria-label="Search puzzles and actions" placeholder="Search puzzles or actions…" autofocus><button class="icon-button" data-search-close aria-label="Close search">×</button></div><div class="search-key-hint"><kbd>↑</kbd><kbd>↓</kbd> move <kbd>Enter</kbd> open <kbd>Esc</kbd> close</div><div class="search-results" id="quick-search-results" role="listbox"></div></div></div>`;
     const input=$('.search-input',overlayRoot), results=$('.search-results',overlayRoot);
-    const update=()=>{
-      const q=input.value.trim().toLowerCase();
-      const games=ALL_GAMES.filter(g=>g.status==='available' && (!q || `${g.name} ${g.category} ${g.description}`.toLowerCase().includes(q)));
-      results.innerHTML=games.map(g=>`<button class="search-result" data-game="${g.id}"><strong>${esc(g.name)}</strong><span>${CATEGORIES[g.category].label}</span></button>`).join('') || `<div class="empty">No puzzles found.</div>`;
-      $$('.search-result',results).forEach(b=>b.onclick=()=>{closeOverlay();openGame(b.dataset.game)});
+    let items=[],selected=0;
+    const runSelected=()=>{
+      const item=items[selected];if(!item)return;
+      closeOverlay();item.run();
     };
-    input.addEventListener('input',update); update();
+    const paintSelection=()=>{
+      const buttons=$$('[data-search-index]',results);
+      buttons.forEach((button,i)=>{const on=i===selected;button.classList.toggle('is-selected',on);button.setAttribute('aria-selected',String(on));});
+      const current=buttons[selected];if(current){input.setAttribute('aria-activedescendant',current.id);current.scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');
+    };
+    const update=()=>{
+      const q=input.value.trim().toLowerCase(),commands=qolCommandItems();
+      const commandMatches=commands.filter(x=>!q||`${x.label} ${x.meta} ${x.keywords}`.toLowerCase().includes(q));
+      const available=ALL_GAMES.filter(g=>g.status==='available');
+      let games=available.filter(g=>!q||`${g.name} ${g.category} ${CATEGORIES[g.category]?.label||''} ${g.description}`.toLowerCase().includes(q));
+      if(!q){
+        const recent=homeUniqueRecent(available,8),seen=new Set(recent.map(g=>g.id));
+        games=[...recent,...available.filter(g=>!seen.has(g.id))].slice(0,8);
+      }
+      items=[
+        ...commandMatches.map(x=>({...x,type:'command'})),
+        ...games.map(g=>({id:'game-'+g.id,label:g.name,meta:CATEGORIES[g.category].label,keywords:g.description,type:'game',run:()=>openGame(g.id)}))
+      ];
+      if(selected>=items.length)selected=Math.max(0,items.length-1);
+      results.innerHTML=items.map((item,i)=>`<button class="search-result ${item.type==='command'?'search-result--command':''}" id="quick-result-${i}" role="option" aria-selected="false" data-search-index="${i}"><span class="search-result__copy"><strong>${esc(item.label)}</strong><small>${esc(item.type==='command'?'Action':'Puzzle')}</small></span><span>${esc(item.meta)}</span></button>`).join('') || `<div class="empty">No puzzles or actions found.</div>`;
+      $$('[data-search-index]',results).forEach(b=>b.onclick=()=>{selected=+b.dataset.searchIndex;runSelected();});
+      paintSelection();
+    };
+    input.addEventListener('input',()=>{selected=0;update();});
+    input.addEventListener('keydown',e=>{
+      if(!items.length)return;
+      if(e.key==='ArrowDown'){e.preventDefault();selected=(selected+1)%items.length;paintSelection();return;}
+      if(e.key==='ArrowUp'){e.preventDefault();selected=(selected-1+items.length)%items.length;paintSelection();return;}
+      if(e.key==='Home'){e.preventDefault();selected=0;paintSelection();return;}
+      if(e.key==='End'){e.preventDefault();selected=items.length-1;paintSelection();return;}
+      if(e.key==='Enter'){e.preventDefault();runSelected();}
+    });
+    update();
     $('[data-search-close]',overlayRoot).onclick=closeOverlay;
     overlayRoot.onkeydown=trapOverlayFocus;
     setTimeout(()=>input.focus(),0);
@@ -1697,16 +1755,62 @@
   function showControlsHelp(){
     const game=state.currentGame,gameCopy=game&&PLAY_GUIDES[game.id]?.[1];
     showModal('Keyboard & touch controls', `<div class="controls-help">
-      <p>Every puzzle can be played with touch or a mouse. Board buttons remain keyboard focusable, and games with directional controls also support the arrow keys.</p>
+      <p>Every puzzle can be played with touch or a mouse. Outside puzzle boards, the app also supports fast keyboard navigation.</p>
       <dl class="shortcut-list">
+        <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>K</kbd></dt><dd>Open the quick switcher</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Search puzzles and actions</dd></div>
+        <div><dt><kbd>G</kbd> then <kbd>P</kbd></dt><dd>Go to Puzzles</dd></div>
+        <div><dt><kbd>G</kbd> then <kbd>L</kbd></dt><dd>Go to Learn</dd></div>
+        <div><dt><kbd>G</kbd> then <kbd>S</kbd></dt><dd>Go to Stats</dd></div>
+        <div><dt><kbd>G</kbd> then <kbd>O</kbd></dt><dd>Go to Settings / options</dd></div>
+        <div><dt><kbd>C</kbd></dt><dd>Continue the most recent open puzzle outside a game</dd></div>
+        <div><dt><kbd>R</kbd></dt><dd>Open a random puzzle outside a game</dd></div>
+        <div><dt><kbd>← ↑ ↓ →</kbd></dt><dd>Move between library cards, filters, and bottom navigation</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>Open this controls guide</dd></div>
         <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Z</kbd></dt><dd>Undo in games that support undo</dd></div>
         <div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></dt><dd>Redo</dd></div>
-        <div><dt><kbd>Esc</kbd></dt><dd>Close dialogs and search</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close a dialog; in a puzzle, open game options</dd></div>
       </dl>
       ${gameCopy?`<div class="current-game-controls"><h3>${esc(game.name)}</h3><p>${esc(gameCopy)}</p></div>`:''}
       <p class="subtle">On touch screens, drag gestures are limited to boards that need tracing or painting. Mines also provides explicit Reveal and Flag modes so long-press is never required.</p>
     </div>`);
+  }
+
+  function qolVisible(items){
+    return items.filter(el=>{const r=el.getBoundingClientRect(),style=getComputedStyle(el);return style.display!=='none'&&style.visibility!=='hidden'&&r.width>0&&r.height>0&&!el.disabled;});
+  }
+  function qolMoveFocus(current,key,items){
+    const list=qolVisible(items);if(!list.length)return false;
+    if(key==='Home'){list[0].focus({preventScroll:true});list[0].scrollIntoView({block:'nearest',inline:'nearest'});return true;}
+    if(key==='End'){const last=list.at(-1);last.focus({preventScroll:true});last.scrollIntoView({block:'nearest',inline:'nearest'});return true;}
+    if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key))return false;
+    const cr=current.getBoundingClientRect(),cx=cr.left+cr.width/2,cy=cr.top+cr.height/2;
+    const vertical=key==='ArrowUp'||key==='ArrowDown',positive=key==='ArrowRight'||key==='ArrowDown';
+    const candidates=list.filter(el=>el!==current).map(el=>{
+      const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,dx=x-cx,dy=y-cy,primary=vertical?dy:dx,cross=vertical?dx:dy;
+      return {el,primary,cross,score:Math.abs(primary)+Math.abs(cross)*0.36};
+    }).filter(x=>positive?x.primary>3:x.primary<-3).sort((a,b)=>a.score-b.score);
+    const target=candidates[0]?.el;if(!target)return false;
+    target.focus({preventScroll:true});target.scrollIntoView({block:'nearest',inline:'nearest'});return true;
+  }
+  function qolBindKeyGroup(containerSelector,itemSelector){
+    $$(containerSelector).forEach(container=>{
+      const items=$$(itemSelector,container);
+      items.forEach(item=>{
+        if(item.dataset.qolKeynav==='1')return;item.dataset.qolKeynav='1';
+        item.addEventListener('keydown',e=>{
+          if(qolMoveFocus(item,e.key,items)){e.preventDefault();e.stopPropagation();}
+        });
+      });
+    });
+  }
+  function bindQolKeyboardNavigation(){
+    qolBindKeyGroup('.main-nav','.nav-link');
+    qolBindKeyGroup('.filterbar','.filter');
+    qolBindKeyGroup('.category-portals','.category-portal');
+    qolBindKeyGroup('.continue-rail','.continue-tile');
+    qolBindKeyGroup('.home-mini-grid','.home-mini-card__open');
+    qolBindKeyGroup('.game-grid','.game-card__open');
   }
 
   function bindCommon(){
@@ -1735,6 +1839,7 @@
     document.querySelectorAll('.game-card__open,.continue-card,[data-home-open]').forEach(el => {
       el.onclick=()=>openGame(el.dataset.gameOpen || el.dataset.game || el.dataset.homeOpen);
     });
+    bindQolKeyboardNavigation();
   }
 
   async function randomGame(){
@@ -5526,11 +5631,38 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('.skip-link')){e.preventDefault();main.focus({preventScroll:true});main.scrollIntoView({block:'start'});}
   });
+  let qolGoChordUntil=0;
   document.addEventListener('keydown',e=>{
     if(e.defaultPrevented)return;
-    if(e.key==='Escape'&&overlayRoot.firstChild){e.preventDefault();closeOverlay();return;}
-    if(overlayRoot.firstChild||e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
-    if(e.key==='?'){e.preventDefault();showControlsHelp();}
+    const editable=e.target?.closest?.('input,textarea,select,[contenteditable="true"]');
+    if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='k'){
+      e.preventDefault();e.stopPropagation();if(!overlayRoot.firstChild)showSearch();return;
+    }
+    if(e.key==='Escape'&&overlayRoot.firstChild){e.preventDefault();e.stopPropagation();closeOverlay();return;}
+    if(overlayRoot.firstChild)return;
+    if(editable)return;
+    if(e.key==='?'){e.preventDefault();e.stopPropagation();showControlsHelp();return;}
+    if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key==='/'){e.preventDefault();e.stopPropagation();showSearch();return;}
+    const route=parseHash().parts[0]||'home';
+    if(e.key==='Escape'&&route==='game'&&state.currentGame&&state.currentActive){
+      e.preventDefault();e.stopPropagation();gameMenu(state.currentGame,state.currentActive);return;
+    }
+    if(e.ctrlKey||e.metaKey||e.altKey||e.target?.closest?.('button,a,[role="button"]'))return;
+    if(route==='game'){qolGoChordUntil=0;return;}
+    const key=e.key.toLowerCase();
+    if(Date.now()<qolGoChordUntil){
+      const routes={p:'home',l:'learn',s:'stats',o:'settings'};
+      qolGoChordUntil=0;
+      if(routes[key]){e.preventDefault();e.stopPropagation();go(routes[key]);return;}
+    }
+    if(key==='g'){
+      qolGoChordUntil=Date.now()+1400;
+      announceRoute('Navigation shortcut: press P for puzzles, L for learn, S for stats, or O for settings.');
+      return;
+    }
+    qolGoChordUntil=0;
+    if(key==='c'){e.preventDefault();qolResumeLatest();return;}
+    if(key==='r'){e.preventDefault();randomGame();}
   },true);
   window.addEventListener('hashchange',()=>{
     const {parts,params}=parseHash();
