@@ -1,8 +1,20 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.13.0 · Final Production Hardening, Release Certification & Maintenance Baseline · PWA cache v32**
+**Current release: 1.14.0 · QoL, Keyboard Navigation & Mobile UI Polish · PWA cache v33**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## QoL, Keyboard Navigation & Mobile UI Polish 1.14.0
+
+This explicitly approved pre-maintenance release improves everyday navigation without changing puzzle rules, persistence schemas, or the 36-game catalog.
+
+Keyboard users now get a quick switcher with **Ctrl/⌘ K** or **/**, arrow-key selection and Enter activation, **G** navigation chords, **C** to resume the latest open puzzle, **R** for a random puzzle, **Esc** for game options, and spatial arrow-key movement through library cards, filters, category portals, and primary navigation.
+
+Mobile now uses a compact icon+label bottom navigation bar, tighter home/catalog cards, horizontal chip and recent-game rails, simplified phone top-bar actions, full-screen quick search, bottom-sheet dialogs, and a sticky thumb-friendly game action dock.
+
+The Phase 20 recovery, deployment-integrity, endurance, fuzz, and cross-browser gates remain required, with an additional dedicated QoL browser gate.
+
+See `docs/QOL_KEYBOARD_MOBILE_1_14.md`.
 
 ## Final Production Hardening, Release Certification & Maintenance Baseline 1.13.0
 
