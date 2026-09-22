@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#1d1d1b"/><g fill="none" stroke="#f6f4ef" stroke-width="2.5"><rect x="10" y="10" width="19" height="19"/><rect x="35" y="10" width="19" height="19"/><rect x="10" y="35" width="19" height="19"/><rect x="35" y="35" width="19" height="19"/></g><circle cx="19.5" cy="19.5" r="3" fill="#f6f4ef"/><path d="M40 19.5h9" stroke="#f6f4ef" stroke-width="3" stroke-linecap="round"/><path d="M16 41v8h8" stroke="#f6f4ef" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="40" y="40" width="5" height="5" fill="#f6f4ef"/><rect x="45" y="45" width="5" height="5" fill="#f6f4ef"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Puzzle Arcade icon">
+  <rect width="512" height="512" rx="112" fill="#20201d"/>
+  <rect x="78" y="78" width="356" height="356" rx="76" fill="#f3f0e8"/>
+  <g stroke="#20201d" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="#c65a78" d="M104 104H256V166C288 166 288 218 256 218V256H218C218 288 166 288 166 256H104Z"/>
+    <path fill="#4f79c9" d="M256 104H408V256H346C346 224 294 224 294 256H256V218C288 218 288 166 256 166Z"/>
+    <path fill="#4f8a70" d="M104 256H166C166 288 218 288 218 256H256V294C224 294 224 346 256 346V408H104Z"/>
+    <path fill="#c9783f" d="M256 256H294C294 224 346 224 346 256H408V408H256V346C224 346 224 294 256 294Z"/>
+  </g>
+</svg>
