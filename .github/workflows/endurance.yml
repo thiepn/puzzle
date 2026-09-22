@@ -3,23 +3,29 @@ name: Long-Session Endurance
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 4 * * 0'
+    - cron: '17 6 * * 0'
 
 permissions:
   contents: read
+
+concurrency:
+  group: puzzle-deep-endurance
+  cancel-in-progress: true
 
 jobs:
   endurance:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
       - name: Install Chromium
         run: |
-          python -m pip install --disable-pip-version-check playwright
+          python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
       - name: Run deep endurance certification
         run: |
@@ -33,9 +39,10 @@ jobs:
             --cycles 12 \
             --heap-growth-mb 128 \
             --output test-results/endurance/deep.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: phase19-endurance-deep
           path: test-results/endurance/deep.json
           retention-days: 30
+          if-no-files-found: error
