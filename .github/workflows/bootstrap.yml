@@ -92,7 +92,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
-      - name: Phase 17 player fuzz shard ${{ matrix.shard }}
+      - name: Release player fuzz shard ${{ matrix.shard }}
         run: |
           set -euo pipefail
           python -m http.server 8080 >/tmp/puzzle-player-fuzz-http.log 2>&1 &
@@ -115,7 +115,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
-      - name: Phase 19 long-session endurance
+      - name: Release long-session endurance
         run: |
           set -euo pipefail
           mkdir -p test-results/endurance
@@ -129,7 +129,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: phase19-endurance-release
+          name: release-endurance
           path: test-results/endurance/release.json
           retention-days: 30
           if-no-files-found: error
@@ -149,7 +149,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
-      - name: Phase 20 backup restore reset recovery
+      - name: Release backup restore reset recovery
         run: |
           set -euo pipefail
           mkdir -p test-results/recovery
@@ -162,7 +162,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: phase20-recovery-release
+          name: release-recovery
           path: test-results/recovery/release.json
           retention-days: 30
           if-no-files-found: error
@@ -195,7 +195,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: qol-keyboard-mobile-release
+          name: release-qol-keyboard-mobile
           path: test-results/qol/release.json
           retention-days: 30
           if-no-files-found: error
@@ -218,7 +218,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps "${{ matrix.browser }}"
-      - name: Phase 18 browser resilience
+      - name: Cross-browser resilience
         run: |
           set -euo pipefail
           python -m http.server 8080 >/tmp/puzzle-resilience-http.log 2>&1 &
