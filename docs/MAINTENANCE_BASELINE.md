@@ -43,6 +43,7 @@ Every production release must keep the following green:
 - WebKit resilience;
 - long-session endurance;
 - backup / restore / reset recovery;
+- QoL keyboard/mobile certification;
 - deployment integrity verification after GitHub Pages deployment.
 
 Do not bypass a red gate by weakening its threshold unless the threshold itself is shown to be invalid with reproducible evidence.
@@ -169,3 +170,11 @@ A new architecture/research phase is justified only if one of these becomes true
 - measured performance shows the single-file runtime architecture has become a material bottleneck.
 
 Otherwise, remain in maintenance mode.
+
+## Formal handoff
+
+The operational handoff is defined in `docs/MAINTENANCE_HANDOFF.md`.
+
+Maintenance changes should use the repository issue/PR templates, follow `docs/RELEASE_CHECKLIST.md`, and use `docs/ROLLBACK.md` for production rollback decisions.
+
+The maintenance handoff baseline is **1.14.0 / v33 / DB schema 1 / backup schema 1**.

@@ -1,0 +1,42 @@
+name: Performance or reliability issue
+description: Report measurable slowdown, memory/storage growth, freezes, or long-session degradation.
+title: "[Performance] "
+labels: ["performance"]
+body:
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Measurable symptom
+      description: Include timings, repeated-session behavior, or a clear before/after observation when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+  - type: input
+    id: device
+    attributes:
+      label: Device / OS
+  - type: dropdown
+    id: duration
+    attributes:
+      label: When does it appear?
+      options:
+        - Immediately
+        - After switching games repeatedly
+        - After a long session
+        - After background/foreground
+        - After offline/reconnect
+        - Other
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Measurements
+      description: Route time, memory, storage, freezes, CPU, screenshots, etc.

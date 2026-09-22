@@ -1,0 +1,88 @@
+name: Bug report
+description: Report a reproducible Puzzle Arcade defect.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for reproducible product defects. Do not include sensitive information from backup files.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What is broken?
+      description: Describe the defect and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Choose ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - Browser tab
+        - Installed PWA
+        - Offline / reconnect
+        - Backup / restore / reset
+        - Multi-tab
+        - Puzzle gameplay
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: "Firefox 156 / Chrome 153 / Safari 18 ..."
+  - type: input
+    id: device
+    attributes:
+      label: Device / viewport / OS
+      placeholder: "Android phone, 390x844 / Windows 11 desktop ..."
+  - type: input
+    id: game
+    attributes:
+      label: Game or screen
+      placeholder: "Sudoku / Settings / Home ..."
+  - type: dropdown
+    id: saved
+    attributes:
+      label: Did existing saved progress matter?
+      options:
+        - "No"
+        - "Yes"
+        - "Unsure"
+  - type: dropdown
+    id: tabs
+    attributes:
+      label: Were multiple Puzzle Arcade tabs open?
+      options:
+        - "No"
+        - "Yes"
+        - "Unsure"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Additional evidence
+      description: Screenshots, console error text, or timing numbers when useful.
