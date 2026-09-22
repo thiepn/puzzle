@@ -108,11 +108,19 @@
   "finalReleaseManifest": "release-manifest.json",
   "maintenanceBaselineWorkflow": "WEEKLY_AND_MANUAL",
   "githubActionsDependencyMonitoring": "MONTHLY_DEPENDABOT",
-  "productDevelopmentMode": "PRE_MAINTENANCE_QOL_RELEASE",
+  "productDevelopmentMode": "MAINTENANCE_BASELINE",
   "qolKeyboardNavigation": "REQUIRED_ON_RELEASE",
   "qolCommandPalette": "REQUIRED_ON_RELEASE",
   "qolSpatialLibraryNavigation": "REQUIRED_ON_RELEASE",
   "qolMobileUiCertification": "REQUIRED_ON_RELEASE",
   "qolMobileBottomNavigation": "REQUIRED_ON_RELEASE",
-  "qolMobileStickyGameActions": "REQUIRED_ON_RELEASE"
+  "qolMobileStickyGameActions": "REQUIRED_ON_RELEASE",
+  "maintenanceHandoff": "COMPLETE",
+  "maintenanceBaselineVersion": "1.14.0",
+  "maintenanceBaselineCacheVersion": 33,
+  "maintenanceIssueTemplates": "ENABLED",
+  "maintenancePullRequestTemplate": "ENABLED",
+  "maintenanceReleaseChecklist": "docs/RELEASE_CHECKLIST.md",
+  "maintenanceRollbackProcedure": "docs/ROLLBACK.md",
+  "maintenanceHandoffDocument": "docs/MAINTENANCE_HANDOFF.md"
 }
