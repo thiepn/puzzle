@@ -68,6 +68,7 @@ ok(!/run: node scripts\/test-(?:phase18|phase19|phase20|qol|maintenance|docs)/.t
 
 ok(/outputs:\n\s+runtime_changed:/.test(bootstrap),'release gate runtime-change output missing');
 ok(/Detect production runtime changes/.test(bootstrap),'runtime deployment change detection missing');
+ok(/git diff --name-only "\$\{\{ github\.event\.before \}\}" "\$\{\{ github\.sha \}\}"/.test(bootstrap),'runtime change detection does not cover the complete push range');
 ok(/deploy:[\s\S]*needs\.release-gate\.outputs\.runtime_changed == 'true'/.test(bootstrap),'docs/tooling-only pushes can still redeploy runtime');
 ok(!/grep -q "const APP_VERSION/.test(bootstrap),'deployment smoke hard-codes app version instead of release manifest');
 ok(!/grep -q "const CACHE_VERSION/.test(bootstrap),'deployment smoke hard-codes cache version instead of release manifest');
