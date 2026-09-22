@@ -1,0 +1,46 @@
+name: Accessibility issue
+description: Report keyboard, focus, screen-reader, contrast, motion, touch-target, or sensory accessibility problems.
+title: "[Accessibility] "
+labels: ["accessibility"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Accessibility problem
+      description: Describe the barrier, not only the visual symptom.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Keyboard / focus
+        - Screen reader / semantics
+        - Contrast / visual state
+        - Motion
+        - Touch target / gesture
+        - Sound / haptics
+        - Zoom / text size / reflow
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: input
+    id: at
+    attributes:
+      label: Assistive technology
+      placeholder: "VoiceOver / TalkBack / NVDA / keyboard only / none"
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / OS / device
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected accessible behavior
