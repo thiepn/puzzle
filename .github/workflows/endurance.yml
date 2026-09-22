@@ -42,7 +42,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: phase19-endurance-deep
+          name: deep-endurance
           path: test-results/endurance/deep.json
           retention-days: 30
           if-no-files-found: error
