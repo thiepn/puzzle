@@ -15,8 +15,12 @@ const workflow=read('.github/workflows/bootstrap.yml');
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
-has(app,"const APP_VERSION = '1.13.0';",'Phase 20 app version missing');
-has(app,"const BUILD_PHASE = 'Final Production Hardening, Release Certification & Maintenance Baseline';",'Phase 20 build identity missing');
+const appVersion=app.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const buildPhase=app.match(/const BUILD_PHASE = '([^']+)';/)?.[1];
+const swVersion=sw.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const cacheNumber=Number(sw.match(/const CACHE_VERSION = 'v(\d+)';/)?.[1]||0);
+assert.match(appVersion||'',/^\d+\.\d+\.\d+$/,'release app version missing');checks++;
+assert.ok(buildPhase,'release build phase missing');checks++;
 has(app,'const P20_VERSION=20;','Phase 20 runtime version missing');
 has(app,'const BACKUP_SCHEMA_VERSION = 1;','backup schema missing');
 has(app,"const BACKUP_KIND = 'puzzle-arcade-backup';",'backup kind missing');
@@ -39,8 +43,10 @@ has(app,'data-action="backup-import"','backup import UI missing');
 has(app,'data-action="clear-data"','reset UI missing');
 
 assert.equal(release.product,'Puzzle Arcade');checks++;
-assert.equal(release.version,'1.13.0');checks++;
-assert.equal(release.cacheVersion,'v32');checks++;
+assert.equal(release.version,appVersion,'release-manifest version mismatch');checks++;
+assert.equal(release.phase,buildPhase,'release-manifest phase mismatch');checks++;
+assert.equal(release.cacheVersion,'v'+cacheNumber,'release-manifest cache mismatch');checks++;
+assert.ok(cacheNumber>=32,'service worker regressed below Phase 20 cache generation');checks++;
 assert.equal(release.databaseSchema,1);checks++;
 assert.equal(release.backupSchema,1);checks++;
 assert.equal(release.catalogGames,36);checks++;
@@ -48,8 +54,7 @@ assert.equal(release.releaseChannel,'stable');checks++;
 assert.ok(Array.isArray(release.coreFiles)&&release.coreFiles.length===10,'release core-file manifest incomplete');checks++;
 for(const file of release.coreFiles){assert.ok(exists(file),'release core file missing: '+file);checks++;}
 
-has(sw,"const APP_VERSION = '1.13.0';",'service worker version mismatch');
-has(sw,"const CACHE_VERSION = 'v32';",'service worker cache generation mismatch');
+assert.equal(swVersion,appVersion,'service worker version mismatch');checks++;
 
 assert.equal(pwa.id,'./');checks++;
 assert.equal(pwa.scope,'./');checks++;
@@ -80,6 +85,6 @@ for(const file of [
 has(workflow,'recovery-gate:','release workflow recovery gate missing');
 has(workflow,'node scripts/build-release-integrity.mjs dist','deploy integrity generation missing');
 has(workflow,'node scripts/verify-deployed-release.mjs "$base"','live deployed integrity verification missing');
-has(workflow,'needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, resilience-matrix]','deployment does not require every final gate');
+assert.match(workflow,/needs: \[[^\]]*release-gate[^\]]*player-fuzz-gate[^\]]*endurance-gate[^\]]*recovery-gate[^\]]*resilience-matrix[^\]]*\]/,'deployment does not require every Phase 20 gate');checks++;
 
 console.log(JSON.stringify({pass:true,phase:20,checks,version:release.version,coreFiles:release.coreFiles.length},null,2));
