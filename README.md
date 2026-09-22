@@ -16,6 +16,8 @@ Maintenance operations:
 - `docs/RELEASE_CHECKLIST.md` — production maintenance release checklist
 - `docs/ROLLBACK.md` — certified rollback procedure
 - `docs/MAINTENANCE_BASELINE.md` — frozen technical invariants and required gates
+- `docs/REPOSITORY_GOVERNANCE.md` — recommended GitHub branch/ruleset protection
+- `docs/MAINTENANCE_PASS2_CI_HYGIENE.md` — current CI/workflow hygiene baseline
 - repository issue forms — bug, accessibility, and performance evidence capture
 - pull-request template — storage/recovery/release/rollback review
 
