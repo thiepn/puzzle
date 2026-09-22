@@ -1,7 +1,7 @@
 {
-  "version": "1.12.0",
-  "phase": "Performance, Memory & Long-Session Endurance",
-  "cacheVersion": 31,
+  "version": "1.13.0",
+  "phase": "Final Production Hardening, Release Certification & Maintenance Baseline",
+  "cacheVersion": 32,
   "databaseSchema": 1,
   "catalogGames": 36,
   "difficultyTiersPerGame": 3,
@@ -92,5 +92,21 @@
   "enduranceTimerBalance": "REQUIRED_ON_RELEASE",
   "endurancePointerCleanup": "REQUIRED_ON_RELEASE",
   "enduranceLifecycleRecovery": "REQUIRED_ON_RELEASE",
-  "enduranceDeepWorkflow": "WEEKLY_AND_MANUAL"
+  "enduranceDeepWorkflow": "WEEKLY_AND_MANUAL",
+  "releaseChannel": "stable",
+  "backupSchemaVersion": 1,
+  "maxBackupBytes": 16777216,
+  "backupChecksum": "FNV1A32_CORRUPTION_CHECK",
+  "backupRestoreCertification": "REQUIRED_ON_RELEASE",
+  "resetDisasterRecoveryCertification": "REQUIRED_ON_RELEASE",
+  "backupTamperRejection": "REQUIRED_ON_RELEASE",
+  "backupAtomicIndexedDbRestore": "REQUIRED_ON_RELEASE",
+  "backupCrossTabRestoreSignal": "REQUIRED_ON_RELEASE",
+  "deploymentIntegrityAlgorithm": "SHA-256",
+  "deploymentIntegrityCoreFiles": 10,
+  "deploymentIntegrityVerification": "REQUIRED_AFTER_DEPLOY",
+  "finalReleaseManifest": "release-manifest.json",
+  "maintenanceBaselineWorkflow": "WEEKLY_AND_MANUAL",
+  "githubActionsDependencyMonitoring": "MONTHLY_DEPENDABOT",
+  "productDevelopmentMode": "MAINTENANCE_BASELINE"
 }
