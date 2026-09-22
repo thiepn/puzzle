@@ -158,7 +158,7 @@ Strict sign-off:
 node scripts/validate-real-device-evidence.mjs path/to/evidence.json
 ```
 
-Strict validation requires both Android and iOS/iPadOS coverage, all required checks completed, no failures, and only the explicitly allowed iOS haptic `unsupported` result.
+Strict validation requires both Android and iPhone/iOS coverage, all required checks completed, no failures, and only the explicitly allowed iOS haptic `unsupported` result. iPadOS evidence may be added but does not replace the iPhone run.
 
 ## Acceptance rule
 
