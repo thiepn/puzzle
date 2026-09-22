@@ -226,9 +226,30 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/test-resilience-browser.py --base-url http://127.0.0.1:8080/ --browser "${{ matrix.browser }}"
 
-  deploy:
-    if: github.event_name == 'push' && needs.release-gate.outputs.runtime_changed == 'true'
+  certification-summary:
+    if: always()
     needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, qol-gate, resilience-matrix]
+    permissions: {}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every production certification gate
+        env:
+          RELEASE_GATE: ${{ needs.release-gate.result }}
+          PLAYER_FUZZ_GATE: ${{ needs.player-fuzz-gate.result }}
+          ENDURANCE_GATE: ${{ needs.endurance-gate.result }}
+          RECOVERY_GATE: ${{ needs.recovery-gate.result }}
+          QOL_GATE: ${{ needs.qol-gate.result }}
+          RESILIENCE_MATRIX: ${{ needs.resilience-matrix.result }}
+        run: |
+          set -euo pipefail
+          for result in "$RELEASE_GATE" "$PLAYER_FUZZ_GATE" "$ENDURANCE_GATE" "$RECOVERY_GATE" "$QOL_GATE" "$RESILIENCE_MATRIX"; do
+            test "$result" = "success"
+          done
+
+  deploy:
+    if: github.event_name == 'push' && needs.certification-summary.result == 'success' && needs.release-gate.outputs.runtime_changed == 'true'
+    needs: [release-gate, certification-summary]
     permissions:
       contents: read
       pages: write
