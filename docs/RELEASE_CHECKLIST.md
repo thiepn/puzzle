@@ -85,8 +85,12 @@ If release notes claim physical-device verification:
 - [ ] haptics checked where supported.
 - [ ] mobile backup download/restore checked.
 - [ ] rotation / safe-area behavior checked.
+- [ ] physical evidence is recorded using `docs/real-device-evidence.template.json`.
+- [ ] strict evidence validation passes: `node scripts/validate-real-device-evidence.mjs <evidence.json>`.
 
-If these were not performed, release notes must not imply they were.
+If a device campaign is still in progress, `--allow-pending` may be used only to validate evidence structure. It is not sign-off.
+
+If these were not performed, release notes must not imply they were. iOS/iPadOS haptics may be recorded as `unsupported`; this is the expected platform limitation rather than a failure.
 
 ## 8. Rollback readiness
 
