@@ -34,7 +34,7 @@ if(!allowPending){
 }
 
 const ids=new Set();
-let android=0,apple=0;
+let android=0,ios=0;
 for(const [index,device] of (root.devices||[]).entries()){
   const prefix='devices['+index+']';
   must(typeof device?.id==='string'&&device.id.length>0,prefix+'.id missing');
@@ -44,7 +44,7 @@ for(const [index,device] of (root.devices||[]).entries()){
   }
   must(['android','ios','ipados'].includes(device?.platform),prefix+'.platform must be android, ios, or ipados');
   if(device?.platform==='android')android++;
-  if(device?.platform==='ios'||device?.platform==='ipados')apple++;
+  if(device?.platform==='ios')ios++;
   must(device?.installMode==='installed-pwa',prefix+'.installMode must be installed-pwa');
   for(const field of ['deviceModel','osVersion','browser','browserVersion','screenReader']){
     must(typeof device?.[field]==='string'&&device[field].trim().length>0,prefix+'.'+field+' missing');
@@ -77,7 +77,7 @@ for(const [index,device] of (root.devices||[]).entries()){
 }
 
 must(android>=1,'at least one Android installed-PWA device is required');
-must(apple>=1,'at least one iOS/iPadOS installed-PWA device is required');
+must(ios>=1,'at least one iPhone/iOS installed-PWA device is required; iPadOS may be additional evidence');
 
 const out={
   pass:fail.length===0,
