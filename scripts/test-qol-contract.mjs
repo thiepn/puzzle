@@ -46,7 +46,8 @@ for(const [needle,label] of [
 ]) has(css,needle,label);
 
 has(workflow,'qol-gate:','QoL browser gate missing from CI');
-has(workflow,'needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, qol-gate, resilience-matrix]','deployment does not require QoL gate');
+has(workflow,'needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, qol-gate, resilience-matrix]','certification summary does not require QoL gate');
+has(workflow,'needs: [release-gate, certification-summary]','deployment does not require certification summary');
 assert.ok(release.certificationGates?.includes('qol-gate'),'release manifest does not include QoL gate');checks++;
 
 console.log(JSON.stringify({pass:true,release:'1.14.0',checks},null,2));
