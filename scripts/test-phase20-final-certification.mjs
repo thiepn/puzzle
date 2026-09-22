@@ -11,6 +11,7 @@ const index=read('index.html');
 const styles=read('styles.css');
 const pwa=JSON.parse(read('manifest.webmanifest'));
 const release=JSON.parse(read('release-manifest.json'));
+const workflow=read('.github/workflows/bootstrap.yml');
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
@@ -69,9 +70,16 @@ for(const file of [
   'docs/PHASE20_FINAL_CERTIFICATION.md',
   'scripts/test-recovery-browser.py',
   'scripts/build-release-integrity.mjs',
-  'scripts/verify-deployed-release.mjs'
+  'scripts/verify-deployed-release.mjs',
+  '.github/workflows/maintenance-baseline.yml',
+  '.github/dependabot.yml'
 ]){
   assert.ok(exists(file),'Phase 20 certification file missing: '+file);checks++;
 }
+
+has(workflow,'recovery-gate:','release workflow recovery gate missing');
+has(workflow,'node scripts/build-release-integrity.mjs dist','deploy integrity generation missing');
+has(workflow,'node scripts/verify-deployed-release.mjs "$base"','live deployed integrity verification missing');
+has(workflow,'needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, resilience-matrix]','deployment does not require every final gate');
 
 console.log(JSON.stringify({pass:true,phase:20,checks,version:release.version,coreFiles:release.coreFiles.length},null,2));
