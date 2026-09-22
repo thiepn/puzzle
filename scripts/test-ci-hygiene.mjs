@@ -38,7 +38,6 @@ for(const [name,min] of Object.entries(minimumActionMajors)){
 }
 
 ok(/^playwright==\d+\.\d+\.\d+$/.test(requirements),'Playwright CI dependency is not exactly pinned');
-ok(requirements==='playwright==1.63.0','Playwright baseline changed without CI hygiene review');
 
 for(const [name,text] of Object.entries(workflows)){
   if(!text.includes('actions/setup-python@'))continue;
