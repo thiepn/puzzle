@@ -143,6 +143,12 @@ A maintenance release can be automated-release-certified while these are still m
 - Restore uses an atomic IndexedDB transaction when IndexedDB is available.
 - Unknown or future backup/database schemas fail closed.
 
+## Documentation integrity
+
+Maintenance documentation is part of the operational surface. CI verifies that the README release identity matches runtime metadata, maintained file references resolve, and retired operational paths/commands do not silently reappear.
+
+See `docs/MAINTENANCE_PASS1_DOCS_INTEGRITY.md` for the initial post-handoff audit.
+
 ## Maintenance workflow
 
 For routine fixes:
