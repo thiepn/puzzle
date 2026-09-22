@@ -43,6 +43,10 @@ has(css,'--on-accent: #fffdf8;','light on-accent token missing');
 has(css,'html[data-theme="dark"] {','explicit dark theme missing');
 has(css,'color-scheme: dark;','dark native-control color scheme missing');
 has(css,'.mine-cell[data-n="1"]{color:var(--number)}','Minesweeper number colors must use theme tokens');
+has(css,'.wordle-tile.correct { background:var(--success);color:var(--on-accent);','base correct tile must use solid success contrast');
+has(css,'.wordle-tile.present { background:var(--warning);color:var(--on-accent);','base present tile must use solid warning contrast');
+has(css,'.trail-cell.locked { background:color-mix(in srgb,var(--logic) 12%,var(--paper-bright));color:var(--logic);','Theme Trail locked state contrast regression');
+
 has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.correct {','Five Letters correct-tile override missing');
 has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.present {','Five Letters present-tile override missing');
 has(css,'.game-page[data-play-game="five-letters"] .key.correct {','Five Letters correct-key feedback missing');
