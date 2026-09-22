@@ -1,8 +1,8 @@
 {
   "product": "Puzzle Arcade",
-  "version": "1.13.0",
-  "phase": "Final Production Hardening, Release Certification & Maintenance Baseline",
-  "cacheVersion": "v32",
+  "version": "1.14.0",
+  "phase": "QoL, Keyboard Navigation & Mobile UI Polish",
+  "cacheVersion": "v33",
   "databaseSchema": 1,
   "backupSchema": 1,
   "catalogGames": 36,
@@ -24,7 +24,8 @@
     "player-fuzz-gate",
     "resilience-matrix",
     "endurance-gate",
-    "recovery-gate"
+    "recovery-gate",
+    "qol-gate"
   ],
   "maintenanceBaseline": "docs/MAINTENANCE_BASELINE.md",
   "finalCertification": "docs/PHASE20_FINAL_CERTIFICATION.md"

@@ -1,6 +1,6 @@
-/* Puzzle Arcade 1.13.0: final production hardening and maintenance-baseline release shell. */
-const APP_VERSION = '1.13.0';
-const CACHE_VERSION = 'v32';
+/* Puzzle Arcade 1.14.0: QoL, keyboard navigation and mobile UI polish release shell. */
+const APP_VERSION = '1.14.0';
+const CACHE_VERSION = 'v33';
 const SCOPE = new URL(self.registration.scope);
 const CACHE_FAMILY = 'puzzle-arcade-core-';
 const CACHE_PREFIX = `${CACHE_FAMILY}${encodeURIComponent(SCOPE.pathname)}-`;

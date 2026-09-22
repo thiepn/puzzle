@@ -1,44 +1,48 @@
-# Puzzle Arcade 1.13.0 — Final Production Hardening, Release Certification & Maintenance Baseline
+# Puzzle Arcade 1.14.0 — QoL, Keyboard Navigation & Mobile UI Polish
 
-Phase 20 completes the numbered development sequence and establishes the stable maintenance baseline.
+This is the explicitly approved pre-maintenance QoL release. It does not add puzzle families, progression systems, accounts, cloud sync, or storage migrations.
 
-## Local disaster recovery
+## Faster keyboard navigation
 
-Settings now includes **Download backup** and **Restore backup**.
+- **Ctrl/⌘ K** or **/** opens a quick switcher for puzzles and app actions.
+- **Arrow Up/Down + Enter** navigate and activate quick-switcher results.
+- **G → P** opens Puzzles.
+- **G → L** opens Learn.
+- **G → S** opens Stats.
+- **G → O** opens Settings.
+- **C** resumes the newest open puzzle outside gameplay.
+- **R** launches a random puzzle outside gameplay.
+- **Esc** opens the current puzzle's options.
+- Arrow keys move spatially between library cards, category portals, filters, recent/continue cards, and primary navigation.
 
-A backup contains local Puzzle Arcade settings, favorites, active/completed puzzle sessions, and bounded result history. Restore verifies file size, JSON structure, backup/database schema, checksum, saved-game identity, current generator compatibility, and sanitized state before current local data can be replaced.
+Puzzle-specific keyboard controls remain unchanged and keep priority while playing.
 
-The required recovery gate tests the actual download and file-picker user flows, checksum tampering, active-record repair, reset, restore, reload durability, and both completed and in-progress puzzle recovery.
+## Mobile UI polish
 
-## Production integrity
+The phone layout is denser and more app-like:
 
-The committed `release-manifest.json` identifies the stable release.
+- icon + label bottom navigation;
+- smaller top bar with redundant controls removed;
+- tighter hero and continue card;
+- 2×2 compact category cards;
+- horizontal recent/favorite/continue rails;
+- smaller two-column library cards;
+- horizontal category filter chips;
+- full-screen mobile quick switcher;
+- bottom-sheet dialogs;
+- sticky game action dock with 44px+ touch targets;
+- tighter settings sections and action groups.
 
-Deployment creates SHA-256 and byte-size metadata for every core production file. After GitHub Pages publishes, CI re-downloads every core file with cache busting and rejects a mixed or stale deployment if any hash or release identity differs.
+## Certification
 
-## Maintenance mode
+1.14.0 keeps every Phase 20 release gate and adds a dedicated QoL browser gate covering desktop keyboard behavior and phone-sized UI behavior.
 
-Phase 20 freezes the current product baseline:
+The maintenance baseline now starts from:
 
+- app **1.14.0**
+- PWA cache **v33**
+- IndexedDB schema **1**
+- backup schema **1**
 - 36 playable games
-- IndexedDB schema 1
-- backup schema 1
-- PWA cache v32
-- no account/backend/cloud dependency
-- no third-party runtime JavaScript/CSS/font/API dependency
-- Chromium, Firefox, and WebKit release resilience
-- bounded long-session resource behavior
-- required backup/reset recovery gate
-- weekly maintenance-baseline workflow
-- monthly GitHub Actions dependency monitoring
 
-Future work should default to bug fixes, compatibility, accessibility, security, content corrections, and measured performance maintenance.
-
-Physical iOS/Android PWA installation/update, real-device screen readers, and physical haptics remain documented manual checks; this release does not claim those were independently automated.
-
-See:
-
-- `docs/PHASE20_FINAL_CERTIFICATION.md`
-- `docs/MAINTENANCE_BASELINE.md`
-- `SECURITY.md`
-- `release-manifest.json`
+See `docs/QOL_KEYBOARD_MOBILE_1_14.md` for the exact interaction contract.

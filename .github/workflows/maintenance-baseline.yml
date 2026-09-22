@@ -22,6 +22,7 @@ jobs:
       - run: node scripts/test-phase18-resilience.mjs
       - run: node scripts/test-phase19-endurance.mjs
       - run: node scripts/test-phase20-final-certification.mjs
+      - run: node scripts/test-qol-contract.mjs
       - run: node scripts/release-check.mjs
 
   browser-resilience:
@@ -65,3 +66,4 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/test-recovery-browser.py --base-url http://127.0.0.1:8080/
+          python scripts/test-qol-browser.py --base-url http://127.0.0.1:8080/

@@ -13,7 +13,7 @@ def main():
 
     failures=[]
     page_errors=[]
-    report={'pass':False,'phase':20,'version':'1.13.0'}
+    report={'pass':False,'phase':20,'version':'1.14.0'}
 
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True)

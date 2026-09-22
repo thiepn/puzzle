@@ -12,7 +12,7 @@ const read=f=>fs.readFileSync(path.join(ROOT,f),'utf8');
 const core=['index.html','styles.css','app.js','word-dictionary.js','word-content.js','manifest.webmanifest','sw.js','icon.svg','icon-192.png','icon-512.png'];
 for(const f of core) must(fs.existsSync(path.join(ROOT,f)),`missing core file: ${f}`);
 const run=(cmd,args)=>spawnSync(cmd,args,{cwd:ROOT,encoding:'utf8'});
-for(const f of ['app.js','word-dictionary.js','word-content.js','sw.js','scripts/validate-word-content.js','scripts/test-word-entry.mjs','scripts/test-accessibility-controls.mjs','scripts/test-phase10-integration.mjs','scripts/test-sensory-feedback.mjs','scripts/test-learning-onboarding.mjs','scripts/test-difficulty-quality.mjs','scripts/test-variety-quality.mjs','scripts/test-generator-stress.mjs','scripts/test-completion-quality.mjs','scripts/test-player-fuzz.mjs','scripts/test-phase18-resilience.mjs','scripts/test-phase19-endurance.mjs','scripts/test-phase20-final-certification.mjs','scripts/build-release-integrity.mjs','scripts/verify-deployed-release.mjs']){const r=run('node',['--check',f]);must(r.status===0,`${f}: syntax failed: ${r.stderr.trim()}`);}
+for(const f of ['app.js','word-dictionary.js','word-content.js','sw.js','scripts/validate-word-content.js','scripts/test-word-entry.mjs','scripts/test-accessibility-controls.mjs','scripts/test-phase10-integration.mjs','scripts/test-sensory-feedback.mjs','scripts/test-learning-onboarding.mjs','scripts/test-difficulty-quality.mjs','scripts/test-variety-quality.mjs','scripts/test-generator-stress.mjs','scripts/test-completion-quality.mjs','scripts/test-player-fuzz.mjs','scripts/test-phase18-resilience.mjs','scripts/test-phase19-endurance.mjs','scripts/test-phase20-final-certification.mjs','scripts/test-qol-contract.mjs','scripts/build-release-integrity.mjs','scripts/verify-deployed-release.mjs']){const r=run('node',['--check',f]);must(r.status===0,`${f}: syntax failed: ${r.stderr.trim()}`);}
 const content=run('node',['scripts/validate-word-content.js']);must(content.status===0,`word content validation failed: ${(content.stderr||content.stdout).trim()}`);
 const swTest=run('node',['scripts/test-service-worker.mjs']);must(swTest.status===0,`service worker tests failed: ${(swTest.stderr||swTest.stdout).trim()}`);
 const wordTest=run('node',['scripts/test-word-entry.mjs']);must(wordTest.status===0,`word-entry regression tests failed: ${(wordTest.stderr||wordTest.stdout).trim()}`);
@@ -28,6 +28,7 @@ const playerFuzzTest=run('node',['scripts/test-player-fuzz.mjs']);must(playerFuz
 const resilienceTest=run('node',['scripts/test-phase18-resilience.mjs']);must(resilienceTest.status===0,`Phase 18 resilience regression failed: ${(resilienceTest.stderr||resilienceTest.stdout).trim()}`);
 const enduranceTest=run('node',['scripts/test-phase19-endurance.mjs']);must(enduranceTest.status===0,`Phase 19 endurance regression failed: ${(enduranceTest.stderr||enduranceTest.stdout).trim()}`);
 const finalCertTest=run('node',['scripts/test-phase20-final-certification.mjs']);must(finalCertTest.status===0,`Phase 20 final certification regression failed: ${(finalCertTest.stderr||finalCertTest.stdout).trim()}`);
+const qolTest=run('node',['scripts/test-qol-contract.mjs']);must(qolTest.status===0,`QoL keyboard/mobile regression failed: ${(qolTest.stderr||qolTest.stdout).trim()}`);
 let contentSummary=null;try{contentSummary=JSON.parse(content.stdout)}catch{}
 const app=read('app.js'), index=read('index.html'), sw=read('sw.js'), manifest=JSON.parse(read('manifest.webmanifest')), readme=read('README.md');
 const version=app.match(/const APP_VERSION = '([^']+)';/)?.[1] || '';
@@ -48,13 +49,14 @@ const allowed={
   '1.10.0':{cache:'v29',phase:'Real Player Simulation, State Fuzzing & Interaction Sequence Reliability'},
   '1.11.0':{cache:'v30',phase:'Cross-Browser, Offline/PWA & Multi-Tab Resilience'},
   '1.12.0':{cache:'v31',phase:'Performance, Memory & Long-Session Endurance'},
-  '1.13.0':{cache:'v32',phase:'Final Production Hardening, Release Certification & Maintenance Baseline'}
+  '1.13.0':{cache:'v32',phase:'Final Production Hardening, Release Certification & Maintenance Baseline'},
+  '1.14.0':{cache:'v33',phase:'QoL, Keyboard Navigation & Mobile UI Polish'}
 };
 must(!!allowed[version],`unexpected Wave 10 APP_VERSION: ${version || 'missing'}`);
 const expected=allowed[version] || {cache:'__invalid__',phase:'Wave 10'};
 must(/const DB_VERSION = 1;/.test(app),'IndexedDB schema version must be explicit');
 must(app.includes(`const BUILD_PHASE = '${expected.phase}';`),'BUILD_PHASE does not match release identity');
-if(['1.11.0','1.12.0','1.13.0'].includes(version)){
+if(['1.11.0','1.12.0','1.13.0','1.14.0'].includes(version)){
   must(/const P18_VERSION=18;/.test(app),'Phase 18 runtime contract missing');
   must(/new BroadcastChannel\('puzzle-arcade-resilience-v1'\)/.test(app),'Phase 18 BroadcastChannel transport missing');
   must(/addEventListener\('storage'/.test(app),'Phase 18 storage-event fallback missing');
@@ -72,7 +74,7 @@ if(['1.11.0','1.12.0','1.13.0'].includes(version)){
   must(/pageshow/.test(app)&&/p18ResyncAfterRestore/.test(app),'Phase 18 BFCache resync missing');
   must(/SKIP_WAITING/.test(app)&&/controllerchange/.test(app),'Phase 18 controlled PWA upgrade missing');
 }
-if(['1.12.0','1.13.0'].includes(version)){
+if(['1.12.0','1.13.0','1.14.0'].includes(version)){
   must(/const P19_VERSION=19;/.test(app),'Phase 19 runtime contract missing');
   must(/const MAX_HISTORY_ENTRIES = 10000;/.test(app),'Phase 19 history bound missing');
   must(/async trimHistory\(limit=MAX_HISTORY_ENTRIES\)/.test(app),'Phase 19 history compaction missing');
@@ -82,7 +84,7 @@ if(['1.12.0','1.13.0'].includes(version)){
   must(/p19Counters\.routeRenders\+\+/.test(app)&&/p19Counters\.gameRenders\+\+/.test(app),'Phase 19 render instrumentation missing');
   must(/await db\.trimHistory\(MAX_HISTORY_ENTRIES\)/.test(app),'Phase 19 boot history compaction missing');
 }
-if(version==='1.13.0'){
+if(['1.13.0','1.14.0'].includes(version)){
   must(/const P20_VERSION=20;/.test(app),'Phase 20 runtime contract missing');
   must(/const BACKUP_SCHEMA_VERSION = 1;/.test(app),'Phase 20 backup schema missing');
   must(/const MAX_BACKUP_BYTES = 16 \* 1024 \* 1024;/.test(app),'Phase 20 backup size ceiling missing');
@@ -102,6 +104,16 @@ if(version==='1.13.0'){
   must(fs.existsSync(path.join(ROOT,'SECURITY.md')),'SECURITY.md missing');
   must(fs.existsSync(path.join(ROOT,'docs/MAINTENANCE_BASELINE.md')),'maintenance baseline missing');
   must(fs.existsSync(path.join(ROOT,'docs/PHASE20_FINAL_CERTIFICATION.md')),'Phase 20 final certification document missing');
+}
+if(version==='1.14.0'){
+  must(/function qolLatestActive\(\)/.test(app),'QoL latest-active helper missing');
+  must(/function qolCommandItems\(\)/.test(app),'QoL quick switcher missing');
+  must(/function qolMoveFocus\(current,key,items\)/.test(app),'QoL spatial keyboard navigation missing');
+  must(/e\.key\.toLowerCase\(\)==='k'/.test(app)&&/e\.key==='\/'/.test(app),'QoL search shortcuts missing');
+  must(/const routes=\{p:'home',l:'learn',s:'stats',o:'settings'\}/.test(app),'QoL G chord routes missing');
+  must(/if\(key==='c'\)/.test(app)&&/if\(key==='r'\)/.test(app),'QoL quick resume/random shortcuts missing');
+  must(/QoL release 1\.14/.test(read('styles.css')),'QoL mobile style baseline missing');
+  must(/class="nav-icon"/.test(index),'QoL mobile nav icons missing');
 }
 must(!/console\.(log|debug|warn|error)\s*\(/.test(app),'production app.js contains console logging');
 must(!/\beval\s*\(/.test(app),'production app.js contains global eval-like call');
@@ -131,6 +143,6 @@ const playableMatch=app.match(/const playableIds = \[([^\]]+)\]/s);must(!!playab
 if(playableMatch){const ids=[...playableMatch[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);must(ids.length===36,`expected 36 playable games, got ${ids.length}`);must(new Set(ids).size===36,'duplicate playable game id');}
 const badNames=[];function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){const fp=path.join(dir,ent.name),rel=path.relative(ROOT,fp);if(ent.isDirectory()){if(['node_modules','__pycache__','.git','test-results','dist'].includes(ent.name))continue;walk(fp);} else if(/(?:^|\/)(?:backup|tmp|debug|harness)(?:[-_.]|$)|\.bak$/i.test(rel))badNames.push(rel);}}walk(ROOT);must(badNames.length===0,`release tree contains debug/backup residue: ${badNames.join(', ')}`);
 const prodFiles=['app.js','styles.css','index.html','sw.js'];for(const f of prodFiles){const t=read(f);const urls=[...t.matchAll(/https?:\/\/[^\s'"<>]+/g)].map(m=>m[0]).filter(u=>!u.includes('www.w3.org/2000/svg'));must(urls.length===0,`${f} contains unexpected external URL: ${urls.join(', ')}`);}
-notes.push(`content errors: ${contentSummary?.errors ?? 'unknown'}`);notes.push('playable games: 36');notes.push(`service worker: ${expected.cache}`);notes.push('Phase 13 difficulty/quality contract: enabled');notes.push('Phase 14 variety/anti-repetition contract: enabled');notes.push('Phase 15 generator robustness contract: enabled');notes.push('Phase 16 completion certification contract: enabled');notes.push('Phase 17 player state-fuzz contract: enabled');notes.push('Phase 18 cross-browser/PWA/multi-tab resilience contract: enabled');notes.push('Phase 19 performance/memory/endurance contract: enabled');notes.push('Phase 20 recovery/deployment/maintenance certification contract: enabled');
+notes.push(`content errors: ${contentSummary?.errors ?? 'unknown'}`);notes.push('playable games: 36');notes.push(`service worker: ${expected.cache}`);notes.push('Phase 13 difficulty/quality contract: enabled');notes.push('Phase 14 variety/anti-repetition contract: enabled');notes.push('Phase 15 generator robustness contract: enabled');notes.push('Phase 16 completion certification contract: enabled');notes.push('Phase 17 player state-fuzz contract: enabled');notes.push('Phase 18 cross-browser/PWA/multi-tab resilience contract: enabled');notes.push('Phase 19 performance/memory/endurance contract: enabled');notes.push('Phase 20 recovery/deployment/maintenance certification contract: enabled');notes.push('QoL keyboard/mobile certification contract: enabled');
 const playTest=run('node',['scripts/test-play-experience.mjs']);must(playTest.status===0,`play-experience regression tests failed: ${(playTest.stderr||playTest.stdout).trim()}`);
 const out={phase:expected.phase,appVersion:version,errors,notes,pass:errors.length===0};console.log(JSON.stringify(out,null,2));process.exit(errors.length?1:0);

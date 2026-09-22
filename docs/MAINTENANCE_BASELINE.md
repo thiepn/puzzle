@@ -4,18 +4,18 @@ This document defines the post-Phase-20 production baseline for Puzzle Arcade.
 
 ## Frozen baseline
 
-- Product release: **1.13.0**
+- Product release: **1.14.0**
 - Release channel: **stable**
 - IndexedDB schema: **1**
 - Backup schema: **1**
-- PWA cache generation: **v32**
+- PWA cache generation: **v33**
 - Playable catalog: **36 games**
 - Runtime model: static local-first browser application
 - Backend/accounts/analytics: **none**
 - Runtime third-party JavaScript/CSS/font/API dependencies: **none**
 - Deployment target: GitHub Pages
 
-Phase 20 closes the open-ended feature-development sequence. Future work should default to maintenance, defect correction, compatibility, security, accessibility, content correction, or measured performance work. A new feature phase should require an explicit product decision rather than emerging from maintenance drift.
+Phase 20 closed the open-ended feature-development sequence. Release 1.14.0 is the explicitly approved pre-maintenance QoL exception, focused on navigation and mobile usability without changing puzzle systems or storage schemas. Future work should default to maintenance, defect correction, compatibility, security, accessibility, content correction, or measured performance work. A new feature phase should require an explicit product decision rather than emerging from maintenance drift.
 
 ## Production invariants
 
