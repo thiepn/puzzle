@@ -136,7 +136,7 @@ def main():
             page.locator('[data-action="backup-import"]').click()
         chooser_info.value.set_files(str(backup_path))
         page.locator('.modal').wait_for(timeout=15000)
-        page.get_by_role('button',name='Restore backup').click()
+        page.locator('#overlay-root').get_by_role('button',name='Restore backup').click()
         page.wait_for_function(
             'async () => { const s=await window.__PA_RECOVERY__.snapshot(); return s.active>=2 && s.history>=1 && s.favorites.includes("sudoku") && s.settings.theme==="dark"; }',
             timeout=30000
