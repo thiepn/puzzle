@@ -26,13 +26,14 @@ const cacheVersion=sw.match(/const CACHE_VERSION = '([^']+)';/)?.[1];
 const dbVersion=Number(app.match(/const DB_VERSION = (\d+);/)?.[1]||0);
 const backupVersion=Number(app.match(/const BACKUP_SCHEMA_VERSION = (\d+);/)?.[1]||0);
 
-eq(appVersion,'1.14.0','maintenance baseline app version changed unexpectedly');
-eq(cacheVersion,'v33','maintenance baseline cache version changed unexpectedly');
+ok(/^1\.14\.\d+$/.test(appVersion||''),'maintenance release left the supported 1.14.x line without an explicit baseline update');
+const cacheNumber=Number(String(cacheVersion||'').replace(/^v/,''));
+ok(Number.isInteger(cacheNumber)&&cacheNumber>=33,'maintenance cache generation regressed below v33');
 eq(dbVersion,1,'maintenance baseline DB schema changed unexpectedly');
 eq(backupVersion,1,'maintenance baseline backup schema changed unexpectedly');
 
-eq(release.version,'1.14.0','release manifest version is not maintenance baseline');
-eq(release.cacheVersion,'v33','release manifest cache is not maintenance baseline');
+eq(release.version,appVersion,'release manifest version does not match app version');
+eq(release.cacheVersion,cacheVersion,'release manifest cache does not match service worker');
 eq(release.databaseSchema,1,'release manifest DB schema changed');
 eq(release.backupSchema,1,'release manifest backup schema changed');
 eq(release.catalogGames,36,'catalog changed during maintenance handoff');
@@ -90,6 +91,7 @@ ok(/Accessibility problem/.test(read('.github/ISSUE_TEMPLATE/accessibility.yml')
 console.log(JSON.stringify({
   pass:true,
   mode:status.productDevelopmentMode,
-  baseline:{appVersion,cacheVersion,dbVersion,backupVersion,catalogGames:release.catalogGames},
+  baselineFloor:{appVersion:'1.14.0',cacheVersion:'v33',dbVersion:1,backupVersion:1,catalogGames:36},
+  current:{appVersion,cacheVersion,dbVersion,backupVersion,catalogGames:release.catalogGames},
   checks
 },null,2));
