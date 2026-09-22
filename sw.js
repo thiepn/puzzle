@@ -1,4 +1,4 @@
-/* Puzzle Arcade 1.14.0: QoL, keyboard navigation and mobile UI polish release shell. */
+/* Puzzle Arcade 1.14.0: QoL release shell; refreshed for theme/contrast hotfix. */
 const APP_VERSION = '1.14.0';
 const CACHE_VERSION = 'v33';
 const SCOPE = new URL(self.registration.scope);
