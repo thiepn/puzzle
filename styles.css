@@ -5803,9 +5803,14 @@ html[data-controls="large"] .segmented button {
     height: 38px;
     font-size: 21px;
   }
-  .top-actions [data-action="sound-toggle"],
   .top-actions [data-action="controls"] {
     display: none;
+  }
+  .top-actions [data-action="sound-toggle"] {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
 
   .main-nav {
