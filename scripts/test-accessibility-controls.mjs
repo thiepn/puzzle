@@ -36,5 +36,24 @@ has(css,'@media (forced-colors: active)','forced-colors support missing');
 has(css,'@media (pointer: coarse)','coarse-pointer target support missing');
 has(css,'html[data-controls="large"]','large-controls mode missing');
 has(css,'100dvh','dynamic viewport support missing');
+has(css,'--on-accent: #fffdf8;','light on-accent token missing');
+has(css,'html[data-theme="dark"] {','explicit dark theme missing');
+has(css,'color-scheme: dark;','dark native-control color scheme missing');
+has(css,'.mine-cell[data-n="1"]{color:var(--number)}','Minesweeper number colors must use theme tokens');
+assert.ok(!/\bcolor\s*:\s*(?:#(?:fff|ffffff)|white)\b/i.test(css),'literal white text color bypasses theme-aware on-accent token');checks++;
+
+const hexVars=block=>Object.fromEntries([...block.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map(m=>[m[1],m[2]]));
+const rootBlock=css.match(/^:root\s*\{([\s\S]*?)\n\}/)?.[1]||'';
+const darkBlock=css.match(/html\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1]||'';
+const lightVars=hexVars(rootBlock),darkVars=hexVars(darkBlock);
+const luminance=hex=>{const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];};
+const ratio=(a,b)=>{const [hi,lo]=[luminance(a),luminance(b)].sort((x,y)=>y-x);return (hi+.05)/(lo+.05);};
+for(const [mode,vars] of [['light',lightVars],['dark',darkVars]]) {
+  for(const token of ['word','number','logic','spatial','success','danger','warning','hint','focus']) {
+    assert.ok(ratio(vars[token],vars['paper-bright'])>=4.5,`${mode} --${token} fails 4.5:1 against --paper-bright`);checks++;
+    assert.ok(ratio(vars['on-accent'],vars[token])>=4.5,`${mode} --on-accent fails 4.5:1 against --${token}`);checks++;
+  }
+}
+
 
 console.log(JSON.stringify({pass:true,checks},null,2));
