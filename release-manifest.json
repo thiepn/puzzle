@@ -1,0 +1,31 @@
+{
+  "product": "Puzzle Arcade",
+  "version": "1.13.0",
+  "phase": "Final Production Hardening, Release Certification & Maintenance Baseline",
+  "cacheVersion": "v32",
+  "databaseSchema": 1,
+  "backupSchema": 1,
+  "catalogGames": 36,
+  "releaseChannel": "stable",
+  "coreFiles": [
+    "index.html",
+    "styles.css",
+    "app.js",
+    "word-dictionary.js",
+    "word-content.js",
+    "manifest.webmanifest",
+    "sw.js",
+    "icon.svg",
+    "icon-192.png",
+    "icon-512.png"
+  ],
+  "certificationGates": [
+    "release-gate",
+    "player-fuzz-gate",
+    "resilience-matrix",
+    "endurance-gate",
+    "recovery-gate"
+  ],
+  "maintenanceBaseline": "docs/MAINTENANCE_BASELINE.md",
+  "finalCertification": "docs/PHASE20_FINAL_CERTIFICATION.md"
+}
