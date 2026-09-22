@@ -24,6 +24,7 @@ jobs:
       - run: node scripts/test-phase20-final-certification.mjs
       - run: node scripts/test-qol-contract.mjs
       - run: node scripts/test-maintenance-handoff.mjs
+      - run: node scripts/test-docs-integrity.mjs
       - run: node scripts/release-check.mjs
 
   browser-resilience:
