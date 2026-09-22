@@ -1,7 +1,7 @@
 {
-  "version": "1.13.0",
-  "phase": "Final Production Hardening, Release Certification & Maintenance Baseline",
-  "cacheVersion": 32,
+  "version": "1.14.0",
+  "phase": "QoL, Keyboard Navigation & Mobile UI Polish",
+  "cacheVersion": 33,
   "databaseSchema": 1,
   "catalogGames": 36,
   "difficultyTiersPerGame": 3,
@@ -108,5 +108,11 @@
   "finalReleaseManifest": "release-manifest.json",
   "maintenanceBaselineWorkflow": "WEEKLY_AND_MANUAL",
   "githubActionsDependencyMonitoring": "MONTHLY_DEPENDABOT",
-  "productDevelopmentMode": "MAINTENANCE_BASELINE"
+  "productDevelopmentMode": "PRE_MAINTENANCE_QOL_RELEASE",
+  "qolKeyboardNavigation": "REQUIRED_ON_RELEASE",
+  "qolCommandPalette": "REQUIRED_ON_RELEASE",
+  "qolSpatialLibraryNavigation": "REQUIRED_ON_RELEASE",
+  "qolMobileUiCertification": "REQUIRED_ON_RELEASE",
+  "qolMobileBottomNavigation": "REQUIRED_ON_RELEASE",
+  "qolMobileStickyGameActions": "REQUIRED_ON_RELEASE"
 }
