@@ -71,7 +71,7 @@ The movement is geometry-based rather than assuming a fixed column count, so it 
 
 - fixed bottom navigation with icon + label;
 - compact mobile top bar;
-- sound and help controls hidden from the top bar on phones because Settings and the keyboard/touch guide already expose them;
+- compact sound mute remains in the phone top bar for instant sensory control; the redundant help control is removed from that bar because the keyboard/touch guide remains available elsewhere;
 - safe-area insets retained.
 
 ### Home and library
@@ -115,7 +115,7 @@ The required QoL browser test certifies:
 - arrow navigation in primary nav;
 - fixed mobile bottom bar;
 - visible mobile nav icons;
-- hidden redundant mobile top-bar controls;
+- compact mobile sensory mute retained while redundant top-bar help is removed;
 - compact catalog/card dimensions;
 - compact category cards;
 - mobile quick switcher;
