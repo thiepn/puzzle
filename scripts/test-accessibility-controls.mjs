@@ -44,6 +44,19 @@ has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.correct {','Five
 has(css,'.game-page[data-play-game="five-letters"] .wordle-tile.present {','Five Letters present-tile override missing');
 has(css,'.game-page[data-play-game="five-letters"] .key.correct {','Five Letters correct-key feedback missing');
 has(css,'.game-page[data-play-game="five-letters"] .key.present {','Five Letters present-key feedback missing');
+has(css,'.game-page[data-play-game="word-pieces"] .pieces-grid button.selected {','Word Pieces selected-state override missing');
+has(css,'.game-page[data-play-game="network"] .network-cell.bad,','Network bad-state override missing');
+has(css,'.game-page[data-play-game="binary"] .binary-cell.wrong,','Logic error-state override missing');
+const familyWordPos=css.indexOf('.game-page[data-play-category="word"] :is(\n  .wordle-tile,.group-tile,.anagram-tiles button,.pieces-grid button,.key\n)');
+const piecesSelectedPos=css.indexOf('.game-page[data-play-game="word-pieces"] .pieces-grid button.selected {');
+assert.ok(piecesSelectedPos>familyWordPos,'Word Pieces selected state must follow generic word-family surface styling');checks++;
+const networkBasePos=css.indexOf('.game-page[data-play-category="spatial"] .network-cell {');
+const networkBadPos=css.indexOf('.game-page[data-play-game="network"] .network-cell.bad,');
+assert.ok(networkBadPos>networkBasePos,'Network bad state must follow generic spatial cell styling');checks++;
+const logicStatePos=css.indexOf('.nono-cell.filled,.binary-cell.selected,.queen-cell.queen,.tent-cell.tent,');
+const logicErrorPos=css.indexOf('.game-page[data-play-game="binary"] .binary-cell.wrong,');
+assert.ok(logicErrorPos>logicStatePos,'Logic error states must follow generic logic state emphasis');checks++;
+
 
 assert.ok(!/\bcolor\s*:\s*(?:#(?:fff|ffffff)|white)\b/i.test(css),'literal white text color bypasses theme-aware on-accent token');checks++;
 
