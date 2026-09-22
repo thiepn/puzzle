@@ -1,12 +1,15 @@
 (() => {
   'use strict';
 
-  const APP_VERSION = '1.12.0';
-  const BUILD_PHASE = 'Performance, Memory & Long-Session Endurance';
+  const APP_VERSION = '1.13.0';
+  const BUILD_PHASE = 'Final Production Hardening, Release Certification & Maintenance Baseline';
   const DB_NAME = 'puzzle-arcade';
   const DB_VERSION = 1;
   const MAX_SHARED_SEED_LENGTH = 96;
   const MAX_HISTORY_ENTRIES = 10000;
+  const BACKUP_SCHEMA_VERSION = 1;
+  const BACKUP_KIND = 'puzzle-arcade-backup';
+  const MAX_BACKUP_BYTES = 16 * 1024 * 1024;
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -425,6 +428,55 @@
         }catch{resolve({before:0,removed:0,after:0});}
       });
     },
+    async replaceAll(snapshot) {
+      ++this._epoch;
+      if(this._opening)await this._opening;
+      const settings=cloneValue(snapshot?.settings);
+      const favorites=cloneValue(snapshot?.favorites);
+      const active=Array.isArray(snapshot?.active)?snapshot.active.map(cloneValue):[];
+      const history=Array.isArray(snapshot?.history)?snapshot.history.map(cloneValue):[];
+      const d=await this.open();
+      let replaced=false;
+      if(d){
+        replaced=await new Promise(resolve=>{
+          try{
+            const tx=d.transaction(['kv','active','history'],'readwrite');
+            const kv=tx.objectStore('kv'),act=tx.objectStore('active'),hist=tx.objectStore('history');
+            kv.clear();act.clear();hist.clear();
+            kv.put(settings,'settings');kv.put(favorites,'favorites');
+            active.forEach(row=>act.put(row));
+            history.forEach(row=>hist.put(row));
+            tx.oncomplete=()=>resolve(true);
+            tx.onerror=tx.onabort=()=>resolve(false);
+          }catch{resolve(false);}
+        });
+        if(replaced){
+          try{Object.keys(localStorage).filter(k=>k.startsWith('pa:')).forEach(k=>localStorage.removeItem(k));}
+          catch{}
+        }
+      }else{
+        const previous={};
+        try{
+          Object.keys(localStorage).filter(k=>k.startsWith('pa:')).forEach(k=>previous[k]=localStorage.getItem(k));
+          Object.keys(previous).forEach(k=>localStorage.removeItem(k));
+          localStorage.setItem('pa:kv:settings',JSON.stringify(settings));
+          localStorage.setItem('pa:kv:favorites',JSON.stringify(favorites));
+          active.forEach(row=>localStorage.setItem('pa:active:'+row.gameId,JSON.stringify(row)));
+          history.forEach(row=>localStorage.setItem('pa:history:'+row.id,JSON.stringify(row)));
+          replaced=true;
+        }catch{
+          try{
+            Object.keys(localStorage).filter(k=>k.startsWith('pa:')).forEach(k=>localStorage.removeItem(k));
+            Object.entries(previous).forEach(([k,v])=>{if(v!=null)localStorage.setItem(k,v);});
+          }catch{}
+          replaced=false;
+        }
+      }
+      this._writeWarningShown=false;
+      if(replaced)p18Emit({type:'restore'});
+      return replaced;
+    },
+
     async resetAll() {
       ++this._epoch;
       if(this._opening)await this._opening;
@@ -605,12 +657,13 @@
     }
   }
   async function p18HandleRemote(payload){
-    if(payload.type==='reset'){
+    if(payload.type==='reset'||payload.type==='restore'){
+      const restored=payload.type==='restore';
       const current=state.currentActive;if(current)retiredActives.add(current);
       stopTimer();state.currentActive=null;state.currentGame=null;
       await refreshData();
       if(parseHash().parts[0]==='game')location.hash='#/home';else void renderRoute();
-      setTimeout(()=>toast('Local puzzle data was reset in another tab.'),0);
+      setTimeout(()=>toast(restored?'Local puzzle data was restored in another tab.':'Local puzzle data was reset in another tab.'),0);
       return;
     }
     if(payload.type!=='db-write')return;
@@ -753,6 +806,199 @@
     settle:p19Settle
   };
 
+  // ---------- Phase 20: final production recovery & certification ----------
+  const P20_VERSION=20;
+  function p20StableClone(value,depth=0){
+    if(depth>24)throw new Error('Backup data is too deeply nested.');
+    if(value===null||typeof value==='string'||typeof value==='boolean')return value;
+    if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('Backup contains an invalid number.');return value;}
+    if(Array.isArray(value))return value.map(v=>p20StableClone(v,depth+1));
+    if(!value||typeof value!=='object')throw new Error('Backup contains unsupported data.');
+    const out={};
+    for(const key of Object.keys(value).sort()){
+      if(['__proto__','constructor','prototype'].includes(key))throw new Error('Backup contains an unsafe object key.');
+      const v=value[key];
+      if(v!==undefined)out[key]=p20StableClone(v,depth+1);
+    }
+    return out;
+  }
+  function p20StableStringify(value){return JSON.stringify(p20StableClone(value));}
+  function p20Checksum(payload){
+    const text=p20StableStringify(payload);let h=2166136261;
+    for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}
+    return 'fnv1a32:'+((h>>>0).toString(16).padStart(8,'0'));
+  }
+  function p20TextBytes(text){
+    try{return new Blob([text]).size;}catch{return String(text).length*2;}
+  }
+  async function p20CreateBackup(){
+    if(state.currentActive&&!retiredActives.has(state.currentActive))await saveActive(state.currentActive);
+    const active=(await activeRecords()).filter(a=>a&&typeof a.gameId==='string'&&Object.hasOwn(GAMES,a.gameId)).map(a=>cloneValue(a));
+    const history=sanitizeHistory(await db.all('history')).filter(boundedSaveData).sort((a,b)=>b.endedAt-a.endedAt).slice(0,MAX_HISTORY_ENTRIES);
+    const payload={
+      settings:sanitizeSettings(state.settings),
+      favorites:sanitizeFavorites(state.favorites),
+      active,
+      history
+    };
+    const envelope={
+      kind:BACKUP_KIND,
+      schemaVersion:BACKUP_SCHEMA_VERSION,
+      appVersion:APP_VERSION,
+      databaseSchema:DB_VERSION,
+      exportedAt:new Date().toISOString(),
+      payload,
+      checksum:p20Checksum(payload)
+    };
+    const text=JSON.stringify(envelope,null,2);
+    if(p20TextBytes(text)>MAX_BACKUP_BYTES)throw new Error('Local data is too large for the backup safety limit.');
+    return envelope;
+  }
+  function p20HistoryRows(value){
+    if(!Array.isArray(value))return [];
+    const safe=sanitizeHistory(value.filter(boundedSaveData));
+    const map=new Map();
+    for(const row of safe){
+      const previous=map.get(row.id);
+      if(!previous||(row.endedAt||0)>(previous.endedAt||0))map.set(row.id,row);
+    }
+    return [...map.values()].sort((a,b)=>b.endedAt-a.endedAt).slice(0,MAX_HISTORY_ENTRIES);
+  }
+  async function p20ActiveRows(value){
+    if(!Array.isArray(value))return {rows:[],repaired:0,skipped:0};
+    if(value.length>ALL_GAMES.length*2)throw new Error('Backup contains too many active puzzle records.');
+    const chosen=new Map();
+    for(const raw of value){
+      const id=raw&&typeof raw.gameId==='string'?raw.gameId:null;
+      if(!id||!Object.hasOwn(GAMES,id)){continue;}
+      const prior=chosen.get(id);
+      if(!prior||(Number(raw.updatedAt)||0)>(Number(prior.updatedAt)||0))chosen.set(id,raw);
+    }
+    const rows=[];let repaired=0,skipped=0,seq=0;
+    for(const [id,raw] of chosen){
+      const game=GAMES[id],seed=sanitizeSharedSeed(raw?.seed),difficulty=normalizeDifficulty(game,raw?.difficulty);
+      if(!seed||difficulty!==raw?.difficulty){skipped++;continue;}
+      if(game.generatorVersion&&raw?.puzzle?.generatorVersion!==game.generatorVersion){skipped++;continue;}
+      let fresh=null,recovered=null;
+      try{
+        fresh=await game.create(seed,difficulty);fresh.startedAt=null;
+        recovered=repairSavedActive(game,cloneValue(raw),fresh);
+      }catch{recovered=null;}
+      if(!recovered||!activeRecordLooksUsable(game,recovered)){skipped++;continue;}
+      if(recovered._recoveredFields){delete recovered._recoveredFields;repaired++;}
+      recovered.startedAt=null;
+      recovered.updatedAt=Date.now()+(++seq);
+      rows.push(recovered);
+    }
+    return {rows,repaired,skipped};
+  }
+  async function p20PrepareBackupText(text){
+    if(typeof text!=='string'||!text.trim())throw new Error('Backup file is empty.');
+    if(p20TextBytes(text)>MAX_BACKUP_BYTES)throw new Error('Backup file exceeds the 16 MiB safety limit.');
+    let root=null;
+    try{root=JSON.parse(text);}catch{throw new Error('Backup file is not valid JSON.');}
+    if(!root||typeof root!=='object'||Array.isArray(root))throw new Error('Backup root is invalid.');
+    if(root.kind!==BACKUP_KIND||root.schemaVersion!==BACKUP_SCHEMA_VERSION)throw new Error('Backup format is not supported by this release.');
+    if(root.databaseSchema!==DB_VERSION)throw new Error('Backup database schema is not compatible with this release.');
+    if(!root.payload||typeof root.payload!=='object'||Array.isArray(root.payload))throw new Error('Backup payload is missing.');
+    if(typeof root.checksum!=='string'||root.checksum!==p20Checksum(root.payload))throw new Error('Backup checksum does not match. The file may be damaged or edited.');
+    const settings=sanitizeSettings(root.payload.settings);
+    const favorites=sanitizeFavorites(root.payload.favorites);
+    const rawHistory=Array.isArray(root.payload.history)?root.payload.history:[];
+    const history=p20HistoryRows(rawHistory);
+    const activeResult=await p20ActiveRows(root.payload.active);
+    return {
+      prepared:true,
+      metadata:{appVersion:typeof root.appVersion==='string'?root.appVersion:'unknown',exportedAt:typeof root.exportedAt==='string'?root.exportedAt:null},
+      payload:{settings,favorites,active:activeResult.rows,history},
+      report:{
+        favorites:favorites.length,
+        active:activeResult.rows.length,
+        history:history.length,
+        repairedActive:activeResult.repaired,
+        skippedActive:activeResult.skipped,
+        droppedHistory:Math.max(0,rawHistory.length-history.length)
+      }
+    };
+  }
+  async function p20ApplyPreparedBackup(prepared){
+    if(!prepared?.prepared||!prepared.payload)throw new Error('Prepared backup is invalid.');
+    stopTimer();window.onkeydown=null;clearGamePointerHandlers();
+    if(state.currentActive)retiredActives.add(state.currentActive);
+    ++routeGeneration;state.currentActive=null;state.currentGame=null;
+    const ok=await db.replaceAll(prepared.payload);
+    if(!ok)throw new Error('The backup could not be written. Existing data was preserved where possible.');
+    await refreshData();
+    try{localStorage.setItem('pa:bootstrap-theme',state.settings.theme);}catch{}
+    setTheme(state.settings.theme,false);applyAccessibilitySettings(false);syncSensoryChrome();
+    if(parseHash().parts[0]==='game')location.hash='#/home';else await renderRoute();
+    return {...prepared.report,restored:true};
+  }
+  function p20ReadFile(file){
+    if(!file)throw new Error('No backup file selected.');
+    if(file.size>MAX_BACKUP_BYTES)throw new Error('Backup file exceeds the 16 MiB safety limit.');
+    if(typeof file.text==='function')return file.text();
+    return new Promise((resolve,reject)=>{
+      try{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result||''));
+        reader.onerror=()=>reject(new Error('Backup file could not be read.'));
+        reader.readAsText(file);
+      }catch{reject(new Error('Backup file could not be read.'));}
+    });
+  }
+  async function p20DownloadBackup(){
+    try{
+      const backup=await p20CreateBackup(),text=JSON.stringify(backup,null,2);
+      const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+      const a=document.createElement('a'),date=new Date().toISOString().slice(0,10);
+      a.href=url;a.download='puzzle-arcade-backup-'+date+'.json';a.rel='noopener';a.hidden=true;
+      document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      toast('Backup downloaded');
+    }catch(error){showModal('Backup failed','<p>'+esc(error?.message||'The backup could not be created.')+'</p>');}
+  }
+  function p20ChooseBackup(){
+    const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
+    input.onchange=async()=>{
+      const file=input.files?.[0];input.remove();if(!file)return;
+      try{
+        const prepared=await p20PrepareBackupText(await p20ReadFile(file)),r=prepared.report;
+        showModal('Restore local backup',
+          '<p>This will replace local Puzzle Arcade data in this browser with the verified backup.</p>'+
+          '<div class="backup-summary"><p><strong>'+r.active+'</strong> active puzzles · <strong>'+r.history+'</strong> history entries · <strong>'+r.favorites+'</strong> favorites</p>'+
+          (r.repairedActive||r.skippedActive||r.droppedHistory?'<p class="subtle">Validation repaired '+r.repairedActive+' active record(s), skipped '+r.skippedActive+', and dropped '+r.droppedHistory+' invalid/duplicate history row(s).</p>':'')+'</div>',[
+            {label:'Cancel',kind:'secondary',action:closeOverlay},
+            {label:'Restore backup',kind:'primary',action:async()=>{
+              closeOverlay();
+              try{await p20ApplyPreparedBackup(prepared);toast('Backup restored');}
+              catch(error){showModal('Restore failed','<p>'+esc(error?.message||'The backup could not be restored.')+'</p>');}
+            }}
+          ]);
+      }catch(error){showModal('Backup could not be opened','<p>'+esc(error?.message||'The backup is invalid.')+'</p>');}
+    };
+    document.body.append(input);input.click();
+  }
+  async function p20RecoverySnapshot(){
+    const [active,history]=await Promise.all([db.all('active'),db.all('history')]);
+    return {
+      version:P20_VERSION,
+      appVersion:APP_VERSION,
+      backupSchema:BACKUP_SCHEMA_VERSION,
+      databaseSchema:DB_VERSION,
+      settings:sanitizeSettings(await db.get('kv','settings')),
+      favorites:sanitizeFavorites(await db.get('kv','favorites')),
+      active:active.length,
+      history:history.length
+    };
+  }
+  window.__PA_RECOVERY__={
+    version:P20_VERSION,
+    createBackup:p20CreateBackup,
+    prepareText:p20PrepareBackupText,
+    applyPrepared:p20ApplyPreparedBackup,
+    snapshot:p20RecoverySnapshot,
+    checksum:p20Checksum
+  };
 
   let routeGeneration = 0;
   let saveClock = 0;
@@ -1363,7 +1609,7 @@
         <div class="setting-row"><div><h3>Haptic feedback</h3><p class="subtle">${sensorySupport().haptics?'Short vibration patterns are used only for high-signal events.':'This browser does not expose vibration feedback.'}</p></div><div class="segmented" role="group" aria-label="Haptic feedback">${['on','off'].map(t=>`<button data-haptics-choice="${t}" class="${state.settings.haptics===t?'is-active':''}" aria-pressed="${state.settings.haptics===t}" ${!sensorySupport().haptics?'disabled':''}>${t==='on'?'On':'Off'}</button>`).join('')}</div></div>
         <div class="sensory-test-row"><button class="secondary-button" data-action="sensory-test" ${state.settings.sound==='off'&&!sensorySupport().haptics?'disabled':''}>Test feedback</button><span class="subtle">Reduced-motion and sensory settings remain independent.</span></div>
       </section>
-      <section class="settings-group"><h2>Local data</h2><p class="subtle">Progress, favorites, and statistics are stored locally on this device.</p><button class="danger-button" data-action="clear-data">Reset local puzzle data</button></section>
+      <section class="settings-group"><h2>Local data</h2><p class="subtle">Progress, favorites, settings, and statistics are stored locally on this device. Download a backup before clearing browser data or moving to another browser profile.</p><div class="result-actions"><button class="secondary-button" data-action="backup-export">Download backup</button><button class="secondary-button" data-action="backup-import">Restore backup</button><button class="danger-button" data-action="clear-data">Reset local puzzle data</button></div><p class="subtle">Backup files stay on your device. Restore validates the file and its checksum before replacing current local data.</p></section>
       <section class="settings-group"><h2>Privacy & notices</h2><p class="subtle">No account or analytics are required. Shared puzzle links contain only the game, seed, and difficulty.</p><div class="result-actions"><button class="secondary-button" data-action="privacy-info">Privacy</button><button class="secondary-button" data-action="license-info">Licenses & notices</button></div></section>
       <section class="settings-group"><h2>About this build</h2><p class="subtle">Puzzle Arcade ${APP_VERSION} · ${BUILD_PHASE} · ${playableIds.length}/${ALL_GAMES.length} playable games · local-first PWA.</p></section>
     </div>`;
@@ -1469,6 +1715,8 @@
     $$('[data-action="random"]').forEach(b=>b.onclick=randomGame);
     $$('[data-action="search"]').forEach(b=>b.onclick=showSearch);
     $$('[data-action="clear-data"]').forEach(b=>b.onclick=clearData);
+    $$('[data-action="backup-export"]').forEach(b=>b.onclick=()=>void p20DownloadBackup());
+    $$('[data-action="backup-import"]').forEach(b=>b.onclick=p20ChooseBackup);
     $$('[data-action="privacy-info"]').forEach(b=>b.onclick=showPrivacyInfo);
     $$('[data-action="license-info"]').forEach(b=>b.onclick=showLicenseInfo);
     $$('[data-action="controls"]').forEach(b=>b.onclick=showControlsHelp);

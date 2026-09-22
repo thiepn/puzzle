@@ -9,8 +9,7 @@ const sw=read('sw.js');
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
-has(app,"const APP_VERSION = '1.12.0';",'Phase 19 app version missing');
-has(app,"const BUILD_PHASE = 'Performance, Memory & Long-Session Endurance';",'Phase 19 build identity missing');
+assert.match(app,/const APP_VERSION = '\d+\.\d+\.\d+';/,'release app version missing');checks++;
 has(app,'const P19_VERSION=19;','Phase 19 runtime version missing');
 has(app,'const MAX_HISTORY_ENTRIES = 10000;','durable history bound missing');
 has(app,'async trimHistory(limit=MAX_HISTORY_ENTRIES)','history compaction API missing');
@@ -37,7 +36,10 @@ for(const [needle,label] of [
   ['syncSeenLimit:P18_SEEN_LIMIT','cross-tab seen-cache bound missing']
 ]) has(app,needle,label);
 
-has(sw,"const APP_VERSION = '1.12.0';",'service worker app version mismatch');
-has(sw,"const CACHE_VERSION = 'v31';",'Phase 19 cache generation missing');
+const appVersion=app.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const swVersion=sw.match(/const APP_VERSION = '([^']+)';/)?.[1];
+const cacheVersion=Number(sw.match(/const CACHE_VERSION = 'v(\d+)';/)?.[1]||0);
+assert.equal(swVersion,appVersion,'service worker app version mismatch');checks++;
+assert.ok(cacheVersion>=31,'service worker regressed below Phase 19 cache generation');checks++;
 
 console.log(JSON.stringify({pass:true,phase:19,checks},null,2));

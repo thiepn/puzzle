@@ -1,8 +1,18 @@
 # Puzzle Arcade — 36-Game Endless Puzzle PWA
 
-**Current release: 1.12.0 · Performance, Memory & Long-Session Endurance · PWA cache v31**
+**Current release: 1.13.0 · Final Production Hardening, Release Certification & Maintenance Baseline · PWA cache v32**
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
+
+## Final Production Hardening, Release Certification & Maintenance Baseline 1.13.0
+
+Phase 20 closes the numbered feature-development sequence and freezes Puzzle Arcade as a maintained production application.
+
+Local data can now be downloaded as a verified JSON backup and restored through Settings. Restore validates schema, size, checksum, puzzle generator compatibility, history, settings, and active records **before** replacing live data. IndexedDB replacement is atomic, reset/restore synchronize across tabs, and the recovery gate tests the real download, file-picker restore, reset, reload, completed-puzzle recovery, and in-progress recovery paths.
+
+Production deployment now generates SHA-256 integrity metadata for every core file and verifies the deployed GitHub Pages bytes after publishing. A weekly maintenance baseline re-runs recovery and Chromium/Firefox/WebKit resilience, while Dependabot monitors GitHub Actions dependencies monthly.
+
+See docs/PHASE20_FINAL_CERTIFICATION.md, docs/MAINTENANCE_BASELINE.md, and SECURITY.md.
 
 ## Performance, Memory & Long-Session Endurance 1.12.0
 

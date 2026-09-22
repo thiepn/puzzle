@@ -1,3 +1,20 @@
+# 1.13.0 — Final Production Hardening, Release Certification & Maintenance Baseline
+
+- Added verified local backup download and restore for settings, favorites, active/completed puzzle records, and bounded history.
+- Added a 16 MiB backup safety ceiling, backup schema versioning, database-schema compatibility checks, deterministic corruption checksum validation, and unsafe-object-key rejection.
+- Added active-record repair against freshly generated current puzzles and generator-version compatibility checks before restore.
+- Added atomic IndexedDB replacement across settings, active records, and history; localStorage fallback snapshots and rolls back Puzzle Arcade-owned keys on failure.
+- Added cross-tab restore propagation alongside the existing reset synchronization.
+- Added required browser disaster-recovery certification covering real backup download, checksum tamper rejection, active-state repair, destructive reset, real file-picker restore, reload durability, completed-result recovery, and in-progress recovery.
+- Added `release-manifest.json` as the stable release identity document.
+- Added deploy-time SHA-256 + byte-size integrity generation for all ten core production files.
+- Added post-deployment verification against the live GitHub Pages bytes, including app/service-worker identity, CSP, and PWA manifest checks.
+- Added `SECURITY.md` and a frozen post-Phase-20 maintenance baseline.
+- Added a weekly/manual maintenance workflow covering cumulative static certification, Chromium/Firefox/WebKit resilience, and disaster recovery.
+- Added monthly Dependabot monitoring for GitHub Actions dependencies.
+- Phase 20 deliberately adds no new puzzle family, progression system, backend, account, or cloud-sync feature.
+- Advanced the PWA cache to v32; IndexedDB schema remains 1 and the catalog remains 36 games.
+
 # 1.12.0 — Performance, Memory & Long-Session Endurance
 
 - Added a required warmed 144-route Chromium endurance certification to the release workflow.

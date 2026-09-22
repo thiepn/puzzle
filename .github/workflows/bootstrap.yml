@@ -33,12 +33,13 @@ jobs:
       - run: node scripts/test-word-entry.mjs
       - run: node scripts/test-phase18-resilience.mjs
       - run: node scripts/test-phase19-endurance.mjs
+      - run: node scripts/test-phase20-final-certification.mjs
       - run: node scripts/release-check.mjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Validate browser test syntax
-        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py scripts/test-player-fuzz-browser.py scripts/test-resilience-browser.py scripts/test-endurance-browser.py
+        run: python -m py_compile scripts/test-play-browser.py scripts/test-difficulty-browser.py scripts/test-variety-browser.py scripts/test-generator-stress-browser.py scripts/test-completion-browser.py scripts/test-player-fuzz-browser.py scripts/test-resilience-browser.py scripts/test-endurance-browser.py scripts/test-recovery-browser.py
       - name: Install browser test dependencies
         run: |
           python -m pip install --disable-pip-version-check playwright
@@ -120,6 +121,36 @@ jobs:
           path: test-results/endurance/release.json
           retention-days: 30
 
+
+  recovery-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Phase 20 backup restore reset recovery
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/recovery
+          python -m http.server 8080 >/tmp/puzzle-recovery-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-recovery-browser.py \
+            --base-url http://127.0.0.1:8080/ \
+            --output test-results/recovery/release.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase20-recovery-release
+          path: test-results/recovery/release.json
+          retention-days: 30
+
   resilience-matrix:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -146,7 +177,7 @@ jobs:
 
   deploy:
     if: github.event_name == 'push'
-    needs: [release-gate, player-fuzz-gate, endurance-gate, resilience-matrix]
+    needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, resilience-matrix]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -158,8 +189,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp index.html styles.css app.js word-dictionary.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png dist/
+          cp index.html styles.css app.js word-dictionary.js word-content.js manifest.webmanifest sw.js icon.svg icon-192.png icon-512.png release-manifest.json dist/
           touch dist/.nojekyll
+          node scripts/build-release-integrity.mjs dist
       - uses: actions/configure-pages@v5
         with:
           enablement: true
@@ -187,8 +219,9 @@ jobs:
           curl -fsSL --retry 2 "$base/app.js" -o /tmp/live-app.js
           curl -fsSL --retry 2 "$base/sw.js" -o /tmp/live-sw.js
           curl -fsSL --retry 2 "$base/word-dictionary.js" -o /tmp/live-dictionary.js
-          grep -q "const APP_VERSION = '1.12.0';" /tmp/live-app.js
-          grep -q "const CACHE_VERSION = 'v31';" /tmp/live-sw.js
+          grep -q "const APP_VERSION = '1.13.0';" /tmp/live-app.js
+          grep -q "const CACHE_VERSION = 'v32';" /tmp/live-sw.js
           grep -q 'trace' /tmp/live-dictionary.js
           grep -q 'adieu' /tmp/live-dictionary.js
+          node scripts/verify-deployed-release.mjs "$base"
           echo 'PRODUCTION_SMOKE=PASS'

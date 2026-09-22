@@ -1,18 +1,44 @@
-# Puzzle Arcade 1.12.0 — Performance, Memory & Long-Session Endurance
+# Puzzle Arcade 1.13.0 — Final Production Hardening, Release Certification & Maintenance Baseline
 
-Phase 19 turns sustained browser use into a release requirement.
+Phase 20 completes the numbered development sequence and establishes the stable maintenance baseline.
 
-- The required endurance job warms all 36 puzzle families and then runs 108 measured fresh-seed routes.
-- The weekly/manual deep workflow runs 432 measured routes after the same full-catalog warm pass.
-- Route latency, DOM growth, heap growth, timers, pointer cleanup, global handlers, lifecycle recovery, runtime caches, and storage are measured in one persistent browser session.
-- Chromium heap growth is measured only after lazy puzzle/cache initialization, preventing legitimate warm-up memory from being misclassified as a leak.
-- Completed history is now bounded to 10,000 durable entries instead of growing forever.
-- Oversized legacy history is compacted on boot; ongoing play prunes excess results.
-- IndexedDB and localStorage fallback storage follow the same retention rule.
-- The endurance gate independently verifies history compaction using real browser storage.
-- Active-puzzle storage remains naturally bounded to one record per game.
-- Existing Phase 18 Chromium/Firefox/WebKit resilience certification and Phase 17 four-shard player fuzzing remain required for deployment.
+## Local disaster recovery
 
-IndexedDB schema remains **1**. Service-worker cache is **v31**.
+Settings now includes **Download backup** and **Restore backup**.
 
-See docs/PHASE19_PERFORMANCE_MEMORY_ENDURANCE.md for the complete contract.
+A backup contains local Puzzle Arcade settings, favorites, active/completed puzzle sessions, and bounded result history. Restore verifies file size, JSON structure, backup/database schema, checksum, saved-game identity, current generator compatibility, and sanitized state before current local data can be replaced.
+
+The required recovery gate tests the actual download and file-picker user flows, checksum tampering, active-record repair, reset, restore, reload durability, and both completed and in-progress puzzle recovery.
+
+## Production integrity
+
+The committed `release-manifest.json` identifies the stable release.
+
+Deployment creates SHA-256 and byte-size metadata for every core production file. After GitHub Pages publishes, CI re-downloads every core file with cache busting and rejects a mixed or stale deployment if any hash or release identity differs.
+
+## Maintenance mode
+
+Phase 20 freezes the current product baseline:
+
+- 36 playable games
+- IndexedDB schema 1
+- backup schema 1
+- PWA cache v32
+- no account/backend/cloud dependency
+- no third-party runtime JavaScript/CSS/font/API dependency
+- Chromium, Firefox, and WebKit release resilience
+- bounded long-session resource behavior
+- required backup/reset recovery gate
+- weekly maintenance-baseline workflow
+- monthly GitHub Actions dependency monitoring
+
+Future work should default to bug fixes, compatibility, accessibility, security, content corrections, and measured performance maintenance.
+
+Physical iOS/Android PWA installation/update, real-device screen readers, and physical haptics remain documented manual checks; this release does not claim those were independently automated.
+
+See:
+
+- `docs/PHASE20_FINAL_CERTIFICATION.md`
+- `docs/MAINTENANCE_BASELINE.md`
+- `SECURITY.md`
+- `release-manifest.json`
