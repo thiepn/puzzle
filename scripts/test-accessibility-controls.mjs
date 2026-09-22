@@ -10,6 +10,9 @@ const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;
 has(index,'class="skip-link"','skip link missing');
 has(index,'id="route-status"','route live region missing');
 has(index,'data-action="controls"','controls help entry missing');
+has(index,'<meta name="theme-color" content="#f3f0e8" />','initial theme color must match light palette');
+has(app,"meta.content = dark ? '#171714' : '#f3f0e8'","runtime theme chrome colors must match CSS palette");
+
 assert.ok(/maximum-scale=1/.test(index)&&/user-scalable=no/.test(index),'app viewport must disable browser zoom');checks++;
 
 for(const key of ["motion:['system','reduced']","contrast:['system','high']","controls:['standard','large']"]) {
