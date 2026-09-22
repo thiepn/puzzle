@@ -8,7 +8,7 @@
 - Added shortcut metadata and an expanded keyboard/touch help sheet.
 - Rebuilt the mobile bottom navigation as a compact icon+label app bar.
 - Reduced mobile home/catalog density: smaller hero, continue card, category cards, recent/favorite rails, library cards, filters, and settings groups.
-- Simplified the mobile top bar by hiding redundant sound/help controls.
+- Simplified the mobile top bar while retaining a compact always-available sound mute; the redundant help control moves out of the phone top bar.
 - Converted mobile search into a full-screen quick switcher with bounded scrolling.
 - Converted mobile dialogs into bottom sheets.
 - Made the in-game mobile action dock sticky and thumb-friendly while retaining 44px+ touch targets.
