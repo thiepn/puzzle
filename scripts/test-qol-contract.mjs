@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 const root=new URL('../',import.meta.url);
 const read=f=>fs.readFileSync(new URL(f,root),'utf8');
-const app=read('app.js'),css=read('styles.css'),index=read('index.html');
+const app=read('app.js'),css=read('styles.css'),index=read('index.html'),workflow=read('.github/workflows/bootstrap.yml'),release=JSON.parse(read('release-manifest.json'));
 let checks=0;
 const has=(text,needle,label)=>{assert.ok(text.includes(needle),label);checks++;};
 
@@ -44,5 +44,9 @@ for(const [needle,label] of [
   ['.play-action-dock {','mobile game action dock override missing'],
   ['.home-mini-grid {','mobile horizontal mini-card rail missing']
 ]) has(css,needle,label);
+
+has(workflow,'qol-gate:','QoL browser gate missing from CI');
+has(workflow,'needs: [release-gate, player-fuzz-gate, endurance-gate, recovery-gate, qol-gate, resilience-matrix]','deployment does not require QoL gate');
+assert.ok(release.certificationGates?.includes('qol-gate'),'release manifest does not include QoL gate');checks++;
 
 console.log(JSON.stringify({pass:true,release:'1.14.0',checks},null,2));
