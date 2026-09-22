@@ -1,3 +1,21 @@
+# 1.14.0 — QoL, Keyboard Navigation & Mobile UI Polish
+
+- Added a keyboard quick switcher opened by Ctrl/⌘ K or / with action + puzzle search, arrow-key selection, and Enter activation.
+- Added G chord navigation: G→P Puzzles, G→L Learn, G→S Stats, G→O Settings.
+- Added C to resume the latest open puzzle and R to launch a random puzzle outside gameplay.
+- Added Esc-to-options while inside a puzzle.
+- Added spatial arrow-key navigation across puzzle-library cards, category portals, continue rails, category filters, and primary navigation.
+- Added shortcut metadata and an expanded keyboard/touch help sheet.
+- Rebuilt the mobile bottom navigation as a compact icon+label app bar.
+- Reduced mobile home/catalog density: smaller hero, continue card, category cards, recent/favorite rails, library cards, filters, and settings groups.
+- Simplified the mobile top bar by hiding redundant sound/help controls.
+- Converted mobile search into a full-screen quick switcher with bounded scrolling.
+- Converted mobile dialogs into bottom sheets.
+- Made the in-game mobile action dock sticky and thumb-friendly while retaining 44px+ touch targets.
+- Added required desktop keyboard + mobile UI browser certification and folded it into weekly maintenance checks.
+- Preserved Phase 20 backup/restore/reset, deployment integrity, endurance, cross-browser, and fuzz certification.
+- Advanced the PWA cache to v33; IndexedDB schema remains 1, backup schema remains 1, and the catalog remains 36 games.
+
 # 1.13.0 — Final Production Hardening, Release Certification & Maintenance Baseline
 
 - Added verified local backup download and restore for settings, favorites, active/completed puzzle records, and bounded history.
