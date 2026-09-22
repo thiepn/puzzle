@@ -49,6 +49,7 @@ For docs/tooling-only changes:
 
 ## 5. Required automated gates
 
+- [ ] stable `certification-summary`
 - [ ] cumulative release gate
 - [ ] player-fuzz shard 1
 - [ ] player-fuzz shard 2
