@@ -3,10 +3,14 @@ name: Player Deep Fuzz
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 3 * * 0'
+    - cron: '17 4 * * 0'
 
 permissions:
   contents: read
+
+concurrency:
+  group: puzzle-deep-player-fuzz
+  cancel-in-progress: true
 
 jobs:
   player-fuzz:
@@ -26,13 +30,15 @@ jobs:
             games: queens,number-path,tents,rectangles,dominoes,towers,fillomino,network,sliding-tiles,lights-out,untangle
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
       - name: Install Chromium
         run: |
-          python -m pip install --disable-pip-version-check playwright
+          python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
       - name: Run family fuzz shard
         run: |
@@ -48,9 +54,10 @@ jobs:
             --steps 24 \
             --cycles 2 \
             --output "test-results/player-fuzz/${{ matrix.shard }}.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: player-fuzz-${{ matrix.shard }}
           path: test-results/player-fuzz/${{ matrix.shard }}.json
           retention-days: 30
+          if-no-files-found: error
