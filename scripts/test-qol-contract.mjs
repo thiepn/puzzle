@@ -37,7 +37,7 @@ for(const [needle,label] of [
   ['.search-result.is-selected','quick switcher selected state missing'],
   ['--mobile-nav-h: 64px','mobile bottom nav sizing missing'],
   ['.nav-icon {','mobile nav icon styling missing'],
-  ['.top-actions [data-action="sound-toggle"]','mobile topbar declutter missing'],
+  ['.top-actions [data-action="controls"]','mobile topbar declutter missing'],
   ['.catalog-game-grid {','mobile catalog density missing'],
   ['.modal-backdrop {','mobile bottom-sheet modal override missing'],
   ['position: sticky;','mobile sticky action dock missing'],
