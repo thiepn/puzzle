@@ -67,6 +67,5 @@ jobs:
         with:
           name: generator-stress-${{ matrix.shard }}
           path: generator-stress-${{ matrix.shard }}.json
-          if-no-files-found: warn
           retention-days: 30
           if-no-files-found: error
