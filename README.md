@@ -4,6 +4,24 @@
 
 A local-first puzzle arcade built around one loop: choose a puzzle, solve it, press **Next Puzzle**, repeat.
 
+## Maintenance status
+
+Puzzle Arcade is now in **formal maintenance mode** on the certified **1.14.0 / v33** baseline.
+
+Routine work should be limited to bug fixes, compatibility, accessibility, security, content corrections, measured performance/reliability work, CI/tooling maintenance, and supporting documentation. New product capabilities require an explicit product-direction decision rather than entering through maintenance by default.
+
+Maintenance operations:
+
+- `docs/MAINTENANCE_HANDOFF.md` — scope, severity, triage and emergency-patch rules
+- `docs/RELEASE_CHECKLIST.md` — production maintenance release checklist
+- `docs/ROLLBACK.md` — certified rollback procedure
+- `docs/MAINTENANCE_BASELINE.md` — frozen technical invariants and required gates
+- repository issue forms — bug, accessibility, and performance evidence capture
+- pull-request template — storage/recovery/release/rollback review
+
+The app version, service-worker cache, DB schema and backup schema do **not** change for this documentation/tooling handoff.
+
+
 ## QoL, Keyboard Navigation & Mobile UI Polish 1.14.0
 
 This explicitly approved pre-maintenance release improves everyday navigation without changing puzzle rules, persistence schemas, or the 36-game catalog.
