@@ -115,6 +115,7 @@ def main():
             navLinkDisplay:css(navLink).display,
             navIconDisplay:css(navIcon).display,
             soundDisplay:css(sound).display,
+            soundWidth:Math.round(sound.getBoundingClientRect().width),
             cardHeight:card?.getBoundingClientRect().height||0,
             descriptionDisplay:desc?css(desc).display:null,
             portalHeight:portal?.getBoundingClientRect().height||0
@@ -123,7 +124,8 @@ def main():
         report['mobileHome']=mobile_metrics
         check(mobile_metrics['navPosition']=='fixed','mobile-nav-not-fixed',mobile_metrics)
         check(mobile_metrics['navIconDisplay']!='none','mobile-nav-icons-hidden',mobile_metrics)
-        check(mobile_metrics['soundDisplay']=='none','mobile-topbar-not-decluttered',mobile_metrics)
+        check(mobile_metrics['soundDisplay']!='none','mobile-sound-toggle-hidden',mobile_metrics)
+        check(mobile_metrics['soundWidth']<=38,'mobile-sound-toggle-not-compact',mobile_metrics)
         check(mobile_metrics['descriptionDisplay']=='none','mobile-card-description-visible',mobile_metrics)
         check(mobile_metrics['cardHeight']<=175,'mobile-card-too-tall',mobile_metrics)
         check(mobile_metrics['portalHeight']<=105,'mobile-category-portal-too-tall',mobile_metrics)
