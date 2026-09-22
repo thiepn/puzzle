@@ -1,0 +1,67 @@
+name: Maintenance Baseline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 5 * * 3'
+
+permissions:
+  contents: read
+
+jobs:
+  static-baseline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check app.js
+      - run: node --check sw.js
+      - run: node scripts/test-phase18-resilience.mjs
+      - run: node scripts/test-phase19-endurance.mjs
+      - run: node scripts/test-phase20-final-certification.mjs
+      - run: node scripts/release-check.mjs
+
+  browser-resilience:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps "${{ matrix.browser }}"
+      - name: Cross-browser persistence resilience
+        run: |
+          set -euo pipefail
+          python -m http.server 8080 >/tmp/puzzle-maintenance-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-resilience-browser.py --base-url http://127.0.0.1:8080/ --browser "${{ matrix.browser }}"
+
+  recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Backup restore reset recovery
+        run: |
+          set -euo pipefail
+          python -m http.server 8080 >/tmp/puzzle-maintenance-recovery-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          python scripts/test-recovery-browser.py --base-url http://127.0.0.1:8080/
