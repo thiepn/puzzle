@@ -1039,7 +1039,7 @@
   function syncThemeChrome() {
     const dark = state.settings.theme === 'dark' || (state.settings.theme === 'system' && themeMedia.matches);
     const meta = $('meta[name="theme-color"]');
-    if (meta) meta.content = dark ? '#171715' : '#f5f2ea';
+    if (meta) meta.content = dark ? '#171714' : '#f3f0e8';
   }
   function setTheme(theme, persist=true) {
     state.settings.theme = ['system','light','dark'].includes(theme) ? theme : 'system';
