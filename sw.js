@@ -1,4 +1,4 @@
-/* Puzzle Arcade 1.14.0: QoL release shell; refreshed for theme/contrast hotfix. */
+/* Puzzle Arcade 1.14.0: QoL release shell; refreshed for Five Letters theme hotfix. */
 const APP_VERSION = '1.14.0';
 const CACHE_VERSION = 'v33';
 const SCOPE = new URL(self.registration.scope);
