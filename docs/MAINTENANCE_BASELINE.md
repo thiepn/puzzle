@@ -149,6 +149,22 @@ Maintenance documentation is part of the operational surface. CI verifies that t
 
 See `docs/MAINTENANCE_PASS1_DOCS_INTEGRITY.md` for the initial post-handoff audit.
 
+## CI and workflow hygiene
+
+The maintenance baseline treats CI configuration as production infrastructure.
+
+Current rules:
+
+- cumulative static contracts are owned by `scripts/release-check.mjs` and are not duplicated in workflow YAML;
+- browser automation installs from the pinned `.github/requirements-ci.txt`;
+- Python CI dependencies and GitHub Actions are tracked monthly by Dependabot;
+- workflow-level permissions are read-only; Pages/OIDC write privileges are scoped to deployment only;
+- docs/tooling-only main pushes run certification but do not republish identical runtime bytes;
+- the stable `certification-summary` status aggregates all required release gates;
+- deep generator, player-fuzz, and endurance suites are staggered to avoid scheduled runner contention.
+
+See `docs/MAINTENANCE_PASS2_CI_HYGIENE.md` and `docs/REPOSITORY_GOVERNANCE.md`.
+
 ## Maintenance workflow
 
 For routine fixes:

@@ -8,24 +8,21 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: puzzle-maintenance-baseline
+  cancel-in-progress: true
+
 jobs:
   static-baseline:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: node --check app.js
-      - run: node --check sw.js
-      - run: node scripts/test-phase18-resilience.mjs
-      - run: node scripts/test-phase19-endurance.mjs
-      - run: node scripts/test-phase20-final-certification.mjs
-      - run: node scripts/test-qol-contract.mjs
-      - run: node scripts/test-maintenance-handoff.mjs
-      - run: node scripts/test-docs-integrity.mjs
-      - run: node scripts/release-check.mjs
+      - name: Cumulative maintenance baseline
+        run: node scripts/release-check.mjs
 
   browser-resilience:
     runs-on: ubuntu-24.04
@@ -35,12 +32,14 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
       - run: |
-          python -m pip install --disable-pip-version-check playwright
+          python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps "${{ matrix.browser }}"
       - name: Cross-browser persistence resilience
         run: |
@@ -50,18 +49,20 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           python scripts/test-resilience-browser.py --base-url http://127.0.0.1:8080/ --browser "${{ matrix.browser }}"
 
-  recovery:
+  chromium-maintenance:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
       - run: |
-          python -m pip install --disable-pip-version-check playwright
+          python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt
           python -m playwright install --with-deps chromium
-      - name: Backup restore reset recovery
+      - name: Recovery and QoL drift certification
         run: |
           set -euo pipefail
           python -m http.server 8080 >/tmp/puzzle-maintenance-recovery-http.log 2>&1 &

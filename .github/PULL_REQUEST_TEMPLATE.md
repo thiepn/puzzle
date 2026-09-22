@@ -38,6 +38,7 @@ Explain any schema or migration change:
 
 ### Required gates
 
+- [ ] Stable `certification-summary`
 - [ ] Release gate
 - [ ] Player fuzz shards 1–4
 - [ ] Chromium / Firefox / WebKit resilience

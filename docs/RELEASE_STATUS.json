@@ -123,8 +123,21 @@
   "maintenanceReleaseChecklist": "docs/RELEASE_CHECKLIST.md",
   "maintenanceRollbackProcedure": "docs/ROLLBACK.md",
   "maintenanceHandoffDocument": "docs/MAINTENANCE_HANDOFF.md",
-  "maintenancePass": "PASS_1_POST_HANDOFF_DOCS_INTEGRITY",
+  "maintenancePass": "PASS_2_CI_WORKFLOW_REPOSITORY_HYGIENE",
   "documentationIntegrityRegression": "REQUIRED_ON_RELEASE",
   "documentationIntegrityWeekly": "REQUIRED_ON_MAINTENANCE_BASELINE",
-  "documentationIntegrityDocument": "docs/MAINTENANCE_PASS1_DOCS_INTEGRITY.md"
+  "documentationIntegrityDocument": "docs/MAINTENANCE_PASS1_DOCS_INTEGRITY.md",
+  "ciHygieneRegression": "REQUIRED_ON_RELEASE",
+  "ciPlaywrightPin": "1.63.0",
+  "ciPythonRequirements": ".github/requirements-ci.txt",
+  "stableCertificationCheck": "certification-summary",
+  "docsOnlyRuntimeDeployment": "SKIPPED_AFTER_FULL_CERTIFICATION",
+  "workflowPermissions": "LEAST_PRIVILEGE_DEPLOY_SCOPED",
+  "deepGeneratorScheduleUtc": "SUNDAY_02_17",
+  "deepPlayerFuzzScheduleUtc": "SUNDAY_04_17",
+  "deepEnduranceScheduleUtc": "SUNDAY_06_17",
+  "repositoryRulesetsObserved": 0,
+  "classicBranchProtectionVisibility": "NOT_READABLE_BY_CONNECTED_GITHUB_APP",
+  "repositoryGovernanceDocument": "docs/REPOSITORY_GOVERNANCE.md",
+  "ciHygieneDocument": "docs/MAINTENANCE_PASS2_CI_HYGIENE.md"
 }

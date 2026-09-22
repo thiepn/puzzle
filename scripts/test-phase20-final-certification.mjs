@@ -85,6 +85,7 @@ for(const file of [
 has(workflow,'recovery-gate:','release workflow recovery gate missing');
 has(workflow,'node scripts/build-release-integrity.mjs dist','deploy integrity generation missing');
 has(workflow,'node scripts/verify-deployed-release.mjs "$base"','live deployed integrity verification missing');
-assert.match(workflow,/needs: \[[^\]]*release-gate[^\]]*player-fuzz-gate[^\]]*endurance-gate[^\]]*recovery-gate[^\]]*resilience-matrix[^\]]*\]/,'deployment does not require every Phase 20 gate');checks++;
+assert.match(workflow,/certification-summary:[\s\S]*needs: \[release-gate, player-fuzz-gate, endurance-gate, recovery-gate, qol-gate, resilience-matrix\]/,'certification summary does not require every production gate');checks++;
+assert.match(workflow,/deploy:[\s\S]*needs: \[release-gate, certification-summary\]/,'deployment does not require stable certification summary');checks++;
 
 console.log(JSON.stringify({pass:true,phase:20,checks,version:release.version,coreFiles:release.coreFiles.length},null,2));
