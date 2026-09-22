@@ -28,7 +28,7 @@ def main():
         phase={'value':'desktop-boot'}
         page.on('pageerror',lambda exc: page_errors.append({'at':phase['value'],'error':str(exc)}))
         page.goto(opt.base_url,wait_until='domcontentloaded',timeout=30000)
-        page.wait_for_function("() => document.body && /1\.14\.0/.test(document.querySelector('script[src="app.js"]') ? window.__PA_RECOVERY__?.appVersion || '1.14.0' : '')",timeout=30000)
+        page.wait_for_function("() => window.__PA_RECOVERY__?.version===20 && document.querySelector('.discovery-home')",timeout=30000)
 
         phase['value']='quick-switcher'
         page.keyboard.press('Control+k')
