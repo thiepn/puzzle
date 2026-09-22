@@ -30,7 +30,7 @@ def main():
             page.wait_for_function(condition,timeout=30000)
 
         # Create representative user state through production UI/runtime paths.
-        route('#/settings','() => location.hash==="#/settings" && document.querySelector(".settings-page")')
+        route('#/settings','() => location.hash==="#/settings" && document.querySelector(\'[data-theme-choice="dark"]\')')
         page.locator('[data-theme-choice="dark"]').click()
         page.wait_for_function('() => document.documentElement.dataset.theme==="dark"')
 
@@ -59,7 +59,7 @@ def main():
             raise AssertionError('could not persist active puzzle state')
 
         # Verify the actual settings download button, not only the internal API.
-        route('#/settings','() => location.hash==="#/settings" && document.querySelector(".settings-page")')
+        route('#/settings','() => location.hash==="#/settings" && document.querySelector(\'[data-theme-choice="dark"]\')')
         backup_path=Path('/tmp/puzzle-arcade-phase20-backup.json')
         with page.expect_download(timeout=15000) as download_info:
             page.locator('[data-action="backup-export"]').click()
