@@ -290,8 +290,8 @@ p { line-height:1.55; }
 .wordle-board { display:grid;grid-template-rows:repeat(6,1fr);gap:6px;margin:8px auto 14px; }
 .wordle-row { display:grid;grid-template-columns:repeat(5,1fr);gap:6px; }
 .wordle-tile { aspect-ratio:1;border:2px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font:900 clamp(22px,6vw,36px)/1 var(--ui-font);text-transform:uppercase; }
-.wordle-tile.correct { background:color-mix(in srgb,var(--success) 72%,var(--paper));color:var(--on-accent);border-color:var(--success); }
-.wordle-tile.present { background:color-mix(in srgb,var(--warning) 72%,var(--paper));color:var(--on-accent);border-color:var(--warning);box-shadow:inset 0 -5px 0 rgba(0,0,0,.18); }
+.wordle-tile.correct { background:var(--success);color:var(--on-accent);border-color:var(--success); }
+.wordle-tile.present { background:var(--warning);color:var(--on-accent);border-color:var(--warning);box-shadow:inset 0 -5px 0 rgba(0,0,0,.18); }
 .wordle-tile.absent { background:var(--paper-muted);color:var(--ink-soft);border-style:dotted; }
 .letter-keyboard { display:grid; gap:5px; }
 .key-row { display:flex;justify-content:center;gap:5px; }
@@ -666,7 +666,7 @@ p { line-height:1.55; }
 .theme-trail-board { width:min(78vw,520px);aspect-ratio:1;display:grid;grid-template-columns:repeat(5,1fr);border:2px solid var(--ink);background:var(--line);gap:1px;touch-action:none;user-select:none; }
 .trail-cell { border:0;background:var(--paper-bright);color:var(--ink);font:850 clamp(18px,5vw,31px)/1 var(--display-font);padding:0;cursor:pointer; }
 .trail-cell.path { background:color-mix(in srgb,var(--word) 25%,var(--paper-bright));box-shadow:inset 0 0 0 3px var(--word); }
-.trail-cell.locked { background:color-mix(in srgb,var(--logic) 16%,var(--paper-bright));color:var(--logic); }
+.trail-cell.locked { background:color-mix(in srgb,var(--logic) 12%,var(--paper-bright));color:var(--logic); }
 .trail-cell.selected { outline:3px solid var(--focus);outline-offset:-3px; }
 .theme-answers { width:min(78vw,520px);display:grid;grid-template-columns:repeat(3,1fr);gap:6px; }
 .theme-answers span { border-bottom:1px solid var(--line);padding:6px 3px;color:var(--ink-soft);font-size:10px;text-align:center;text-transform:uppercase; }
