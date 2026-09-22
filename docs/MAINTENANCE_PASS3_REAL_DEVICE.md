@@ -45,7 +45,7 @@ For each required device:
 
 1. Remove any old Puzzle Arcade home-screen install and site data only when a clean-install test is intended.
 2. Open the production site in the platform browser.
-3. Install/add Puzzle Arcade to the home screen.
+3. Install/add Puzzle Arcade to the home screen. On iOS/iPadOS 26+, leave **Open as Web App** enabled when that option is shown.
 4. Launch from the home-screen icon.
 5. Confirm the app opens in standalone mode, starts at the normal app shell, and shows the expected build in **Settings → About this build**.
 6. Confirm no browser chrome overlaps the application UI.
