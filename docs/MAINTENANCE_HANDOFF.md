@@ -206,6 +206,8 @@ Manual, periodically and before notable public releases:
 - backup download/restore through a mobile file picker;
 - rotation and safe-area checks.
 
+Record those checks using the Maintenance Pass 3 protocol in `docs/MAINTENANCE_PASS3_REAL_DEVICE.md`; do not convert emulator/WebKit results into physical-device claims.
+
 ## Release ownership checklist
 
 Before merging any maintenance release, the person merging should be able to answer:

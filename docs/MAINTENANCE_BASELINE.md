@@ -133,6 +133,8 @@ These checks remain manual and must not be described as independently automated:
 
 A maintenance release can be automated-release-certified while these are still manual, but public release notes must not claim those physical checks occurred unless they actually did.
 
+Maintenance Pass 3 formalizes this evidence boundary. Use `docs/MAINTENANCE_PASS3_REAL_DEVICE.md`, copy `docs/real-device-evidence.template.json`, and run `node scripts/validate-real-device-evidence.mjs <evidence.json>` for strict physical sign-off. Until that strict validator passes on actual hardware, the correct status is **REMOTE/AUTOMATED READINESS PASS — PHYSICAL CLOSURE PENDING**.
+
 ## Security baseline
 
 - CSP remains self-only for scripts, network connections, workers, images, and fonts.
