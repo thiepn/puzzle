@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "product": "Puzzle Arcade",
+  "appVersion": "1.14.0",
+  "cacheVersion": "v33",
+  "testedAt": "REPLACE_WITH_ISO_8601",
+  "tester": "REPLACE",
+  "devices": [
+    {
+      "id": "android-primary",
+      "platform": "android",
+      "deviceModel": "REPLACE",
+      "osVersion": "REPLACE",
+      "browser": "Chrome",
+      "browserVersion": "REPLACE",
+      "installMode": "installed-pwa",
+      "screenReader": "TalkBack",
+      "updateFrom": {
+        "appVersion": "1.13.0",
+        "cacheVersion": "v32"
+      },
+      "updateTo": {
+        "appVersion": "1.14.0",
+        "cacheVersion": "v33"
+      },
+      "checks": {
+        "install": "not-tested",
+        "standaloneLaunch": "not-tested",
+        "installedUpdate": "not-tested",
+        "offlineRelaunch": "not-tested",
+        "touch": "not-tested",
+        "rotation": "not-tested",
+        "safeAreas": "not-tested",
+        "backupExport": "not-tested",
+        "backupRestore": "not-tested",
+        "screenReader": "not-tested",
+        "haptics": "not-tested"
+      },
+      "notes": []
+    },
+    {
+      "id": "ios-primary",
+      "platform": "ios",
+      "deviceModel": "REPLACE",
+      "osVersion": "REPLACE",
+      "browser": "Safari",
+      "browserVersion": "REPLACE",
+      "installMode": "installed-pwa",
+      "screenReader": "VoiceOver",
+      "updateFrom": {
+        "appVersion": "1.13.0",
+        "cacheVersion": "v32"
+      },
+      "updateTo": {
+        "appVersion": "1.14.0",
+        "cacheVersion": "v33"
+      },
+      "checks": {
+        "install": "not-tested",
+        "standaloneLaunch": "not-tested",
+        "installedUpdate": "not-tested",
+        "offlineRelaunch": "not-tested",
+        "touch": "not-tested",
+        "rotation": "not-tested",
+        "safeAreas": "not-tested",
+        "backupExport": "not-tested",
+        "backupRestore": "not-tested",
+        "screenReader": "not-tested",
+        "haptics": "unsupported"
+      },
+      "notes": [
+        "iOS Safari/PWA does not expose the Web Vibration API; unsupported haptics are expected."
+      ]
+    }
+  ]
+}

@@ -18,6 +18,7 @@ Maintenance operations:
 - `docs/MAINTENANCE_BASELINE.md` — frozen technical invariants and required gates
 - `docs/REPOSITORY_GOVERNANCE.md` — recommended GitHub branch/ruleset protection
 - `docs/MAINTENANCE_PASS2_CI_HYGIENE.md` — current CI/workflow hygiene baseline
+- `docs/MAINTENANCE_PASS3_REAL_DEVICE.md` — physical Android/iOS PWA, accessibility, backup/restore and haptic verification protocol
 - repository issue forms — bug, accessibility, and performance evidence capture
 - pull-request template — storage/recovery/release/rollback review
 
